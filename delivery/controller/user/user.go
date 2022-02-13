@@ -45,7 +45,7 @@ func (uc UserController) Create() echo.HandlerFunc {
 		for _, s := range check {
 			// check empty string in required input
 			if s == "" {
-				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, s+": "+"cannot be empty"))
+				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "input cannot be empty"))
 			}
 
 			// check malicious character in input
@@ -116,7 +116,7 @@ func (uc UserController) Login() echo.HandlerFunc {
 		for _, s := range check {
 			// check empty string in required input
 			if s == "" {
-				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, s+": "+"cannot be empty"))
+				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "input cannot be empty"))
 			}
 
 			// check malicious character in input

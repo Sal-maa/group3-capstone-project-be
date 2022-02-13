@@ -1,0 +1,1 @@
+go test ./delivery/controller/... -coverprofile=cover.out && go tool cover -html=cover.out

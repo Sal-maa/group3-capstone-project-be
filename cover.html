@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html><head>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+		<title>user: Go Coverage Report</title>
+		<style>
+			body {
+				background: black;
+				color: rgb(80, 80, 80);
+			}
+			body, pre, #legend span {
+				font-family: Menlo, monospace;
+				font-weight: bold;
+			}
+			#topbar {
+				background: black;
+				position: fixed;
+				top: 0; left: 0; right: 0;
+				height: 42px;
+				border-bottom: 1px solid rgb(80, 80, 80);
+			}
+			#content {
+				margin-top: 50px;
+			}
+			#nav, #legend {
+				float: left;
+				margin-left: 10px;
+			}
+			#legend {
+				margin-top: 12px;
+			}
+			#nav {
+				margin-top: 10px;
+			}
+			#legend span {
+				margin: 0 5px;
+			}
+			.cov0 { color: rgb(192, 0, 0) }
+.cov1 { color: rgb(128, 128, 128) }
+.cov2 { color: rgb(116, 140, 131) }
+.cov3 { color: rgb(104, 152, 134) }
+.cov4 { color: rgb(92, 164, 137) }
+.cov5 { color: rgb(80, 176, 140) }
+.cov6 { color: rgb(68, 188, 143) }
+.cov7 { color: rgb(56, 200, 146) }
+.cov8 { color: rgb(44, 212, 149) }
+.cov9 { color: rgb(32, 224, 152) }
+.cov10 { color: rgb(20, 236, 155) }
+
+		</style>
+	</head>
+	<body>
+		<div id="topbar">
+			<div id="nav">
+				<select id="files">
+				
+				<option value="file0" selected="selected">capstone/be/delivery/controller/user/user.go (85.0%)</option>
+				
+				</select>
+			</div>
+			<div id="legend">
+				<span>not tracked</span>
+			
+				<span class="cov0">not covered</span>
+				<span class="cov8">covered</span>
+			
+			</div>
+		</div>
+		<div id="content">
+		
+		<pre class="file" id="file0" style="display: block;">package user
+
+import (
+        _common "capstone/be/delivery/common"
+        _helper "capstone/be/delivery/helper"
+        _midware "capstone/be/delivery/middleware"
+        _entity "capstone/be/entity"
+        _userRepo "capstone/be/repository/user"
+        "fmt"
+        "log"
+        "net/http"
+        "strconv"
+        "strings"
+
+        "github.com/labstack/echo/v4"
+        "golang.org/x/crypto/bcrypt"
+)
+
+type UserController struct {
+        repository _userRepo.User
+}
+
+func New(user _userRepo.User) *UserController <span class="cov8" title="1">{
+        return &amp;UserController{repository: user}
+}</span>
+
+func (uc UserController) Create() echo.HandlerFunc <span class="cov8" title="1">{
+        return func(c echo.Context) error </span><span class="cov8" title="1">{
+                userData := _entity.CreateUser{}
+
+                // detect failure in binding
+                if err := c.Bind(&amp;userData); err != nil </span><span class="cov8" title="1">{
+                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed to bind data"))
+                }</span>
+
+                // prepare input string
+                <span class="cov8" title="1">name := strings.Title(strings.ToLower(strings.TrimSpace(userData.Name)))
+                email := strings.TrimSpace(userData.Email)
+                phone := strings.TrimSpace(userData.Phone)
+                password := strings.TrimSpace(userData.Password)
+
+                // check input string
+                check := []string{name, email, phone, password}
+
+                for _, s := range check </span><span class="cov8" title="1">{
+                        // check empty string in required input
+                        if s == "" </span><span class="cov8" title="1">{
+                                return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "input cannot be empty"))
+                        }</span>
+
+                        // check malicious character in input
+                        <span class="cov8" title="1">if err := _helper.CheckStringInput(s); err != nil </span><span class="cov8" title="1">{
+                                return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, s+": "+err.Error()))
+                        }</span>
+                }
+
+                // check email pattern
+                <span class="cov8" title="1">if err := _helper.CheckEmailPattern(email); err != nil </span><span class="cov8" title="1">{
+                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, email+": "+err.Error()))
+                }</span>
+
+                // check phone pattern
+                <span class="cov8" title="1">if err := _helper.CheckPhonePattern(phone); err != nil </span><span class="cov8" title="1">{
+                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, phone+": "+err.Error()))
+                }</span>
+
+                // check password pattern
+                <span class="cov8" title="1">if err := _helper.CheckPasswordPattern(password); err != nil </span><span class="cov8" title="1">{
+                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, password+": "+err.Error()))
+                }</span>
+
+                // hashing password
+                <span class="cov8" title="1">hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.MinCost)
+
+                // detect failure in hashing password
+                if err != nil </span><span class="cov0" title="0">{
+                        return c.JSON(http.StatusInternalServerError, _common.NoDataResponse(http.StatusInternalServerError, "failed to hash password"))
+                }</span>
+
+                // prepare input to repository
+                <span class="cov8" title="1">createUserData := _entity.User{
+                        Name:     name,
+                        Email:    email,
+                        Phone:    phone,
+                        Password: string(hashedPassword),
+                }
+
+                // calling repository
+                createdUser, code, err := uc.repository.Create(createUserData)
+
+                // detect failure in repository
+                if err != nil </span><span class="cov8" title="1">{
+                        return c.JSON(code, _common.NoDataResponse(code, err.Error()))
+                }</span>
+
+                <span class="cov8" title="1">return c.JSON(http.StatusOK, _common.CreateUserResponse(createdUser))</span>
+        }
+}
+
+func (uc UserController) Login() echo.HandlerFunc <span class="cov8" title="1">{
+        return func(c echo.Context) error </span><span class="cov8" title="1">{
+                loginData := _entity.Login{}
+
+                // handle failure in binding
+                if err := c.Bind(&amp;loginData); err != nil </span><span class="cov8" title="1">{
+                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed to bind data"))
+                }</span>
+
+                // prepare input string
+                <span class="cov8" title="1">input := strings.TrimSpace(loginData.Input)
+                password := strings.TrimSpace(loginData.Password)
+
+                // check input string
+                check := []string{input, password}
+
+                for _, s := range check </span><span class="cov8" title="1">{
+                        // check empty string in required input
+                        if s == "" </span><span class="cov8" title="1">{
+                                return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "input cannot be empty"))
+                        }</span>
+
+                        // check malicious character in input
+                        <span class="cov8" title="1">if err := _helper.CheckStringInput(s); err != nil </span><span class="cov8" title="1">{
+                                return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, s+": "+err.Error()))
+                        }</span>
+                }
+
+                <span class="cov8" title="1">loginUser := _entity.User{}
+
+                // check input pattern
+                if err := _helper.CheckEmailPattern(input); err == nil </span><span class="cov8" title="1">{
+                        // if login by email, calling repository
+                        login, code, err := uc.repository.LoginByEmail(input)
+
+                        // detect failure in repository
+                        if err != nil </span><span class="cov8" title="1">{
+                                return c.JSON(code, _common.NoDataResponse(code, err.Error()))
+                        }</span>
+
+                        <span class="cov8" title="1">loginUser = login</span>
+                } else<span class="cov8" title="1"> if err = _helper.CheckPhonePattern(input); err == nil </span><span class="cov8" title="1">{
+                        // if login by phone, calling repository
+                        login, code, err := uc.repository.LoginByPhone(input)
+
+                        // detect failure in repository
+                        if err != nil </span><span class="cov8" title="1">{
+                                return c.JSON(code, _common.NoDataResponse(code, err.Error()))
+                        }</span>
+
+                        <span class="cov8" title="1">loginUser = login</span>
+                } else<span class="cov8" title="1"> {
+                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, input+": invalid email or phone"))
+                }</span>
+
+                // detect password mismatch
+                <span class="cov8" title="1">if err := bcrypt.CompareHashAndPassword([]byte(loginUser.Password), []byte(password)); err != nil </span><span class="cov0" title="0">{
+                        return c.JSON(http.StatusUnauthorized, _common.NoDataResponse(http.StatusUnauthorized, "password does not match"))
+                }</span>
+
+                // create token based on user id
+                <span class="cov8" title="1">token, err := _midware.CreateToken(loginUser.Id)
+
+                // detect failure in creating token
+                if err != nil </span><span class="cov0" title="0">{
+                        return c.JSON(http.StatusInternalServerError, _common.NoDataResponse(http.StatusInternalServerError, "failed to create token"))
+                }</span>
+
+                <span class="cov8" title="1">return c.JSON(http.StatusOK, _common.LoginResponse(loginUser, token))</span>
+        }
+}
+
+func (uc UserController) GetById() echo.HandlerFunc <span class="cov8" title="1">{
+        return func(c echo.Context) error </span><span class="cov8" title="1">{
+                id, err := strconv.Atoi(c.Param("id"))
+
+                // detect invalid parameter
+                if err != nil </span><span class="cov8" title="1">{
+                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "invalid user id"))
+                }</span>
+
+                // calling repository
+                <span class="cov8" title="1">user, code, err := uc.repository.GetById(id)
+
+                // detect failure in repository
+                if err != nil </span><span class="cov8" title="1">{
+                        return c.JSON(code, _common.NoDataResponse(code, err.Error()))
+                }</span>
+
+                <span class="cov8" title="1">return c.JSON(http.StatusOK, _common.GetUserByIdResponse(user))</span>
+        }
+}
+
+func (uc UserController) GetAll() echo.HandlerFunc <span class="cov8" title="1">{
+        return func(c echo.Context) error </span><span class="cov8" title="1">{
+                // calling repository
+                users, code, err := uc.repository.GetAll()
+
+                // detect failure in repository
+                if err != nil </span><span class="cov8" title="1">{
+                        return c.JSON(code, _common.NoDataResponse(code, err.Error()))
+                }</span>
+
+                <span class="cov8" title="1">return c.JSON(http.StatusOK, _common.GetAllUsersResponse(users))</span>
+        }
+}
+
+func (uc UserController) Update() echo.HandlerFunc <span class="cov8" title="1">{
+        return func(c echo.Context) error </span><span class="cov8" title="1">{
+                // check authentication
+                if valid := _midware.ValidateToken(c); !valid </span><span class="cov0" title="0">{
+                        return c.JSON(http.StatusUnauthorized, _common.NoDataResponse(http.StatusUnauthorized, "unauthorized"))
+                }</span>
+
+                <span class="cov8" title="1">id, err := strconv.Atoi(c.Param("id"))
+
+                // detect invalid parameter
+                if err != nil </span><span class="cov8" title="1">{
+                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "invalid user id"))
+                }</span>
+
+                // check authorization
+                <span class="cov8" title="1">if id != _midware.ExtractId(c) </span><span class="cov0" title="0">{
+                        return c.JSON(http.StatusUnauthorized, _common.NoDataResponse(http.StatusUnauthorized, "unauthorized"))
+                }</span>
+
+                <span class="cov8" title="1">userData := _entity.UpdateUser{}
+
+                // detect failure in binding
+                if err := c.Bind(&amp;userData); err != nil </span><span class="cov8" title="1">{
+                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed to bind data"))
+                }</span>
+
+                // prepare input string
+                <span class="cov8" title="1">name := strings.Title(strings.ToLower(strings.TrimSpace(userData.Name)))
+                email := strings.TrimSpace(userData.Email)
+                phone := strings.TrimSpace(userData.Phone)
+                password := strings.TrimSpace(userData.Password)
+
+                // calling repository to get existing user data
+                updateUserData, code, err := uc.repository.GetById(id)
+
+                // detect failure in repository
+                if err != nil </span><span class="cov8" title="1">{
+                        return c.JSON(code, _common.NoDataResponse(code, err.Error()))
+                }</span>
+
+                // detect change in user name
+                <span class="cov8" title="1">if name != "" </span><span class="cov8" title="1">{
+                        // check malicious character in input
+                        if err := _helper.CheckStringInput(name); err != nil </span><span class="cov8" title="1">{
+                                return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, name+": "+err.Error()))
+                        }</span>
+
+                        <span class="cov8" title="1">updateUserData.Name = name</span>
+                }
+
+                // detect change in user email
+                <span class="cov8" title="1">if email != "" </span><span class="cov8" title="1">{
+                        // check malicious character in input
+                        if err := _helper.CheckStringInput(email); err != nil </span><span class="cov8" title="1">{
+                                return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, email+": "+err.Error()))
+                        }</span>
+
+                        // check email pattern
+                        <span class="cov8" title="1">if err := _helper.CheckEmailPattern(email); err != nil </span><span class="cov8" title="1">{
+                                return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, email+": "+err.Error()))
+                        }</span>
+
+                        <span class="cov8" title="1">updateUserData.Email = email</span>
+                }
+
+                // detect change in user phone
+                <span class="cov8" title="1">if phone != "" </span><span class="cov8" title="1">{
+                        // check malicious character in input
+                        if err := _helper.CheckStringInput(phone); err != nil </span><span class="cov8" title="1">{
+                                return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, phone+": "+err.Error()))
+                        }</span>
+
+                        // check phone pattern
+                        <span class="cov8" title="1">if err := _helper.CheckPhonePattern(phone); err != nil </span><span class="cov8" title="1">{
+                                return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, phone+": "+err.Error()))
+                        }</span>
+
+                        <span class="cov8" title="1">updateUserData.Phone = phone</span>
+                }
+
+                // detect change in user password
+                <span class="cov8" title="1">if password != "" </span><span class="cov8" title="1">{
+                        // check malicious character in input
+                        if err := _helper.CheckStringInput(password); err != nil </span><span class="cov8" title="1">{
+                                return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, password+": "+err.Error()))
+                        }</span>
+
+                        // check password pattern
+                        <span class="cov8" title="1">if err := _helper.CheckPasswordPattern(password); err != nil </span><span class="cov8" title="1">{
+                                return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, password+": "+err.Error()))
+                        }</span>
+
+                        // hashing password
+                        <span class="cov8" title="1">hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.MinCost)
+
+                        // detect failure in hashing password
+                        if err != nil </span><span class="cov0" title="0">{
+                                return c.JSON(http.StatusInternalServerError, _common.NoDataResponse(http.StatusInternalServerError, "failed to hash password"))
+                        }</span>
+
+                        <span class="cov8" title="1">updateUserData.Password = string(hashedPassword)</span>
+                }
+
+                // detect avatar image upload
+                <span class="cov8" title="1">src, file, err := c.Request().FormFile("avatar")
+
+                // detect failure in parsing file
+                switch err </span>{
+                case nil:<span class="cov0" title="0">
+                        defer src.Close()
+
+                        // upload avatar to amazon s3
+                        avatar, code, err := _helper.UploadImage("user", id, file, src)
+
+                        // detect failure while uploading avatar
+                        if err != nil </span><span class="cov0" title="0">{
+                                return c.JSON(code, _common.NoDataResponse(code, err.Error()))
+                        }</span>
+
+                        // delete previous avatar from amazon s3
+                        <span class="cov0" title="0">filename := updateUserData.Avatar[strings.LastIndex(updateUserData.Avatar, "/")+1:]
+
+                        if filename != "default_avatar.png" </span><span class="cov0" title="0">{
+
+                                fmt.Println(filename)
+
+                                if err = _helper.DeleteImage(filename); err != nil </span><span class="cov0" title="0">{
+                                        log.Println(err)
+                                }</span>
+                        }
+
+                        <span class="cov0" title="0">updateUserData.Avatar = avatar</span>
+                case http.ErrMissingFile:<span class="cov0" title="0">
+                        log.Println(err)</span>
+                case http.ErrNotMultipart:<span class="cov8" title="1">
+                        log.Println(err)</span>
+                default:<span class="cov0" title="0">
+                        log.Println(err)
+                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed to upload avatar"))</span>
+                }
+
+                <span class="cov8" title="1">updateUserData.Id = id
+
+                // calling repository
+                updatedUser, code, err := uc.repository.Update(updateUserData)
+
+                // detect failure in repository
+                if err != nil </span><span class="cov0" title="0">{
+                        return c.JSON(code, _common.NoDataResponse(code, err.Error()))
+                }</span>
+
+                <span class="cov8" title="1">return c.JSON(http.StatusOK, _common.UpdateUserResponse(updatedUser))</span>
+        }
+}
+
+func (uc UserController) Delete() echo.HandlerFunc <span class="cov8" title="1">{
+        return func(c echo.Context) error </span><span class="cov8" title="1">{
+                // check authentication
+                if valid := _midware.ValidateToken(c); !valid </span><span class="cov0" title="0">{
+                        return c.JSON(http.StatusUnauthorized, _common.NoDataResponse(http.StatusUnauthorized, "unauthorized"))
+                }</span>
+
+                <span class="cov8" title="1">id, err := strconv.Atoi(c.Param("id"))
+
+                // detect invalid parameter
+                if err != nil </span><span class="cov8" title="1">{
+                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "invalid user id"))
+                }</span>
+
+                // check authorization
+                <span class="cov8" title="1">if id != _midware.ExtractId(c) </span><span class="cov0" title="0">{
+                        return c.JSON(http.StatusUnauthorized, _common.NoDataResponse(http.StatusUnauthorized, "unauthorized"))
+                }</span>
+
+                <span class="cov8" title="1">if code, err := uc.repository.Delete(id); err != nil </span><span class="cov8" title="1">{
+                        return c.JSON(code, _common.NoDataResponse(code, err.Error()))
+                }</span>
+
+                <span class="cov8" title="1">return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "success delete user"))</span>
+        }
+}
+</pre>
+		
+		</div>
+	
+	<script>
+	(function() {
+		var files = document.getElementById('files');
+		var visible;
+		files.addEventListener('change', onChange, false);
+		function select(part) {
+			if (visible)
+				visible.style.display = 'none';
+			visible = document.getElementById(part);
+			if (!visible)
+				return;
+			files.value = part;
+			visible.style.display = 'block';
+			location.hash = part;
+		}
+		function onChange() {
+			select(files.value);
+			window.scrollTo(0, 0);
+		}
+		if (location.hash != "") {
+			select(location.hash.substr(1));
+		}
+		if (!visible) {
+			select("file0");
+		}
+	})();
+	</script>
+
+</body></html>
