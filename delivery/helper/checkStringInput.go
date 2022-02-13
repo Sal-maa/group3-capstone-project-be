@@ -6,7 +6,7 @@ import (
 )
 
 func CheckStringInput(s string) error {
-	if strings.ContainsAny(strings.ReplaceAll(s, " ", ""), ";--") {
+	if strings.Contains(strings.ReplaceAll(s, " ", ""), ";--") {
 		return errors.New("input cannot contain forbidden character")
 	}
 

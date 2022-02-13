@@ -17,7 +17,7 @@ func CheckEmailPattern(email string) error {
 		return errors.New("local name cannot start or end with dot")
 	}
 
-	if re := regexp.MustCompile(`\.\.`); len(re.Find([]byte(splitEmail[0]))) != 0 {
+	if strings.Contains(splitEmail[0], "..") {
 		return errors.New("local name cannot contain consecutive dots")
 	}
 
