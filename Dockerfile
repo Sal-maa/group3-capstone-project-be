@@ -4,11 +4,7 @@ RUN mkdir /app
 
 WORKDIR /app
 
-COPY go.mod /app
-COPY go.sum /app
-RUN go mod download
-
-ADD ./ /app
+COPY ./ /app
 
 RUN cd ./app && go build -o api
 
