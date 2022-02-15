@@ -1,0 +1,23 @@
+services:
+  mysql:
+    image: mysql
+    restart: always
+    container_name: mysql
+    command: --default-authentication-plugin=mysql_native_password
+    volumes:
+      - ./mysql-data:/var/lib/mysql
+    ports:
+      - 3306:3306
+    environment:
+      MYSQL_ROOT_HOST: '%'
+      MYSQL_ROOT_PASSWORD: alta
+      MYSQL_USER: alta
+      MYSQL_PASSWORD: alta
+  app:
+    build: .
+    restart: always
+    environment:
+      HTTP_PORT: 8080
+      STORAGE: db
+    ports:
+      - 80:8080
