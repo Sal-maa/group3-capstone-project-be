@@ -5,7 +5,7 @@ Do the best!
 
 ### 🕮 &nbsp;Documentation
 
-See open API documentation [here](https://app.swaggerhub.com/apis-docs/iswanulumam/EventPlanningApp/1.0.0).
+See open API documentation [here](https://app.swaggerhub.com/apis-docs/bagusbpg6/group3-capstone-API/1.0.0).
 
 ### 🛠 &nbsp;Tech Stacks
 
