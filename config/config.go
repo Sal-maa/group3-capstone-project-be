@@ -7,7 +7,6 @@ import (
 	"sync"
 
 	"github.com/joho/godotenv"
-	"github.com/spf13/viper"
 )
 
 type AppConfig struct {
@@ -65,22 +64,24 @@ func initConfig() *AppConfig {
 	defaultConfig.AWS.Region = os.Getenv("AWS_REGION")
 	defaultConfig.AWS.Bucket = os.Getenv("AWS_BUCKET")
 
-	viper.SetConfigType("json")
-	viper.SetConfigName("config")
-	viper.AddConfigPath("./config")
+	// viper.SetConfigType("json")
+	// viper.SetConfigName("config")
+	// viper.AddConfigPath("./config")
 
-	// read app custom configuration for running in local machine
-	if err := viper.ReadInConfig(); err != nil {
-		log.Println(err)
-		return &defaultConfig
-	}
+	// // read app custom configuration for running in local machine
+	// if err := viper.ReadInConfig(); err != nil {
+	// 	log.Println(err)
+	// 	return &defaultConfig
+	// }
 
-	finalConfig := AppConfig{}
+	// finalConfig := AppConfig{}
 
-	if err := viper.Unmarshal(&finalConfig); err != nil {
-		log.Println(err)
-		return &defaultConfig
-	}
+	// if err := viper.Unmarshal(&finalConfig); err != nil {
+	// 	log.Println(err)
+	// 	return &defaultConfig
+	// }
 
-	return &finalConfig
+	// return &finalConfig
+
+	return &defaultConfig
 }
