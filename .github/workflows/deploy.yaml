@@ -17,6 +17,6 @@ jobs:
         key: ${{ secrets.KEY }}
         port: ${{ secrets.PORT }}
         script: |
-          cd group3-capstone-project-be
+          cd /home/ubuntu/group3-capstone-project-be
           git pull origin main
           docker-compose down && docker-compose up --build -d
