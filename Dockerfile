@@ -7,7 +7,7 @@ WORKDIR /app
 COPY go.mod /app
 COPY go.sum /app
 
-# ADD ./ /app
+ADD ./ /app
 
 RUN cd ./app && go build -o api
 
