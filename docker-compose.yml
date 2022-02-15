@@ -3,15 +3,15 @@ services:
     image: bitnami/mysql
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: toor
-      MYSQL_DATABASE: eplanner
+      MYSQL_ROOT_PASSWORD: group3
+      MYSQL_DATABASE: capstone
     ports: 
       - 3306:3306
     volumes:
       - 'mysql_data:/bitnami/mysql/data'
 
     healthcheck:
-      test: ["CMD", "mysql", "-u", "root",  "-ptoor", "-e", "show schemas"]
+      test: ["CMD", "mysql", "-u", "root",  "-pgroup3", "-e", "show schemas"]
       interval: 10s
 
 volumes:
