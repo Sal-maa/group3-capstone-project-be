@@ -38,7 +38,7 @@ func main() {
 	e.Pre(middleware.RemoveTrailingSlash(), middleware.CORS(), _midware.CustomLogger())
 
 	_router.RegisterPath(e, userController)
-
+	// koneksi
 	address := fmt.Sprintf(":%d", config.Port)
 	e.Logger.Fatal(e.Start(address))
 }
