@@ -13,14 +13,6 @@ services:
     healthcheck:
       test: ["CMD", "mysql", "-u", "root",  "-ptoor", "-e", "show schemas"]
       interval: 10s
-  app:
-    build: .
-    restart: always
-    environment:
-      HTTP_PORT: 3000
-      STORAGE: db
-    ports:
-      - 80:3000
 
 volumes:
   mysql_data:
