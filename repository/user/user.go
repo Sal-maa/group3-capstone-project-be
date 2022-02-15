@@ -100,7 +100,7 @@ func (ur *UserRepository) LoginByEmail(email string) (loginUser _entity.User, co
 	}
 
 	stmt, err := ur.db.Prepare(`
-		SELECT name, password
+		SELECT name, password, avatar
 		FROM users
 		WHERE deleted_at IS NULL AND id = ?
 	`)
@@ -124,7 +124,7 @@ func (ur *UserRepository) LoginByEmail(email string) (loginUser _entity.User, co
 	defer res.Close()
 
 	if res.Next() {
-		if err = res.Scan(&loginUser.Name, &loginUser.Password); err != nil {
+		if err = res.Scan(&loginUser.Name, &loginUser.Password, &loginUser.Avatar); err != nil {
 			log.Println(err)
 			code, err = http.StatusInternalServerError, errors.New("internal server error")
 			return loginUser, code, err
@@ -132,6 +132,7 @@ func (ur *UserRepository) LoginByEmail(email string) (loginUser _entity.User, co
 	}
 
 	loginUser.Id = int(id)
+	loginUser.Avatar = fmt.Sprintf("https://capstone-group3.s3.ap-southeast-1.amazonaws.com/%s", loginUser.Avatar)
 
 	return loginUser, http.StatusOK, nil
 }
@@ -152,7 +153,7 @@ func (ur *UserRepository) LoginByPhone(phone string) (loginUser _entity.User, co
 	}
 
 	stmt, err := ur.db.Prepare(`
-		SELECT name, password
+		SELECT name, password, avatar
 		FROM users
 		WHERE deleted_at IS NULL AND id = ?
 	`)
@@ -176,7 +177,7 @@ func (ur *UserRepository) LoginByPhone(phone string) (loginUser _entity.User, co
 	defer res.Close()
 
 	if res.Next() {
-		if err = res.Scan(&loginUser.Name, &loginUser.Password); err != nil {
+		if err = res.Scan(&loginUser.Name, &loginUser.Password, &loginUser.Avatar); err != nil {
 			log.Println(err)
 			code, err = http.StatusInternalServerError, errors.New("internal server error")
 			return loginUser, code, err
@@ -184,6 +185,7 @@ func (ur *UserRepository) LoginByPhone(phone string) (loginUser _entity.User, co
 	}
 
 	loginUser.Id = int(id)
+	loginUser.Avatar = fmt.Sprintf("https://capstone-group3.s3.ap-southeast-1.amazonaws.com/%s", loginUser.Avatar)
 
 	return loginUser, http.StatusOK, nil
 }

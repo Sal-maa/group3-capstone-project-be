@@ -32,6 +32,7 @@ func (m mockRepoSuccess) LoginByEmail(string) (_entity.User, int, error) {
 		Id:       1,
 		Name:     "Salmaa",
 		Password: "$2a$04$mE8tA7CWbuouRX5Sj5THgOW2SylADQ1H.wzjWcaL/H2KPUGbScXAm",
+		Avatar:   "https://capstone-group3.s3.ap-southeast-1.amazonaws.com/default_avatar.png",
 	}, http.StatusOK, nil
 }
 
@@ -40,6 +41,7 @@ func (m mockRepoSuccess) LoginByPhone(string) (_entity.User, int, error) {
 		Id:       1,
 		Name:     "Salmaa",
 		Password: "$2a$04$mE8tA7CWbuouRX5Sj5THgOW2SylADQ1H.wzjWcaL/H2KPUGbScXAm",
+		Avatar:   "https://capstone-group3.s3.ap-southeast-1.amazonaws.com/default_avatar.png",
 	}, http.StatusOK, nil
 }
 
@@ -152,9 +154,10 @@ func TestLoginByEmailSuccess(t *testing.T) {
 			"code":    float64(http.StatusOK),
 			"message": "success login",
 			"data": map[string]interface{}{
-				"id":    float64(1),
-				"name":  "Salmaa",
-				"token": token,
+				"id":     float64(1),
+				"name":   "Salmaa",
+				"token":  token,
+				"avatar": "https://capstone-group3.s3.ap-southeast-1.amazonaws.com/default_avatar.png",
 			},
 		}
 
@@ -193,9 +196,10 @@ func TestLoginByPhoneSuccess(t *testing.T) {
 			"code":    float64(http.StatusOK),
 			"message": "success login",
 			"data": map[string]interface{}{
-				"id":    float64(1),
-				"name":  "Salmaa",
-				"token": token,
+				"id":     float64(1),
+				"name":   "Salmaa",
+				"token":  token,
+				"avatar": "https://capstone-group3.s3.ap-southeast-1.amazonaws.com/default_avatar.png",
 			},
 		}
 

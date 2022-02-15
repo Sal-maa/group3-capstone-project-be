@@ -28,9 +28,10 @@ func LoginResponse(user _entity.User, token string) map[string]interface{} {
 		"code":    http.StatusOK,
 		"message": "success login",
 		"data": map[string]interface{}{
-			"id":    user.Id,
-			"name":  user.Name,
-			"token": token,
+			"id":     user.Id,
+			"name":   user.Name,
+			"token":  token,
+			"avatar": user.Avatar,
 		},
 	}
 }
