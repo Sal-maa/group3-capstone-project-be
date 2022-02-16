@@ -23,7 +23,7 @@ func CreateUserResponse(user _entity.UserSimplified) map[string]interface{} {
 	}
 }
 
-func LoginResponse(user _entity.User, token string) map[string]interface{} {
+func LoginResponse(user _entity.User, token string, expire int64) map[string]interface{} {
 	return map[string]interface{}{
 		"code":    http.StatusOK,
 		"message": "success login",
@@ -31,6 +31,7 @@ func LoginResponse(user _entity.User, token string) map[string]interface{} {
 			"id":     user.Id,
 			"name":   user.Name,
 			"token":  token,
+			"expire": expire,
 			"avatar": user.Avatar,
 		},
 	}
