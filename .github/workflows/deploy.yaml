@@ -23,4 +23,4 @@ jobs:
           docker container rm app
           docker rmi group3/app
           docker build -t group3/app .
-          docker run --env-file .env -p 80:3000 --name app -d group3/app
+          docker run -d --env-file .env -p 80:3000 --name app group3/app
