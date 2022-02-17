@@ -281,7 +281,7 @@ func TestGetAllSuccess(t *testing.T) {
 
 func TestUpdateSuccess(t *testing.T) {
 	t.Run("TestUpdateSuccess", func(t *testing.T) {
-		token, _ := _midware.CreateToken(1)
+		token, _, _ := _midware.CreateToken(1)
 
 		requestBody, _ := json.Marshal(map[string]string{
 			"name":     "Salmaa",
@@ -329,7 +329,7 @@ func TestUpdateSuccess(t *testing.T) {
 
 func TestDeleteSuccess(t *testing.T) {
 	t.Run("TestDeleteSuccess", func(t *testing.T) {
-		token, _ := _midware.CreateToken(1)
+		token, _, _ := _midware.CreateToken(1)
 
 		request := httptest.NewRequest(http.MethodDelete, "/", nil)
 		request.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", token))
@@ -465,7 +465,7 @@ func TestLoginByPhoneFailBinding(t *testing.T) {
 
 func TestUpdateFailBinding(t *testing.T) {
 	t.Run("TestUpdateFailBinding", func(t *testing.T) {
-		token, _ := _midware.CreateToken(1)
+		token, _, _ := _midware.CreateToken(1)
 
 		requestBody, _ := json.Marshal(map[string]interface{}{
 			"name":     "Salmaa",
@@ -711,7 +711,7 @@ func TestLoginByPhoneFailMaliciousCharacter(t *testing.T) {
 
 func TestUpdateFailMaliciousCharacter1(t *testing.T) {
 	t.Run("TestUpdateFailMaliciousCharacter1", func(t *testing.T) {
-		token, _ := _midware.CreateToken(1)
+		token, _, _ := _midware.CreateToken(1)
 
 		requestBody, _ := json.Marshal(map[string]string{
 			"name":     "; --",
@@ -752,7 +752,7 @@ func TestUpdateFailMaliciousCharacter1(t *testing.T) {
 
 func TestUpdateFailMaliciousCharacter2(t *testing.T) {
 	t.Run("TestUpdateFailMaliciousCharacter2", func(t *testing.T) {
-		token, _ := _midware.CreateToken(1)
+		token, _, _ := _midware.CreateToken(1)
 
 		requestBody, _ := json.Marshal(map[string]string{
 			"name":     "Salmaa",
@@ -793,7 +793,7 @@ func TestUpdateFailMaliciousCharacter2(t *testing.T) {
 
 func TestUpdateFailMaliciousCharacter3(t *testing.T) {
 	t.Run("TestUpdateFailMaliciousCharacter3", func(t *testing.T) {
-		token, _ := _midware.CreateToken(1)
+		token, _, _ := _midware.CreateToken(1)
 
 		requestBody, _ := json.Marshal(map[string]string{
 			"name":     "Salmaa",
@@ -834,7 +834,7 @@ func TestUpdateFailMaliciousCharacter3(t *testing.T) {
 
 func TestUpdateFailMaliciousCharacter4(t *testing.T) {
 	t.Run("TestUpdateFailMaliciousCharacter4", func(t *testing.T) {
-		token, _ := _midware.CreateToken(1)
+		token, _, _ := _midware.CreateToken(1)
 
 		requestBody, _ := json.Marshal(map[string]string{
 			"name":     "Salmaa",
@@ -943,7 +943,7 @@ func TestLoginByEmailFailInvalidEmail(t *testing.T) {
 
 func TestUpdateFailInvalidEmail(t *testing.T) {
 	t.Run("TestUpdateFailInvalidEmail", func(t *testing.T) {
-		token, _ := _midware.CreateToken(1)
+		token, _, _ := _midware.CreateToken(1)
 
 		requestBody, _ := json.Marshal(map[string]string{
 			"name":     "Salmaa",
@@ -1052,7 +1052,7 @@ func TestLoginByPhoneFailInvalidPhone(t *testing.T) {
 
 func TestUpdateFailInvalidPhone(t *testing.T) {
 	t.Run("TestUpdateFailInvalidPhone", func(t *testing.T) {
-		token, _ := _midware.CreateToken(1)
+		token, _, _ := _midware.CreateToken(1)
 
 		requestBody, _ := json.Marshal(map[string]string{
 			"name":     "Salmaa",
@@ -1128,7 +1128,7 @@ func TestCreateFailInvalidPassword(t *testing.T) {
 
 func TestUpdateFailInvalidPassword(t *testing.T) {
 	t.Run("TestUpdateFailInvalidPassword", func(t *testing.T) {
-		token, _ := _midware.CreateToken(1)
+		token, _, _ := _midware.CreateToken(1)
 
 		requestBody, _ := json.Marshal(map[string]string{
 			"name":     "Salmaa",
@@ -1200,7 +1200,7 @@ func TestGetByIdFailInvalidParameter(t *testing.T) {
 
 func TestUpdateFailInvalidParameter(t *testing.T) {
 	t.Run("TestUpdateFailInvalidParameter", func(t *testing.T) {
-		token, _ := _midware.CreateToken(1)
+		token, _, _ := _midware.CreateToken(1)
 
 		requestBody, _ := json.Marshal(map[string]string{
 			"name":     "Salmaa",
@@ -1241,7 +1241,7 @@ func TestUpdateFailInvalidParameter(t *testing.T) {
 
 func TestDeleteFailInvalidParameter(t *testing.T) {
 	t.Run("TestDeleteInvalidParameter", func(t *testing.T) {
-		token, _ := _midware.CreateToken(1)
+		token, _, _ := _midware.CreateToken(1)
 
 		request := httptest.NewRequest(http.MethodDelete, "/", nil)
 		request.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", token))
@@ -1461,7 +1461,7 @@ func TestGetAllFailRepo(t *testing.T) {
 
 func TestUpdateFailRepo(t *testing.T) {
 	t.Run("TestUpdateFailRepo", func(t *testing.T) {
-		token, _ := _midware.CreateToken(1)
+		token, _, _ := _midware.CreateToken(1)
 
 		requestBody, _ := json.Marshal(map[string]string{
 			"name":     "Salmaa",
@@ -1502,7 +1502,7 @@ func TestUpdateFailRepo(t *testing.T) {
 
 func TestDeleteFailRepo(t *testing.T) {
 	t.Run("TestDeleteFailRepo", func(t *testing.T) {
-		token, _ := _midware.CreateToken(1)
+		token, _, _ := _midware.CreateToken(1)
 
 		request := httptest.NewRequest(http.MethodDelete, "/", nil)
 		request.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", token))

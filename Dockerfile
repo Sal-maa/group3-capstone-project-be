@@ -9,6 +9,7 @@ COPY go.sum /app
 
 ADD ./ /app
 
+
 RUN cd ./app && go build -o api
 
 CMD cd ./app && ./api

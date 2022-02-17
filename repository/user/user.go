@@ -79,7 +79,7 @@ func (ur *UserRepository) Create(userData _entity.User) (createdUser _entity.Use
 	createdUser.Name = userData.Name
 	createdUser.Email = userData.Email
 	createdUser.Phone = userData.Phone
-	createdUser.Avatar = "http://cdn.onlinewebfonts.com/svg/img_569204.png"
+	createdUser.Avatar = "https://capstone-group3.s3.ap-southeast-1.amazonaws.com/default_avatar.png"
 
 	return createdUser, http.StatusOK, nil
 }

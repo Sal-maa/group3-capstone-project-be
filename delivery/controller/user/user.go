@@ -6,7 +6,6 @@ import (
 	_midware "capstone/be/delivery/middleware"
 	_entity "capstone/be/entity"
 	_userRepo "capstone/be/repository/user"
-	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -158,14 +157,14 @@ func (uc UserController) Login() echo.HandlerFunc {
 		}
 
 		// create token based on user id
-		token, err := _midware.CreateToken(loginUser.Id)
+		token, expire, err := _midware.CreateToken(loginUser.Id)
 
 		// detect failure in creating token
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, _common.NoDataResponse(http.StatusInternalServerError, "failed to create token"))
 		}
 
-		return c.JSON(http.StatusOK, _common.LoginResponse(loginUser, token))
+		return c.JSON(http.StatusOK, _common.LoginResponse(loginUser, token, expire))
 	}
 }
 
@@ -206,11 +205,6 @@ func (uc UserController) GetAll() echo.HandlerFunc {
 
 func (uc UserController) Update() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// check authentication
-		if valid := _midware.ValidateToken(c); !valid {
-			return c.JSON(http.StatusUnauthorized, _common.NoDataResponse(http.StatusUnauthorized, "unauthorized"))
-		}
-
 		id, err := strconv.Atoi(c.Param("id"))
 
 		// detect invalid parameter
@@ -328,8 +322,6 @@ func (uc UserController) Update() echo.HandlerFunc {
 
 			if filename != "default_avatar.png" {
 
-				fmt.Println(filename)
-
 				if err = _helper.DeleteImage(filename); err != nil {
 					log.Println(err)
 				}
@@ -361,11 +353,6 @@ func (uc UserController) Update() echo.HandlerFunc {
 
 func (uc UserController) Delete() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// check authentication
-		if valid := _midware.ValidateToken(c); !valid {
-			return c.JSON(http.StatusUnauthorized, _common.NoDataResponse(http.StatusUnauthorized, "unauthorized"))
-		}
-
 		id, err := strconv.Atoi(c.Param("id"))
 
 		// detect invalid parameter
