@@ -1,6 +1,7 @@
 package router
 
 import (
+	_payment "capstone/be/delivery/controller/payment"
 	_user "capstone/be/delivery/controller/user"
 	_midware "capstone/be/delivery/middleware"
 	"net/http"
@@ -13,6 +14,7 @@ const swagger string = "<a href=\"https://app.swaggerhub.com/apis-docs/bagusbpg6
 func RegisterPath(
 	e *echo.Echo,
 	userController *_user.UserController,
+	paymentController *_payment.PaymentController,
 ) {
 	// Root
 	e.GET("/", func(c echo.Context) error {
@@ -28,4 +30,6 @@ func RegisterPath(
 	e.GET("/users/:id", userController.GetById())
 	e.PUT("/users/:id", userController.Update(), _midware.JWTMiddleWare())
 	e.DELETE("/users/:id", userController.Delete(), _midware.JWTMiddleWare())
+
+	e.POST("/payments", paymentController.Charge())
 }

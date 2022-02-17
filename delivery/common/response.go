@@ -3,6 +3,8 @@ package common
 import (
 	_entity "capstone/be/entity"
 	"net/http"
+
+	"github.com/xendit/xendit-go"
 )
 
 func NoDataResponse(code int, message string) map[string]interface{} {
@@ -63,5 +65,13 @@ func UpdateUserResponse(user _entity.UserSimplified) map[string]interface{} {
 		"code":    http.StatusOK,
 		"message": "success update user",
 		"data":    user,
+	}
+}
+
+func PaymentResponse(res_pay *xendit.VirtualAccountPayment) map[string]interface{} {
+	return map[string]interface{}{
+		"code":    http.StatusOK,
+		"message": "success update user",
+		"data":    res_pay,
 	}
 }
