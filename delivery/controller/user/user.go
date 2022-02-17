@@ -6,7 +6,6 @@ import (
 	_midware "capstone/be/delivery/middleware"
 	_entity "capstone/be/entity"
 	_userRepo "capstone/be/repository/user"
-	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -322,8 +321,6 @@ func (uc UserController) Update() echo.HandlerFunc {
 			filename := updateUserData.Avatar[strings.LastIndex(updateUserData.Avatar, "/")+1:]
 
 			if filename != "default_avatar.png" {
-
-				fmt.Println(filename)
 
 				if err = _helper.DeleteImage(filename); err != nil {
 					log.Println(err)
