@@ -14,4 +14,4 @@ ADD ./ /app
 
 RUN cd ./app && go build -o api
 
-CMD ["/app/app/main"]
+CMD ["/app/app/api"]
