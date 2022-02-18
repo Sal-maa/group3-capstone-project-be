@@ -34,7 +34,7 @@ func (pc PaymentController) Charge() echo.HandlerFunc {
 
 		createFixedVAData := virtualaccount.CreateFixedVAParams{
 			ExternalID: "va-" + time.Now().String(),
-			BankCode:   availableBanks[0].Code,
+			BankCode:   availableBanks[1].Code,
 			Name:       "Michael Jackson",
 		}
 

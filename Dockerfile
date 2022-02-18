@@ -4,6 +4,7 @@ RUN mkdir /app
 
 WORKDIR /app
 
+COPY .env /app
 COPY go.mod /app
 COPY go.sum /app
 
