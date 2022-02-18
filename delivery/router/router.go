@@ -1,10 +1,8 @@
 package router
 
 import (
-	_config "capstone/be/config"
 	_user "capstone/be/delivery/controller/user"
 	_midware "capstone/be/delivery/middleware"
-	"fmt"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -18,8 +16,6 @@ func RegisterPath(
 ) {
 	// Root
 	e.GET("/", func(c echo.Context) error {
-		config := _config.GetConfig()
-		fmt.Println(config)
 		return c.HTML(http.StatusOK, swagger)
 	})
 
