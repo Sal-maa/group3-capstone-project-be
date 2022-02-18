@@ -13,7 +13,15 @@ services:
     healthcheck:
       test: ["CMD", "mysql", "-u", "root",  "-pgroup3", "-e", "show schemas"]
       interval: 10s
+  app:
+    build: .
+    restart: always
+    depends_on:
+      appDb:
+        condition: service_healthy
 
+    ports:
+      - 80:80
 volumes:
   mysql_data:
     driver: local

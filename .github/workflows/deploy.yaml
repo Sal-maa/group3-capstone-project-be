@@ -19,8 +19,4 @@ jobs:
         script: |
           cd group3-capstone-project-be
           git pull origin main
-          docker container stop app
-          docker container rm app
-          docker rmi group3/app
-          docker build -t group3/app .
-          docker run -d -e "PORT:80" -p 80:80 --name app group3/app
+          docker-compose down && docker-compose up --build -d
