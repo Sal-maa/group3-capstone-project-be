@@ -11,21 +11,27 @@ import (
 )
 
 type AppConfig struct {
-	Port       int    `json:"port" yaml:"port"`
-	JWT_secret string `json:"secret" yaml:"secret"`
+	Port       int    `mapstructure:"app_port"`
+	JWT_secret string `mapstructure:"jwt_secret"`
 	Database   struct {
-		Driver   string `json:"driver" yaml:"driver"`
-		Host     string `json:"host" yaml:"host"`
-		Port     int    `json:"port" yaml:"port"`
-		Username string `json:"username" yaml:"username"`
-		Password string `json:"password" yaml:"password"`
-		Name     string `json:"name" yaml:"name"`
+		Driver   string `mapstructure:"db_driver"`
+		Host     string `mapstructure:"db_host"`
+		Port     int    `mapstructure:"db_port"`
+		Username string `mapstructure:"db_username"`
+		Password string `mapstructure:"db_password"`
+		Name     string `mapstructure:"db_name"`
 	}
 	AWS struct {
-		AccessKeyID string `json:"accesskeyid" yaml:"accesskeyid"`
-		SecretKey   string `json:"secretkey" yaml:"secretkey"`
-		Region      string `json:"region" yaml:"region"`
-		Bucket      string `json:"bucket" yaml:"bucket"`
+		AccessKeyID string `mapstructure:"aws_accesskeyid"`
+		SecretKey   string `mapstructure:"aws_secretkey"`
+		Region      string `mapstructure:"aws_region"`
+		Bucket      string `mapstructure:"aws_bucket"`
+	}
+	Midtrans struct {
+		ServerKey string `mapstructure:"midtrans_serverkey"`
+	}
+	Recaptcha struct {
+		ServerKey string `mapstructure:"recaptcha_serverkey"`
 	}
 }
 
@@ -64,6 +70,8 @@ func initConfig() *AppConfig {
 	defaultConfig.AWS.SecretKey = os.Getenv("AWS_SECRETKEY")
 	defaultConfig.AWS.Region = os.Getenv("AWS_REGION")
 	defaultConfig.AWS.Bucket = os.Getenv("AWS_BUCKET")
+	defaultConfig.Midtrans.ServerKey = os.Getenv("MIDTRANS_SERVERKEY")
+	defaultConfig.Recaptcha.ServerKey = os.Getenv("RECAPTCHA_SECRETKEY")
 
 	viper.SetConfigType("json")
 	viper.SetConfigName("config")
