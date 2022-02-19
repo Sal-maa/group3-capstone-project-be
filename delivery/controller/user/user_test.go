@@ -17,16 +17,6 @@ import (
 
 type mockRepoSuccess struct{}
 
-func (m mockRepoSuccess) Create(_entity.User) (_entity.UserSimplified, int, error) {
-	return _entity.UserSimplified{
-		Id:     1,
-		Name:   "Salmaa",
-		Email:  "salma@sirclo.com",
-		Phone:  "08123456789",
-		Avatar: "https://capstone-group3.s3.ap-southeast-1.amazonaws.com/default_avatar.png",
-	}, http.StatusOK, nil
-}
-
 func (m mockRepoSuccess) LoginByEmail(string) (_entity.User, int, error) {
 	return _entity.User{
 		Id:       1,
@@ -78,50 +68,7 @@ func (m mockRepoSuccess) Update(_entity.User) (_entity.UserSimplified, int, erro
 	}, http.StatusOK, nil
 }
 
-func (m mockRepoSuccess) Delete(int) (int, error) {
-	return http.StatusOK, nil
-}
-
 // success
-
-func TestCreateSuccess(t *testing.T) {
-	t.Run("TestCreateSuccess", func(t *testing.T) {
-		requestBody, _ := json.Marshal(map[string]string{
-			"name":     "Salmaa",
-			"email":    "salma@sirclo.com",
-			"phone":    "08123456789",
-			"password": "74nSA&ge%#fwJ",
-		})
-
-		request := httptest.NewRequest(http.MethodPost, "/", bytes.NewBuffer(requestBody))
-		request.Header.Set("Content-Type", "application/json")
-
-		response := httptest.NewRecorder()
-
-		e := echo.New()
-
-		context := e.NewContext(request, response)
-		context.SetPath("/users")
-
-		userController := New(mockRepoSuccess{})
-		userController.Create()(context)
-
-		actual := map[string]interface{}{}
-		body := response.Body.String()
-		json.Unmarshal([]byte(body), &actual)
-
-		expected := map[string]interface{}{
-			"code":    float64(http.StatusOK),
-			"message": "success create user",
-			"data": map[string]interface{}{
-				"id":   float64(1),
-				"name": "Salmaa",
-			},
-		}
-
-		assert.Equal(t, expected, actual)
-	})
-}
 
 func TestLoginByEmailSuccess(t *testing.T) {
 	t.Run("TestLoginByEmailSuccess", func(t *testing.T) {
@@ -327,75 +274,7 @@ func TestUpdateSuccess(t *testing.T) {
 	})
 }
 
-func TestDeleteSuccess(t *testing.T) {
-	t.Run("TestDeleteSuccess", func(t *testing.T) {
-		token, _, _ := _midware.CreateToken(1)
-
-		request := httptest.NewRequest(http.MethodDelete, "/", nil)
-		request.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", token))
-		request.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-
-		response := httptest.NewRecorder()
-
-		e := echo.New()
-
-		context := e.NewContext(request, response)
-		context.SetPath("/users/:id")
-		context.SetParamNames("id")
-		context.SetParamValues("1")
-
-		userController := New(mockRepoSuccess{})
-		_midware.JWTMiddleWare()(userController.Delete())(context)
-
-		actual := map[string]interface{}{}
-		body := response.Body.String()
-		json.Unmarshal([]byte(body), &actual)
-
-		expected := map[string]interface{}{
-			"code":    float64(http.StatusOK),
-			"message": "success delete user",
-		}
-
-		assert.Equal(t, expected, actual)
-	})
-}
-
 // binding failure
-
-func TestCreateFailBinding(t *testing.T) {
-	t.Run("TestCreateFailBinding", func(t *testing.T) {
-		requestBody, _ := json.Marshal(map[string]interface{}{
-			"name":     "Salmaa",
-			"email":    "salma@sirclo.com",
-			"phone":    8123456789,
-			"password": "74nSA&ge%#fwJ",
-		})
-
-		request := httptest.NewRequest(http.MethodPost, "/", bytes.NewBuffer(requestBody))
-		request.Header.Set("Content-Type", "application/json")
-
-		response := httptest.NewRecorder()
-
-		e := echo.New()
-
-		context := e.NewContext(request, response)
-		context.SetPath("/users")
-
-		userController := New(mockRepoSuccess{})
-		userController.Create()(context)
-
-		actual := map[string]interface{}{}
-		body := response.Body.String()
-		json.Unmarshal([]byte(body), &actual)
-
-		expected := map[string]interface{}{
-			"code":    float64(http.StatusBadRequest),
-			"message": "failed to bind data",
-		}
-
-		assert.Equal(t, expected, actual)
-	})
-}
 
 func TestLoginByEmailFailBinding(t *testing.T) {
 	t.Run("TestLoginByEmailFailBinding", func(t *testing.T) {
@@ -505,40 +384,6 @@ func TestUpdateFailBinding(t *testing.T) {
 }
 
 // empty input
-func TestCreateFailEmptyInput(t *testing.T) {
-	t.Run("TestCreateFailEmptyInput", func(t *testing.T) {
-		requestBody, _ := json.Marshal(map[string]string{
-			"name":     "Salmaa",
-			"email":    "salma@sirclo.com",
-			"phone":    "",
-			"password": "74nSA&ge%#fwJ",
-		})
-
-		request := httptest.NewRequest(http.MethodPost, "/", bytes.NewBuffer(requestBody))
-		request.Header.Set("Content-Type", "application/json")
-
-		response := httptest.NewRecorder()
-
-		e := echo.New()
-
-		context := e.NewContext(request, response)
-		context.SetPath("/users")
-
-		userController := New(mockRepoSuccess{})
-		userController.Create()(context)
-
-		actual := map[string]interface{}{}
-		body := response.Body.String()
-		json.Unmarshal([]byte(body), &actual)
-
-		expected := map[string]interface{}{
-			"code":    float64(http.StatusBadRequest),
-			"message": "input cannot be empty",
-		}
-
-		assert.Equal(t, expected, actual)
-	})
-}
 
 func TestLoginByEmailFailEmptyInput(t *testing.T) {
 	t.Run("TestLoginByEmailFailEmptyInput", func(t *testing.T) {
@@ -607,41 +452,6 @@ func TestLoginByPhoneFailEmptyInput(t *testing.T) {
 }
 
 // string pattern
-
-func TestCreateFailMaliciousCharacter(t *testing.T) {
-	t.Run("TestCreateFailMaliciousCharacter", func(t *testing.T) {
-		requestBody, _ := json.Marshal(map[string]string{
-			"name":     "Salmaa",
-			"email":    "salma@sirclo.com",
-			"phone":    "; --",
-			"password": "74nSA&ge%#fwJ",
-		})
-
-		request := httptest.NewRequest(http.MethodPost, "/", bytes.NewBuffer(requestBody))
-		request.Header.Set("Content-Type", "application/json")
-
-		response := httptest.NewRecorder()
-
-		e := echo.New()
-
-		context := e.NewContext(request, response)
-		context.SetPath("/users")
-
-		userController := New(mockRepoSuccess{})
-		userController.Create()(context)
-
-		actual := map[string]interface{}{}
-		body := response.Body.String()
-		json.Unmarshal([]byte(body), &actual)
-
-		expected := map[string]interface{}{
-			"code":    float64(http.StatusBadRequest),
-			"message": "; --: input cannot contain forbidden character",
-		}
-
-		assert.Equal(t, expected, actual)
-	})
-}
 
 func TestLoginByEmailFailMaliciousCharacter(t *testing.T) {
 	t.Run("TestLoginByEmailFailMaliciousCharacter", func(t *testing.T) {
@@ -873,41 +683,6 @@ func TestUpdateFailMaliciousCharacter4(t *testing.T) {
 	})
 }
 
-func TestCreateFailInvalidEmail(t *testing.T) {
-	t.Run("TestCreateFailInvalidEmail", func(t *testing.T) {
-		requestBody, _ := json.Marshal(map[string]string{
-			"name":     "Salmaa",
-			"email":    "salma@sir@clo.com",
-			"phone":    "08123456789",
-			"password": "74nSA&ge%#fwJ",
-		})
-
-		request := httptest.NewRequest(http.MethodPost, "/", bytes.NewBuffer(requestBody))
-		request.Header.Set("Content-Type", "application/json")
-
-		response := httptest.NewRecorder()
-
-		e := echo.New()
-
-		context := e.NewContext(request, response)
-		context.SetPath("/users")
-
-		userController := New(mockRepoSuccess{})
-		userController.Create()(context)
-
-		actual := map[string]interface{}{}
-		body := response.Body.String()
-		json.Unmarshal([]byte(body), &actual)
-
-		expected := map[string]interface{}{
-			"code":    float64(http.StatusBadRequest),
-			"message": "salma@sir@clo.com: email must contain exactly one local and domain name",
-		}
-
-		assert.Equal(t, expected, actual)
-	})
-}
-
 func TestLoginByEmailFailInvalidEmail(t *testing.T) {
 	t.Run("TestLoginByEmailFailInvalidEmail", func(t *testing.T) {
 		requestBody, _ := json.Marshal(map[string]string{
@@ -982,41 +757,6 @@ func TestUpdateFailInvalidEmail(t *testing.T) {
 	})
 }
 
-func TestCreateFailInvalidPhone(t *testing.T) {
-	t.Run("TestCreateFailInvalidPhone", func(t *testing.T) {
-		requestBody, _ := json.Marshal(map[string]string{
-			"name":     "Salmaa",
-			"email":    "salma@sirclo.com",
-			"phone":    "+628123456789",
-			"password": "74nSA&ge%#fwJ",
-		})
-
-		request := httptest.NewRequest(http.MethodPost, "/", bytes.NewBuffer(requestBody))
-		request.Header.Set("Content-Type", "application/json")
-
-		response := httptest.NewRecorder()
-
-		e := echo.New()
-
-		context := e.NewContext(request, response)
-		context.SetPath("/users")
-
-		userController := New(mockRepoSuccess{})
-		userController.Create()(context)
-
-		actual := map[string]interface{}{}
-		body := response.Body.String()
-		json.Unmarshal([]byte(body), &actual)
-
-		expected := map[string]interface{}{
-			"code":    float64(http.StatusBadRequest),
-			"message": "+628123456789: phone number must contain numbers only",
-		}
-
-		assert.Equal(t, expected, actual)
-	})
-}
-
 func TestLoginByPhoneFailInvalidPhone(t *testing.T) {
 	t.Run("TestLoginByEmailFailInvalidPhone", func(t *testing.T) {
 		requestBody, _ := json.Marshal(map[string]string{
@@ -1085,41 +825,6 @@ func TestUpdateFailInvalidPhone(t *testing.T) {
 		expected := map[string]interface{}{
 			"code":    float64(http.StatusBadRequest),
 			"message": "+628123456789: phone number must contain numbers only",
-		}
-
-		assert.Equal(t, expected, actual)
-	})
-}
-
-func TestCreateFailInvalidPassword(t *testing.T) {
-	t.Run("TestCreateFailInvalidPassword", func(t *testing.T) {
-		requestBody, _ := json.Marshal(map[string]string{
-			"name":     "Salmaa",
-			"email":    "salma@sirclo.com",
-			"phone":    "08123456789",
-			"password": "aaa",
-		})
-
-		request := httptest.NewRequest(http.MethodPost, "/", bytes.NewBuffer(requestBody))
-		request.Header.Set("Content-Type", "application/json")
-
-		response := httptest.NewRecorder()
-
-		e := echo.New()
-
-		context := e.NewContext(request, response)
-		context.SetPath("/users")
-
-		userController := New(mockRepoSuccess{})
-		userController.Create()(context)
-
-		actual := map[string]interface{}{}
-		body := response.Body.String()
-		json.Unmarshal([]byte(body), &actual)
-
-		expected := map[string]interface{}{
-			"code":    float64(http.StatusBadRequest),
-			"message": "aaa: password must be minimum 6 characters long",
 		}
 
 		assert.Equal(t, expected, actual)
@@ -1239,44 +944,7 @@ func TestUpdateFailInvalidParameter(t *testing.T) {
 	})
 }
 
-func TestDeleteFailInvalidParameter(t *testing.T) {
-	t.Run("TestDeleteInvalidParameter", func(t *testing.T) {
-		token, _, _ := _midware.CreateToken(1)
-
-		request := httptest.NewRequest(http.MethodDelete, "/", nil)
-		request.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", token))
-		request.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-
-		response := httptest.NewRecorder()
-
-		e := echo.New()
-
-		context := e.NewContext(request, response)
-		context.SetPath("/users/:id")
-		context.SetParamNames("id")
-		context.SetParamValues("a")
-
-		userController := New(mockRepoSuccess{})
-		_midware.JWTMiddleWare()(userController.Delete())(context)
-
-		actual := map[string]interface{}{}
-		body := response.Body.String()
-		json.Unmarshal([]byte(body), &actual)
-
-		expected := map[string]interface{}{
-			"code":    float64(http.StatusBadRequest),
-			"message": "invalid user id",
-		}
-
-		assert.Equal(t, expected, actual)
-	})
-}
-
 type mockRepoFail struct{}
-
-func (m mockRepoFail) Create(_entity.User) (_entity.UserSimplified, int, error) {
-	return _entity.UserSimplified{}, http.StatusInternalServerError, errors.New("internal server error")
-}
 
 func (m mockRepoFail) LoginByEmail(string) (_entity.User, int, error) {
 	return _entity.User{}, http.StatusInternalServerError, errors.New("internal server error")
@@ -1296,45 +964,6 @@ func (m mockRepoFail) GetAll() ([]_entity.UserSimplified, int, error) {
 
 func (m mockRepoFail) Update(_entity.User) (_entity.UserSimplified, int, error) {
 	return _entity.UserSimplified{}, http.StatusInternalServerError, errors.New("internal server error")
-}
-
-func (m mockRepoFail) Delete(int) (int, error) {
-	return http.StatusInternalServerError, errors.New("internal server error")
-}
-
-func TestCreateFailRepo(t *testing.T) {
-	t.Run("TestCreateFailRepo", func(t *testing.T) {
-		requestBody, _ := json.Marshal(map[string]string{
-			"name":     "Salmaa",
-			"email":    "salma@sirclo.com",
-			"phone":    "08123456789",
-			"password": "74nSA&ge%#fwJ",
-		})
-
-		request := httptest.NewRequest(http.MethodPost, "/", bytes.NewBuffer(requestBody))
-		request.Header.Set("Content-Type", "application/json")
-
-		response := httptest.NewRecorder()
-
-		e := echo.New()
-
-		context := e.NewContext(request, response)
-		context.SetPath("/users")
-
-		userController := New(mockRepoFail{})
-		userController.Create()(context)
-
-		actual := map[string]interface{}{}
-		body := response.Body.String()
-		json.Unmarshal([]byte(body), &actual)
-
-		expected := map[string]interface{}{
-			"code":    float64(http.StatusInternalServerError),
-			"message": "internal server error",
-		}
-
-		assert.Equal(t, expected, actual)
-	})
 }
 
 func TestLoginByEmailFailRepo(t *testing.T) {
@@ -1486,39 +1115,6 @@ func TestUpdateFailRepo(t *testing.T) {
 
 		userController := New(mockRepoFail{})
 		_midware.JWTMiddleWare()(userController.Update())(context)
-
-		actual := map[string]interface{}{}
-		body := response.Body.String()
-		json.Unmarshal([]byte(body), &actual)
-
-		expected := map[string]interface{}{
-			"code":    float64(http.StatusInternalServerError),
-			"message": "internal server error",
-		}
-
-		assert.Equal(t, expected, actual)
-	})
-}
-
-func TestDeleteFailRepo(t *testing.T) {
-	t.Run("TestDeleteFailRepo", func(t *testing.T) {
-		token, _, _ := _midware.CreateToken(1)
-
-		request := httptest.NewRequest(http.MethodDelete, "/", nil)
-		request.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", token))
-		request.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-
-		response := httptest.NewRecorder()
-
-		e := echo.New()
-
-		context := e.NewContext(request, response)
-		context.SetPath("/users/:id")
-		context.SetParamNames("id")
-		context.SetParamValues("1")
-
-		userController := New(mockRepoFail{})
-		_midware.JWTMiddleWare()(userController.Delete())(context)
 
 		actual := map[string]interface{}{}
 		body := response.Body.String()

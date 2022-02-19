@@ -27,12 +27,6 @@ type AppConfig struct {
 		Region      string `mapstructure:"aws_region"`
 		Bucket      string `mapstructure:"aws_bucket"`
 	}
-	Midtrans struct {
-		ServerKey string `mapstructure:"midtrans_serverkey"`
-	}
-	Recaptcha struct {
-		ServerKey string `mapstructure:"recaptcha_serverkey"`
-	}
 }
 
 var lock *sync.Mutex
@@ -70,8 +64,6 @@ func initConfig() *AppConfig {
 	defaultConfig.AWS.SecretKey = os.Getenv("AWS_SECRETKEY")
 	defaultConfig.AWS.Region = os.Getenv("AWS_REGION")
 	defaultConfig.AWS.Bucket = os.Getenv("AWS_BUCKET")
-	defaultConfig.Midtrans.ServerKey = os.Getenv("MIDTRANS_SERVERKEY")
-	defaultConfig.Recaptcha.ServerKey = os.Getenv("RECAPTCHA_SECRETKEY")
 
 	viper.SetConfigType("json")
 	viper.SetConfigName("config")
