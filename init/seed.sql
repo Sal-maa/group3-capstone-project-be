@@ -58,3 +58,13 @@ INSERT INTO capstone.users (id, division_id, role, name, email, phone, password,
 INSERT INTO capstone.users (id, division_id, role, name, email, phone, password, gender, avatar, address, created_at, updated_at, deleted_at) VALUES(48, 3, 'Employee', 'Susanto Suwarto', 'susanto.suwarto@sirclo.com', '0899555993', '$2a$04$ddvPDpdsuhFtlkGWz.FDfOzHx.WWcVNbjMCjWvgbzxVQxINX46/Zm', '', 'default_avatar.jpg', '', '2022-02-20 09:00:00.000', NULL, NULL);
 INSERT INTO capstone.users (id, division_id, role, name, email, phone, password, gender, avatar, address, created_at, updated_at, deleted_at) VALUES(49, 2, 'Employee', 'Jaladri Candarudrika', 'jaladri.candarudrika@sirclo.com', '0878555618', '$2a$04$Csl2xckl9ddKhD5/Zin2a.TPwxvtucK3ovbAXr0Nfy6aTx.eYsA7q', '', 'default_avatar.jpg', '', '2022-02-20 09:00:00.000', NULL, NULL);
 INSERT INTO capstone.users (id, division_id, role, name, email, phone, password, gender, avatar, address, created_at, updated_at, deleted_at) VALUES(50, 5, 'Employee', 'Esmining Mitarum', 'esmining.mitarum@sirclo.com', '0859555636', '$2a$04$mQhXDGqEWcVusMqC/mGOduBRGntN3cRHvNTxbPH4Lu2jHoojyJqYe', '', 'default_avatar.jpg', '', '2022-02-20 09:00:00.000', NULL, NULL);
+
+-- capstone.categories seeding
+
+INSERT INTO capstone.categories (id, name) VALUES(1, 'Computer');
+INSERT INTO capstone.categories (id, name) VALUES(2, 'Computer Accessories');
+INSERT INTO capstone.categories (id, name) VALUES(3, 'Networking');
+INSERT INTO capstone.categories (id, name) VALUES(4, 'UPS');
+INSERT INTO capstone.categories (id, name) VALUES(5, 'Printer and Scanner');
+INSERT INTO capstone.categories (id, name) VALUES(6, 'Electronics');
+INSERT INTO capstone.categories (id, name) VALUES(7, 'Others');

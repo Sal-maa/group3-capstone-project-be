@@ -50,7 +50,6 @@ CREATE TABLE `assets` (
   `name` longtext,
   `entry_date` date,
   `status` longtext,
-  `address` longtext,
   `category_id` bigint unsigned DEFAULT NULL,
   `description` longtext,
   `quantity` bigint,
