@@ -20,7 +20,7 @@ func New(db *sql.DB) *AssetRepository {
 func (ur AssetRepository) Create(assetData _entity.Asset) (createdAsset _entity.Asset, code int, err error) {
 	stmt, err := ur.db.Prepare(`
 	INSERT INTO assets (image, name, entry_date,status,address,description,quantity)
-	VALUES (?, ?, TIMESTAMP,?,?,?,?)
+	VALUES (?, ?, ?, ?, ?, ?, ?)
 `)
 
 	if err != nil {
