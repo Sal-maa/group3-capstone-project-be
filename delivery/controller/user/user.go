@@ -84,7 +84,7 @@ func (uc UserController) Login() echo.HandlerFunc {
 		}
 
 		// create token based on user id
-		token, expire, err := _midware.CreateToken(loginUser.Id)
+		token, expire, err := _midware.CreateToken(loginUser.Id, loginUser.Role)
 
 		// detect failure in creating token
 		if err != nil {
@@ -152,10 +152,13 @@ func (uc UserController) Update() echo.HandlerFunc {
 		}
 
 		// prepare input string
+		division := strings.Title(strings.ToLower(strings.TrimSpace(userData.Division)))
 		name := strings.Title(strings.ToLower(strings.TrimSpace(userData.Name)))
 		email := strings.TrimSpace(userData.Email)
 		phone := strings.TrimSpace(userData.Phone)
 		password := strings.TrimSpace(userData.Password)
+		gender := strings.Title(strings.ToLower(strings.TrimSpace(userData.Gender)))
+		address := strings.Title(strings.ToLower(strings.TrimSpace(userData.Address)))
 
 		// calling repository to get existing user data
 		updateUserData, code, err := uc.repository.GetById(id)
@@ -163,6 +166,16 @@ func (uc UserController) Update() echo.HandlerFunc {
 		// detect failure in repository
 		if err != nil {
 			return c.JSON(code, _common.NoDataResponse(code, err.Error()))
+		}
+
+		// detect change in user division
+		if division != "" {
+			// check malicious character in input
+			if err := _helper.CheckStringInput(division); err != nil {
+				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, division+": "+err.Error()))
+			}
+
+			updateUserData.Division = division
 		}
 
 		// detect change in user name
@@ -228,6 +241,26 @@ func (uc UserController) Update() echo.HandlerFunc {
 			updateUserData.Password = string(hashedPassword)
 		}
 
+		// detect change in user gender
+		if gender != "" {
+			// check malicious character in input
+			if err := _helper.CheckStringInput(gender); err != nil {
+				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, gender+": "+err.Error()))
+			}
+
+			updateUserData.Gender = gender
+		}
+
+		// detect change in user address
+		if address != "" {
+			// check malicious character in input
+			if err := _helper.CheckStringInput(address); err != nil {
+				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, address+": "+err.Error()))
+			}
+
+			updateUserData.Address = address
+		}
+
 		// detect avatar image upload
 		src, file, err := c.Request().FormFile("avatar")
 
@@ -256,9 +289,11 @@ func (uc UserController) Update() echo.HandlerFunc {
 
 			updateUserData.Avatar = avatar
 		case http.ErrMissingFile:
-			log.Println(err)
+			avatar := updateUserData.Avatar[strings.LastIndex(updateUserData.Avatar, "/")+1:]
+			updateUserData.Avatar = avatar
 		case http.ErrNotMultipart:
-			log.Println(err)
+			avatar := updateUserData.Avatar[strings.LastIndex(updateUserData.Avatar, "/")+1:]
+			updateUserData.Avatar = avatar
 		default:
 			log.Println(err)
 			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed to upload avatar"))

@@ -29,10 +29,11 @@ func JWTMiddleWare() echo.MiddlewareFunc {
 	})
 }
 
-func CreateToken(id int) (string, int64, error) {
+func CreateToken(id int, role string) (string, int64, error) {
 	claims := jwt.MapClaims{}
 	claims["authorized"] = true
 	claims["id"] = id
+	claims["role"] = role
 	expire := time.Now().Add(time.Hour * 1).Unix()
 	claims["exp"] = expire
 
@@ -50,4 +51,13 @@ func ExtractId(c echo.Context) int {
 	id := int(claims["id"].(float64))
 
 	return id
+}
+
+func ExtractRole(c echo.Context) string {
+	login := c.Get("user").(*jwt.Token)
+
+	claims := login.Claims.(jwt.MapClaims)
+	role := claims["role"].(string)
+
+	return role
 }
