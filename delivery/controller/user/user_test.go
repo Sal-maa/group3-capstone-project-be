@@ -20,6 +20,7 @@ type mockRepoSuccess struct{}
 func (m mockRepoSuccess) LoginByEmail(string) (_entity.User, int, error) {
 	return _entity.User{
 		Id:       1,
+		Role:     "Manager",
 		Name:     "Salmaa",
 		Password: "$2a$04$mE8tA7CWbuouRX5Sj5THgOW2SylADQ1H.wzjWcaL/H2KPUGbScXAm",
 		Avatar:   "https://capstone-group3.s3.ap-southeast-1.amazonaws.com/default_avatar.png",
@@ -29,6 +30,7 @@ func (m mockRepoSuccess) LoginByEmail(string) (_entity.User, int, error) {
 func (m mockRepoSuccess) LoginByPhone(string) (_entity.User, int, error) {
 	return _entity.User{
 		Id:       1,
+		Role:     "Manager",
 		Name:     "Salmaa",
 		Password: "$2a$04$mE8tA7CWbuouRX5Sj5THgOW2SylADQ1H.wzjWcaL/H2KPUGbScXAm",
 		Avatar:   "https://capstone-group3.s3.ap-southeast-1.amazonaws.com/default_avatar.png",
@@ -38,10 +40,14 @@ func (m mockRepoSuccess) LoginByPhone(string) (_entity.User, int, error) {
 func (m mockRepoSuccess) GetById(int) (_entity.User, int, error) {
 	return _entity.User{
 		Id:       1,
+		Division: "Human Capital",
+		Role:     "Manager",
 		Name:     "Salmaa",
 		Email:    "salma@sirclo.com",
 		Phone:    "08123456789",
 		Password: "$2a$04$mE8tA7CWbuouRX5Sj5THgOW2SylADQ1H.wzjWcaL/H2KPUGbScXAm",
+		Gender:   "Female",
+		Address:  "Jl. Sudirman No. 1, Tebet, Jakarta Selatan",
 		Avatar:   "https://capstone-group3.s3.ap-southeast-1.amazonaws.com/default_avatar.png",
 	}, http.StatusOK, nil
 }
@@ -49,22 +55,30 @@ func (m mockRepoSuccess) GetById(int) (_entity.User, int, error) {
 func (m mockRepoSuccess) GetAll() ([]_entity.UserSimplified, int, error) {
 	return []_entity.UserSimplified{
 		{
-			Id:     1,
-			Name:   "Salmaa",
-			Email:  "salma@sirclo.com",
-			Phone:  "08123456789",
-			Avatar: "https://capstone-group3.s3.ap-southeast-1.amazonaws.com/default_avatar.png",
+			Id:       1,
+			Division: "Human Capital",
+			Role:     "Manager",
+			Name:     "Salmaa",
+			Email:    "salma@sirclo.com",
+			Phone:    "08123456789",
+			Gender:   "Female",
+			Address:  "Jl. Sudirman No. 1, Tebet, Jakarta Selatan",
+			Avatar:   "https://capstone-group3.s3.ap-southeast-1.amazonaws.com/default_avatar.png",
 		},
 	}, http.StatusOK, nil
 }
 
 func (m mockRepoSuccess) Update(_entity.User) (_entity.UserSimplified, int, error) {
 	return _entity.UserSimplified{
-		Id:     1,
-		Name:   "Salmaa",
-		Email:  "salma@sirclo.com",
-		Phone:  "08123456789",
-		Avatar: "https://capstone-group3.s3.ap-southeast-1.amazonaws.com/default_avatar.png",
+		Id:       1,
+		Division: "Human Capital",
+		Role:     "Manager",
+		Name:     "Salmaa",
+		Email:    "salma@sirclo.com",
+		Phone:    "08123456789",
+		Gender:   "Female",
+		Address:  "Jl. Sudirman No. 1, Tebet, Jakarta Selatan",
+		Avatar:   "https://capstone-group3.s3.ap-southeast-1.amazonaws.com/default_avatar.png",
 	}, http.StatusOK, nil
 }
 
@@ -95,14 +109,16 @@ func TestLoginByEmailSuccess(t *testing.T) {
 		json.Unmarshal([]byte(body), &actual)
 
 		data, _ := actual["data"].(map[string]interface{})
-		token := data["token"]
+		token, expire := data["token"], data["expire"]
 
 		expected := map[string]interface{}{
 			"code":    float64(http.StatusOK),
 			"message": "success login",
 			"data": map[string]interface{}{
 				"id":     float64(1),
+				"role":   "Manager",
 				"name":   "Salmaa",
+				"expire": expire,
 				"token":  token,
 				"avatar": "https://capstone-group3.s3.ap-southeast-1.amazonaws.com/default_avatar.png",
 			},
@@ -137,14 +153,16 @@ func TestLoginByPhoneSuccess(t *testing.T) {
 		json.Unmarshal([]byte(body), &actual)
 
 		data, _ := actual["data"].(map[string]interface{})
-		token := data["token"]
+		token, expire := data["token"], data["expire"]
 
 		expected := map[string]interface{}{
 			"code":    float64(http.StatusOK),
 			"message": "success login",
 			"data": map[string]interface{}{
 				"id":     float64(1),
+				"role":   "Manager",
 				"name":   "Salmaa",
+				"expire": expire,
 				"token":  token,
 				"avatar": "https://capstone-group3.s3.ap-southeast-1.amazonaws.com/default_avatar.png",
 			},
@@ -178,11 +196,15 @@ func TestGetByIdSuccess(t *testing.T) {
 			"code":    float64(http.StatusOK),
 			"message": "success get user by id",
 			"data": map[string]interface{}{
-				"id":     float64(1),
-				"name":   "Salmaa",
-				"email":  "salma@sirclo.com",
-				"phone":  "08123456789",
-				"avatar": "https://capstone-group3.s3.ap-southeast-1.amazonaws.com/default_avatar.png",
+				"id":       float64(1),
+				"name":     "Salmaa",
+				"division": "Human Capital",
+				"role":     "Manager",
+				"email":    "salma@sirclo.com",
+				"phone":    "08123456789",
+				"gender":   "Female",
+				"address":  "Jl. Sudirman No. 1, Tebet, Jakarta Selatan",
+				"avatar":   "https://capstone-group3.s3.ap-southeast-1.amazonaws.com/default_avatar.png",
 			},
 		}
 
@@ -213,11 +235,15 @@ func TestGetAllSuccess(t *testing.T) {
 			"message": "success get all users",
 			"data": []interface{}{
 				map[string]interface{}{
-					"id":     float64(1),
-					"name":   "Salmaa",
-					"email":  "salma@sirclo.com",
-					"phone":  "08123456789",
-					"avatar": "https://capstone-group3.s3.ap-southeast-1.amazonaws.com/default_avatar.png",
+					"id":       float64(1),
+					"name":     "Salmaa",
+					"division": "Human Capital",
+					"role":     "Manager",
+					"email":    "salma@sirclo.com",
+					"phone":    "08123456789",
+					"gender":   "Female",
+					"address":  "Jl. Sudirman No. 1, Tebet, Jakarta Selatan",
+					"avatar":   "https://capstone-group3.s3.ap-southeast-1.amazonaws.com/default_avatar.png",
 				},
 			},
 		}
@@ -226,9 +252,9 @@ func TestGetAllSuccess(t *testing.T) {
 	})
 }
 
-func TestUpdateByAdminSuccess(t *testing.T) {
-	t.Run("TestUpdateByAdminSuccess", func(t *testing.T) {
-		token, _, _ := _midware.CreateToken(1, "admin")
+func TestUpdateSuccess(t *testing.T) {
+	t.Run("TestUpdateSuccess", func(t *testing.T) {
+		token, _, _ := _midware.CreateToken(1, "Manager")
 
 		requestBody, _ := json.Marshal(map[string]string{
 			"name":     "Salmaa",
@@ -260,13 +286,17 @@ func TestUpdateByAdminSuccess(t *testing.T) {
 
 		expected := map[string]interface{}{
 			"code":    float64(http.StatusOK),
-			"message": "success UpdateByAdmin user",
+			"message": "success update user",
 			"data": map[string]interface{}{
-				"id":     float64(1),
-				"name":   "Salmaa",
-				"email":  "salma@sirclo.com",
-				"phone":  "08123456789",
-				"avatar": "https://capstone-group3.s3.ap-southeast-1.amazonaws.com/default_avatar.png",
+				"id":       float64(1),
+				"name":     "Salmaa",
+				"division": "Human Capital",
+				"role":     "Manager",
+				"email":    "salma@sirclo.com",
+				"phone":    "08123456789",
+				"gender":   "Female",
+				"address":  "Jl. Sudirman No. 1, Tebet, Jakarta Selatan",
+				"avatar":   "https://capstone-group3.s3.ap-southeast-1.amazonaws.com/default_avatar.png",
 			},
 		}
 
@@ -342,8 +372,8 @@ func TestLoginByPhoneFailBinding(t *testing.T) {
 	})
 }
 
-func TestUpdateByAdminFailBinding(t *testing.T) {
-	t.Run("TestUpdateByAdminFailBinding", func(t *testing.T) {
+func TestUpdateFailBinding(t *testing.T) {
+	t.Run("TestUpdateFailBinding", func(t *testing.T) {
 		token, _, _ := _midware.CreateToken(1, "admin")
 
 		requestBody, _ := json.Marshal(map[string]interface{}{
@@ -519,8 +549,8 @@ func TestLoginByPhoneFailMaliciousCharacter(t *testing.T) {
 	})
 }
 
-func TestUpdateByAdminFailMaliciousCharacter1(t *testing.T) {
-	t.Run("TestUpdateByAdminFailMaliciousCharacter1", func(t *testing.T) {
+func TestUpdateFailMaliciousCharacter1(t *testing.T) {
+	t.Run("TestUpdateFailMaliciousCharacter1", func(t *testing.T) {
 		token, _, _ := _midware.CreateToken(1, "admin")
 
 		requestBody, _ := json.Marshal(map[string]string{
@@ -560,8 +590,8 @@ func TestUpdateByAdminFailMaliciousCharacter1(t *testing.T) {
 	})
 }
 
-func TestUpdateByAdminFailMaliciousCharacter2(t *testing.T) {
-	t.Run("TestUpdateByAdminFailMaliciousCharacter2", func(t *testing.T) {
+func TestUpdateFailMaliciousCharacter2(t *testing.T) {
+	t.Run("TestUpdateFailMaliciousCharacter2", func(t *testing.T) {
 		token, _, _ := _midware.CreateToken(1, "admin")
 
 		requestBody, _ := json.Marshal(map[string]string{
@@ -601,8 +631,8 @@ func TestUpdateByAdminFailMaliciousCharacter2(t *testing.T) {
 	})
 }
 
-func TestUpdateByAdminFailMaliciousCharacter3(t *testing.T) {
-	t.Run("TestUpdateByAdminFailMaliciousCharacter3", func(t *testing.T) {
+func TestUpdateFailMaliciousCharacter3(t *testing.T) {
+	t.Run("TestUpdateFailMaliciousCharacter3", func(t *testing.T) {
 		token, _, _ := _midware.CreateToken(1, "admin")
 
 		requestBody, _ := json.Marshal(map[string]string{
@@ -642,8 +672,8 @@ func TestUpdateByAdminFailMaliciousCharacter3(t *testing.T) {
 	})
 }
 
-func TestUpdateByAdminFailMaliciousCharacter4(t *testing.T) {
-	t.Run("TestUpdateByAdminFailMaliciousCharacter4", func(t *testing.T) {
+func TestUpdateFailMaliciousCharacter4(t *testing.T) {
+	t.Run("TestUpdateFailMaliciousCharacter4", func(t *testing.T) {
 		token, _, _ := _midware.CreateToken(1, "admin")
 
 		requestBody, _ := json.Marshal(map[string]string{
@@ -651,6 +681,126 @@ func TestUpdateByAdminFailMaliciousCharacter4(t *testing.T) {
 			"email":    "salma@sirclo.com",
 			"phone":    "08123456789",
 			"password": "; --",
+		})
+
+		request := httptest.NewRequest(http.MethodPut, "/", bytes.NewBuffer(requestBody))
+		request.Header.Set("Content-Type", "application/json")
+		request.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", token))
+		request.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+
+		response := httptest.NewRecorder()
+
+		e := echo.New()
+
+		context := e.NewContext(request, response)
+		context.SetPath("/users/:id")
+		context.SetParamNames("id")
+		context.SetParamValues("1")
+
+		userController := New(mockRepoSuccess{})
+		_midware.JWTMiddleWare()(userController.Update())(context)
+
+		actual := map[string]interface{}{}
+		body := response.Body.String()
+		json.Unmarshal([]byte(body), &actual)
+
+		expected := map[string]interface{}{
+			"code":    float64(http.StatusBadRequest),
+			"message": "; --: input cannot contain forbidden character",
+		}
+
+		assert.Equal(t, expected, actual)
+	})
+}
+
+func TestUpdateFailMaliciousCharacter5(t *testing.T) {
+	t.Run("TestUpdateFailMaliciousCharacter5", func(t *testing.T) {
+		token, _, _ := _midware.CreateToken(1, "admin")
+
+		requestBody, _ := json.Marshal(map[string]string{
+			"division": "; --",
+			"gender":   "Female",
+			"address":  "Jl. Sudirman No. 1, Tebet, Jakarta Selatan",
+		})
+
+		request := httptest.NewRequest(http.MethodPut, "/", bytes.NewBuffer(requestBody))
+		request.Header.Set("Content-Type", "application/json")
+		request.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", token))
+		request.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+
+		response := httptest.NewRecorder()
+
+		e := echo.New()
+
+		context := e.NewContext(request, response)
+		context.SetPath("/users/:id")
+		context.SetParamNames("id")
+		context.SetParamValues("1")
+
+		userController := New(mockRepoSuccess{})
+		_midware.JWTMiddleWare()(userController.Update())(context)
+
+		actual := map[string]interface{}{}
+		body := response.Body.String()
+		json.Unmarshal([]byte(body), &actual)
+
+		expected := map[string]interface{}{
+			"code":    float64(http.StatusBadRequest),
+			"message": "; --: input cannot contain forbidden character",
+		}
+
+		assert.Equal(t, expected, actual)
+	})
+}
+
+func TestUpdateFailMaliciousCharacter6(t *testing.T) {
+	t.Run("TestUpdateFailMaliciousCharacter6", func(t *testing.T) {
+		token, _, _ := _midware.CreateToken(1, "admin")
+
+		requestBody, _ := json.Marshal(map[string]string{
+			"division": "Finance",
+			"gender":   "; --",
+			"address":  "Jl. Sudirman No. 1, Tebet, Jakarta Selatan",
+		})
+
+		request := httptest.NewRequest(http.MethodPut, "/", bytes.NewBuffer(requestBody))
+		request.Header.Set("Content-Type", "application/json")
+		request.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", token))
+		request.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+
+		response := httptest.NewRecorder()
+
+		e := echo.New()
+
+		context := e.NewContext(request, response)
+		context.SetPath("/users/:id")
+		context.SetParamNames("id")
+		context.SetParamValues("1")
+
+		userController := New(mockRepoSuccess{})
+		_midware.JWTMiddleWare()(userController.Update())(context)
+
+		actual := map[string]interface{}{}
+		body := response.Body.String()
+		json.Unmarshal([]byte(body), &actual)
+
+		expected := map[string]interface{}{
+			"code":    float64(http.StatusBadRequest),
+			"message": "; --: input cannot contain forbidden character",
+		}
+
+		assert.Equal(t, expected, actual)
+	})
+}
+
+func TestUpdateFailMaliciousCharacter7(t *testing.T) {
+	t.Run("TestUpdateFailMaliciousCharacter7", func(t *testing.T) {
+		token, _, _ := _midware.CreateToken(1, "admin")
+
+		requestBody, _ := json.Marshal(map[string]string{
+			"division": "Finance",
+			"gender":   "Female",
+			"address":  "; --",
 		})
 
 		request := httptest.NewRequest(http.MethodPut, "/", bytes.NewBuffer(requestBody))
@@ -716,8 +866,8 @@ func TestLoginByEmailFailInvalidEmail(t *testing.T) {
 	})
 }
 
-func TestUpdateByAdminFailInvalidEmail(t *testing.T) {
-	t.Run("TestUpdateByAdminFailInvalidEmail", func(t *testing.T) {
+func TestUpdateFailInvalidEmail(t *testing.T) {
+	t.Run("TestUpdateFailInvalidEmail", func(t *testing.T) {
 		token, _, _ := _midware.CreateToken(1, "admin")
 
 		requestBody, _ := json.Marshal(map[string]string{
@@ -790,8 +940,8 @@ func TestLoginByPhoneFailInvalidPhone(t *testing.T) {
 	})
 }
 
-func TestUpdateByAdminFailInvalidPhone(t *testing.T) {
-	t.Run("TestUpdateByAdminFailInvalidPhone", func(t *testing.T) {
+func TestUpdateFailInvalidPhone(t *testing.T) {
+	t.Run("TestUpdateFailInvalidPhone", func(t *testing.T) {
 		token, _, _ := _midware.CreateToken(1, "admin")
 
 		requestBody, _ := json.Marshal(map[string]string{
@@ -831,8 +981,8 @@ func TestUpdateByAdminFailInvalidPhone(t *testing.T) {
 	})
 }
 
-func TestUpdateByAdminFailInvalidPassword(t *testing.T) {
-	t.Run("TestUpdateByAdminFailInvalidPassword", func(t *testing.T) {
+func TestUpdateFailInvalidPassword(t *testing.T) {
+	t.Run("TestUpdateFailInvalidPassword", func(t *testing.T) {
 		token, _, _ := _midware.CreateToken(1, "admin")
 
 		requestBody, _ := json.Marshal(map[string]string{
@@ -903,8 +1053,8 @@ func TestGetByIdFailInvalidParameter(t *testing.T) {
 	})
 }
 
-func TestUpdateByAdminFailInvalidParameter(t *testing.T) {
-	t.Run("TestUpdateByAdminFailInvalidParameter", func(t *testing.T) {
+func TestUpdateFailInvalidParameter(t *testing.T) {
+	t.Run("TestUpdateFailInvalidParameter", func(t *testing.T) {
 		token, _, _ := _midware.CreateToken(1, "admin")
 
 		requestBody, _ := json.Marshal(map[string]string{
@@ -1088,8 +1238,8 @@ func TestGetAllFailRepo(t *testing.T) {
 	})
 }
 
-func TestUpdateByAdminFailRepo(t *testing.T) {
-	t.Run("TestUpdateByAdminFailRepo", func(t *testing.T) {
+func TestUpdateFailRepo(t *testing.T) {
+	t.Run("TestUpdateFailRepo", func(t *testing.T) {
 		token, _, _ := _midware.CreateToken(1, "admin")
 
 		requestBody, _ := json.Marshal(map[string]string{
