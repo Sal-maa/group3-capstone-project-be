@@ -1,6 +1,7 @@
 package router
 
 import (
+	_asset "capstone/be/delivery/controller/asset"
 	_history "capstone/be/delivery/controller/history"
 	_request "capstone/be/delivery/controller/request"
 	_user "capstone/be/delivery/controller/user"
@@ -15,6 +16,7 @@ const swagger string = "<a href=\"https://app.swaggerhub.com/apis-docs/bagusbpg6
 func RegisterPath(
 	e *echo.Echo,
 	userController *_user.UserController,
+	assetController *_asset.AssetController,
 	historyController *_history.HistoryController,
 	requestController *_request.RequestController,
 ) {
@@ -30,6 +32,13 @@ func RegisterPath(
 	e.GET("/users", userController.GetAll(), _midware.JWTMiddleWare())
 	e.GET("/users/:id", userController.GetById(), _midware.JWTMiddleWare())
 	e.PUT("/users/:id", userController.Update(), _midware.JWTMiddleWare())
+
+	// Asset
+	e.POST("/assets", assetController.Create())
+
+	e.GET("/assets", assetController.GetAll())
+	e.GET("/assets/:id", assetController.GetById())
+	e.PUT("/assets/:id", assetController.Update())
 
 	// History
 	e.GET("/histories/users/:user_id", historyController.GetAllUsageHistoryOfUser(), _midware.JWTMiddleWare())
