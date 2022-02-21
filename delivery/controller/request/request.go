@@ -24,6 +24,12 @@ func (rc RequestController) Borrow() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		idLogin := middleware.ExtractId(c)
 		newReq := _entity.CreateBorrow{}
+
+		// handle maintenance status
+		asset, err := rc.repository.CheckMaintenance(newReq.AssetId)
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "asset is under maintenace"))
+		}
 		// handle failure in binding
 		if err := c.Bind(&newReq); err != nil {
 			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed to bind data"))
@@ -31,7 +37,7 @@ func (rc RequestController) Borrow() echo.HandlerFunc {
 		reqData := _entity.Borrow{}
 		// prepare input string
 		reqData.User.Id = idLogin
-		reqData.Asset.Id = newReq.AssetId
+		reqData.Asset.Id = asset.Id
 		reqData.Activity = newReq.Activity
 		reqData.RequestTime = newReq.RequestTime
 		reqData.ReturnTime = newReq.ReturnTime
@@ -40,7 +46,7 @@ func (rc RequestController) Borrow() echo.HandlerFunc {
 		reqData.CreatedAt = time.Now()
 		reqData.UpdatedAt = time.Now()
 
-		_, err := rc.repository.Borrow(reqData)
+		_, err = rc.repository.Borrow(reqData)
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed create request"))
 		}
