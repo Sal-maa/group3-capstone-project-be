@@ -5,13 +5,6 @@ import (
 	"net/http"
 )
 
-func NoDataResponse(code int, message string) map[string]interface{} {
-	return map[string]interface{}{
-		"code":    code,
-		"message": message,
-	}
-}
-
 func LoginResponse(user _entity.User, token string, expire int64) map[string]interface{} {
 	return map[string]interface{}{
 		"code":    http.StatusOK,
