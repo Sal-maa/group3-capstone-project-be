@@ -336,7 +336,7 @@ func (ur *UserRepository) checkEmailExistence(email string) (id int64, err error
 	`)
 
 	if err != nil {
-		return 0, err
+		return id, err
 	}
 
 	defer stmt.Close()
@@ -344,14 +344,14 @@ func (ur *UserRepository) checkEmailExistence(email string) (id int64, err error
 	res, err := stmt.Query(email)
 
 	if err != nil {
-		return 0, err
+		return id, err
 	}
 
 	defer res.Close()
 
 	if res.Next() {
 		if err = res.Scan(&id); err != nil {
-			return 0, err
+			return id, err
 		}
 	}
 
@@ -366,7 +366,7 @@ func (ur *UserRepository) checkPhoneExistence(phone string) (id int64, err error
 	`)
 
 	if err != nil {
-		return 0, err
+		return id, err
 	}
 
 	defer stmt.Close()
@@ -374,14 +374,14 @@ func (ur *UserRepository) checkPhoneExistence(phone string) (id int64, err error
 	res, err := stmt.Query(phone)
 
 	if err != nil {
-		return 0, err
+		return id, err
 	}
 
 	defer res.Close()
 
 	if res.Next() {
 		if err = res.Scan(&id); err != nil {
-			return 0, err
+			return id, err
 		}
 	}
 
@@ -396,7 +396,7 @@ func (ur *UserRepository) getDivisionId(division string) (id int64, err error) {
 	`)
 
 	if err != nil {
-		return 0, err
+		return id, err
 	}
 
 	defer stmt.Close()
@@ -404,14 +404,14 @@ func (ur *UserRepository) getDivisionId(division string) (id int64, err error) {
 	res, err := stmt.Query(division)
 
 	if err != nil {
-		return 0, err
+		return id, err
 	}
 
 	defer res.Close()
 
 	if res.Next() {
 		if err = res.Scan(&id); err != nil {
-			return 0, err
+			return id, err
 		}
 	}
 

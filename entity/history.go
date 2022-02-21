@@ -1,14 +1,35 @@
 package entity
 
+import "time"
+
 type UserUsageHistory struct {
-	Id       int    `json:"id" form:"id"`
-	Division string `json:"division" form:"division"`
-	Role     string `json:"role" form:"role"`
-	Name     string `json:"name" form:"name"`
-	Email    string `json:"email" form:"email"`
-	Phone    string `json:"phone" form:"phone"`
-	Password string `json:"password" form:"password"`
-	Gender   string `json:"gender" form:"gender"`
-	Address  string `json:"address" form:"address"`
-	Avatar   string `json:"avatar" form:"avatar"`
+	Id          int       `json:"id" form:"id"`
+	Category    string    `json:"category" form:"category"`
+	AssetName   string    `json:"asset_name" form:"asset_name"`
+	AssetImage  string    `json:"asset_image" form:"asset_image"`
+	StockLeft   int       `json:"stock_left" form:"stock_left"`
+	UserName    string    `json:"user_name" form:"user_name"`
+	RequestDate time.Time `json:"request_date" form:"request_date"`
+	ReturnDate  time.Time `json:"return_date" form:"return_date"`
+	Status      string    `json:"status" form:"status"`
+	Description string    `json:"note" form:"note"`
+}
+
+type UserUsageHistorySimplified struct {
+	Id           int       `json:"id" form:"id"`
+	Category     string    `json:"category" form:"category"`
+	AssetName    string    `json:"asset_name" form:"asset_name"`
+	AssetImage   string    `json:"asset_image" form:"asset_image"`
+	RequestDate  time.Time `json:"request_date" form:"request_date"`
+	ActivityType string    `json:"activity_type" form:"activity_type"`
+}
+
+type AssetUsageHistory struct {
+	Id          int       `json:"id" form:"id"`
+	Category    string    `json:"category" form:"category"`
+	AssetName   string    `json:"asset_name" form:"asset_name"`
+	AssetImage  string    `json:"asset_image" form:"asset_image"`
+	UserName    string    `json:"user_name" form:"user_name"`
+	RequestDate time.Time `json:"request_date" form:"request_date"`
+	Status      string    `json:"status" form:"status"`
 }
