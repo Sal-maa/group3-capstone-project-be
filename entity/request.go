@@ -27,7 +27,7 @@ type CreateBorrow struct {
 type Procure struct {
 	Id          int `json:"id" form:"id"`
 	User        User
-	CategoryId  int       `json:"category_id" form:"category_id"`
+	Category    int       `json:"category" form:"category"`
 	Image       string    `json:"image" form:"image"`
 	Activity    string    `json:"activity" form:"activity"`
 	RequestTime time.Time `json:"request_time" form:"request_time"`
@@ -39,7 +39,7 @@ type Procure struct {
 }
 
 type CreateProcure struct {
-	CategoryId  int       `json:"category_id" form:"category_id"`
+	Category    int       `json:"category" form:"category"`
 	Image       string    `json:"image" form:"image"`
 	Activity    string    `json:"activity" form:"activity"`
 	RequestTime time.Time `json:"request_time" form:"request_time"`
