@@ -124,7 +124,6 @@ func (uc AssetController) Create() echo.HandlerFunc {
 			Name:  assetData.Name,
 			// Entry_date:  assetData.Entry_date,
 			Status:      assetData.Status,
-			Address:     assetData.Address,
 			Description: assetData.Description,
 			Quantity:    assetData.Quantity,
 		}

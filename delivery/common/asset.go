@@ -1,6 +1,9 @@
 package common
 
-import "net/http"
+import (
+	_entity "capstone/be/entity"
+	"net/http"
+)
 
 func CreateAssetResponse(product _entity.Asset) map[string]interface{} {
 	return map[string]interface{}{
