@@ -32,8 +32,8 @@ func RegisterPath(
 	// Asset
 	e.POST("/assets", assetController.Create())
 
-	// e.GET("/asset", assetController.GetAll())
-	// e.GET("/asset/:id", assetController.GetById())
-	// e.PUT("/asset/:id", assetController.Update(), _midware.JWTMiddleWare())
+	e.GET("/assets", assetController.GetAll())
+	e.GET("/assets/:id", assetController.GetById())
+	e.PUT("/assets/:id", assetController.Update())
 
 }
