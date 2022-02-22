@@ -102,7 +102,24 @@ func (rr *RequestRepository) Procure(reqData _entity.Procure) (_entity.Procure, 
 
 func (rr *RequestRepository) UpdateBorrow(reqData _entity.Borrow) (_entity.Borrow, error) {
 	statement, err := rr.db.Prepare(`
-	UPDATE assets
+	UPDATE borrowOrreturn_requests
+		SET status = ?, updated_at = CURRENT_TIMESTAMP
+		WHERE deleted_at IS NULL AND id = ?`)
+	if err != nil {
+		log.Println(err)
+		return reqData, err
+	}
+
+	defer statement.Close()
+
+	_, err = statement.Exec(reqData.Status, reqData.Id)
+
+	return reqData, err
+}
+
+func (rr *RequestRepository) UpdateProcure(reqData _entity.Procure) (_entity.Procure, error) {
+	statement, err := rr.db.Prepare(`
+	UPDATE procurement_requests
 		SET status = ?, updated_at = CURRENT_TIMESTAMP
 		WHERE deleted_at IS NULL AND id = ?`)
 	if err != nil {

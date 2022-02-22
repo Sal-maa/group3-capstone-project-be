@@ -10,4 +10,5 @@ type Request interface {
 	GetCategoryId(newReq _entity.CreateProcure) (id int, err error)
 	Procure(reqData _entity.Procure) (_entity.Procure, error)
 	UpdateBorrow(reqData _entity.Borrow) (_entity.Borrow, error)
+	UpdateProcure(reqData _entity.Procure) (_entity.Procure, error)
 }
