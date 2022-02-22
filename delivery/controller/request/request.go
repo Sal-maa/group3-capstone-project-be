@@ -35,11 +35,21 @@ func (rc RequestController) Borrow() echo.HandlerFunc {
 		reqData := _entity.Borrow{}
 		// prepare input string
 		reqData.User.Id = idLogin
-		reqData.Asset.Id = newReq.AssetId
+
+		// handle get asset id
+		assetId, err := rc.repository.GetAssetId(newReq)
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed to check asset id"))
+		}
+		if assetId == 0 {
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "asset not found"))
+		}
+		reqData.Asset.Id = assetId
+
 		// handle maintenance status
 		asset, err := rc.repository.CheckMaintenance(reqData)
 		if err != nil {
-			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed to check asset asset"))
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed to check asset status"))
 		}
 		if asset.Status == "Asset Under Maintenance" {
 			return c.JSON(http.StatusForbidden, _common.NoDataResponse(http.StatusForbidden, "Sorry, asset is under maintenace"))
@@ -47,7 +57,7 @@ func (rc RequestController) Borrow() echo.HandlerFunc {
 		reqData.Activity = newReq.Activity
 		reqData.RequestTime = newReq.RequestTime
 		reqData.ReturnTime = newReq.ReturnTime
-		reqData.Status = "Waiting Approval from Admin"
+		reqData.Status = "Waiting Approval"
 		reqData.Description = newReq.Description
 		reqData.UpdatedAt = time.Now()
 
@@ -128,15 +138,36 @@ func (rc RequestController) Procure() echo.HandlerFunc {
 
 func (rc RequestController) UpdateBorrow() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		id, err := strconv.Atoi(c.Param("id"))
-
+		idReq, err := strconv.Atoi(c.Param("id"))
 		// detect invalid parameter
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "invalid request id"))
 		}
+
 		role := middleware.ExtractRole(c)
 		if role != "Manager" {
 			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "you don't have permission"))
+		}
+
+		// check manager division and employee division
+		idLogin := middleware.ExtractId(c)
+		divLogin, err := rc.repository.GetUserDivision(idLogin)
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed get division id user"))
+		}
+
+		request, err := rc.repository.GetBorrowById(idReq)
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed get request by id"))
+		}
+
+		divEmpl, err := rc.repository.GetUserDivision(request.Id)
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed get division id user"))
+		}
+
+		if divEmpl != divLogin {
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "You're not in the same division"))
 		}
 
 		newReq := _entity.UpdateBorrow{}
@@ -145,7 +176,7 @@ func (rc RequestController) UpdateBorrow() echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed to bind data"))
 		}
 		reqData := _entity.Borrow{}
-		reqData.Id = id
+		reqData.Id = idReq
 		reqData.Status = newReq.Status
 
 		_, err = rc.repository.UpdateBorrow(reqData)
@@ -159,7 +190,7 @@ func (rc RequestController) UpdateBorrow() echo.HandlerFunc {
 
 func (rc RequestController) UpdateProcure() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		id, err := strconv.Atoi(c.Param("id"))
+		idReq, err := strconv.Atoi(c.Param("id"))
 
 		// detect invalid parameter
 		if err != nil {
@@ -170,13 +201,34 @@ func (rc RequestController) UpdateProcure() echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "you don't have permission"))
 		}
 
+		// check manager division and employee division
+		idLogin := middleware.ExtractId(c)
+		divLogin, err := rc.repository.GetUserDivision(idLogin)
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed get division id user"))
+		}
+
+		request, err := rc.repository.GetBorrowById(idReq)
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed get request by id"))
+		}
+
+		divEmpl, err := rc.repository.GetUserDivision(request.Id)
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed get division id user"))
+		}
+
+		if divEmpl != divLogin {
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "You're not in the same division"))
+		}
+
 		newReq := _entity.UpdateProcure{}
 		// handle failure in binding
 		if err := c.Bind(&newReq); err != nil {
 			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed to bind data"))
 		}
 		reqData := _entity.Procure{}
-		reqData.Id = id
+		reqData.Id = idReq
 		reqData.Status = newReq.Status
 
 		_, err = rc.repository.UpdateProcure(reqData)
