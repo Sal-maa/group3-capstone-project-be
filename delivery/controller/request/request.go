@@ -156,3 +156,34 @@ func (rc RequestController) UpdateBorrow() echo.HandlerFunc {
 		return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "Success create request"))
 	}
 }
+
+func (rc RequestController) UpdateProcure() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		id, err := strconv.Atoi(c.Param("id"))
+
+		// detect invalid parameter
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "invalid request id"))
+		}
+		role := middleware.ExtractRole(c)
+		if role != "Manager" {
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "you don't have permission"))
+		}
+
+		newReq := _entity.UpdateProcure{}
+		// handle failure in binding
+		if err := c.Bind(&newReq); err != nil {
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed to bind data"))
+		}
+		reqData := _entity.Procure{}
+		reqData.Id = id
+		reqData.Status = newReq.Status
+
+		_, err = rc.repository.UpdateProcure(reqData)
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed create request"))
+		}
+
+		return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "Success create request"))
+	}
+}
