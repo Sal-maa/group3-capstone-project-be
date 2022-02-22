@@ -20,7 +20,6 @@ import (
 
 type AssetController struct {
 	repository _assetRepo.Asset
-	// userRepository _userRepo.User
 }
 
 func New(asset _assetRepo.Asset) *AssetController {
@@ -94,11 +93,9 @@ func (uc AssetController) Create() echo.HandlerFunc {
 		}
 		// prepare input to repository
 		createAssetData := _entity.Asset{
-			Image: assetData.Image,
-			Name:  assetData.Name,
-			// Entry_date:  assetData.Entry_date,
+			Image:       assetData.Image,
+			Name:        assetData.Name,
 			Status:      assetData.Status,
-			Address:     assetData.Address,
 			Description: assetData.Description,
 			Quantity:    assetData.Quantity,
 		}
@@ -131,7 +128,6 @@ func (uc AssetController) Update() echo.HandlerFunc {
 		name := strings.Title(strings.ToLower(strings.TrimSpace(assetData.Name)))
 		status := strings.Title(strings.ToLower(strings.TrimSpace(assetData.Status)))
 		description := strings.Title(strings.ToLower(strings.TrimSpace(assetData.Description)))
-
 		quantity := assetData.Quantity
 		// calling repository to get existing user data
 		updateAssetData, code, err := uc.repository.GetById(id)

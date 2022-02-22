@@ -61,19 +61,17 @@ func UpdateUserResponse(user _entity.UserSimplified) map[string]interface{} {
 	}
 }
 
-func CreateAssetResponse(product _entity.Asset) map[string]interface{} {
+func CreateAssetResponse(asset _entity.Asset) map[string]interface{} {
 	return map[string]interface{}{
 		"code":    http.StatusOK,
 		"message": "success create asset",
 		"data": map[string]interface{}{
-			"id":    product.Id,
-			"image": product.Image,
-			"name":  product.Name,
-			// "entry_date":  product.Entry_date,
-			"status": product.Status,
-			// "address":     product.Address,
-			"description": product.Description,
-			"quantity":    product.Quantity,
+			"id":          asset.Id,
+			"image":       asset.Image,
+			"name":        asset.Name,
+			"status":      asset.Status,
+			"description": asset.Description,
+			"quantity":    asset.Quantity,
 		},
 	}
 }
@@ -85,7 +83,7 @@ func GetAllCategoryResponse(categories []_entity.Category) map[string]interface{
 	}
 }
 
-func GetAllAssetsResponse(assets []_entity.Asset) map[string]interface{} {
+func GetAllAssetsResponse(assets []_entity.AssetSimplified) map[string]interface{} {
 	return map[string]interface{}{
 		"code":    http.StatusOK,
 		"message": "success get all assets",
@@ -108,19 +106,17 @@ func GetAssetByIdResponse(asset _entity.Asset) map[string]interface{} {
 	}
 }
 
-func UpdateAssetResponse(product _entity.Asset) map[string]interface{} {
+func UpdateAssetResponse(asset _entity.Asset) map[string]interface{} {
 	return map[string]interface{}{
 		"code":    http.StatusOK,
 		"message": "success edit asset",
 		"data": map[string]interface{}{
-			"id":    product.Id,
-			"image": product.Image,
-			"name":  product.Name,
-			// "entry_date":  product.Entry_date,
-			"status": product.Status,
-			// "address":     product.Address,
-			"description": product.Description,
-			"quantity":    product.Quantity,
+			"id":          asset.Id,
+			"image":       asset.Image,
+			"name":        asset.Name,
+			"status":      asset.Status,
+			"description": asset.Description,
+			"quantity":    asset.Quantity,
 		},
 	}
 }

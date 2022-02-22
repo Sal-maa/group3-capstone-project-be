@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 )
 
 type AssetRepository struct {
@@ -16,12 +17,10 @@ type AssetRepository struct {
 func New(db *sql.DB) *AssetRepository {
 	return &AssetRepository{db: db}
 }
-func (ur *AssetRepository) GetAll() (assets []_entity.Asset, code int, err error) {
+func (ur *AssetRepository) GetAll() (assets []_entity.AssetSimplified, code int, err error) {
 	stmt, err := ur.db.Prepare(`
-	select a.id, a.image, a.name,a.status,a.category_id,
-	a.description,a.quantity 
-	from assets a JOIN 
-	categories b ON a.category_id = b.id
+	select a.id, a.image, a.name,a.status,b.name, b.id,a.description,a.quantity 
+	from assets a join categories b ON a.category_id = b.id
 	`)
 
 	if err != nil {
@@ -43,16 +42,23 @@ func (ur *AssetRepository) GetAll() (assets []_entity.Asset, code int, err error
 	defer res.Close()
 
 	for res.Next() {
-		asset := _entity.Asset{}
-
+		asset := _entity.AssetSimplified{}
 		if err := res.Scan(&asset.Id, &asset.Image, &asset.Name,
-			&asset.Status, &asset.CategoryId,
+			&asset.Status, &asset.Category.Name, &asset.Category.Id,
 			&asset.Description, &asset.Quantity); err != nil {
 			log.Println(err)
 			code, err = http.StatusInternalServerError, errors.New("internal server error")
 			return assets, code, err
 		}
-
+		var count int
+		for i := 0; i < len(asset.Status); i++ {
+			if asset.Status == "Available" {
+				count++
+			}
+		}
+		str := strconv.Itoa(count)
+		asset.Status = str
+		asset.Image = fmt.Sprintf("https://capstone-group3.s3.ap-southeast-1.amazonaws.com/%s", asset.Image)
 		assets = append(assets, asset)
 	}
 
