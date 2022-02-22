@@ -49,4 +49,5 @@ func RegisterPath(
 	e.POST("/requests/borrow", requestController.Borrow(), _midware.JWTMiddleWare())
 	e.POST("/requests/procure", requestController.Procure(), _midware.JWTMiddleWare())
 	e.PUT("/requests/borrow/:id", requestController.UpdateBorrow(), _midware.JWTMiddleWare())
+	e.PUT("/requests/procure/:id", requestController.UpdateProcure(), _midware.JWTMiddleWare())
 }
