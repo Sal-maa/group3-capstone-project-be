@@ -24,6 +24,10 @@ type CreateBorrow struct {
 	Description string    `json:"description" form:"description"`
 }
 
+type UpdateBorrow struct {
+	Status string `json:"status" form:"status"`
+}
+
 type Procure struct {
 	Id          int `json:"id" form:"id"`
 	User        User
