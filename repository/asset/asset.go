@@ -148,10 +148,6 @@ func (ur *AssetRepository) GetById(id int) (asset _entity.Asset, code int, err e
 		code, err = http.StatusBadRequest, errors.New("asset not found")
 		return asset, code, err
 	}
-
-	// asset.Id = id
-	// product.User.Avatar = fmt.Sprintf("https://capstone-group3.s3.ap-southeast-1.amazonaws.com/%s", product.User.Avatar)
-
 	return asset, http.StatusOK, nil
 }
 

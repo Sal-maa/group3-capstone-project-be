@@ -30,10 +30,8 @@ func RegisterPath(
 	e.PUT("/users/:id", userController.Update(), _midware.JWTMiddleWare())
 
 	// Asset
-	e.POST("/assets", assetController.Create())
-
+	e.POST("/assets", assetController.Create(), _midware.JWTMiddleWare())
 	e.GET("/assets", assetController.GetAll())
 	e.GET("/assets/:id", assetController.GetById())
-	e.PUT("/assets/:id", assetController.Update())
-
+	e.PUT("/assets/:id", assetController.Update(), _midware.JWTMiddleWare())
 }

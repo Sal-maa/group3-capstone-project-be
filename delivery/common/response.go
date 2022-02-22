@@ -111,7 +111,7 @@ func GetAssetByIdResponse(asset _entity.Asset) map[string]interface{} {
 func UpdateAssetResponse(product _entity.Asset) map[string]interface{} {
 	return map[string]interface{}{
 		"code":    http.StatusOK,
-		"message": "success create asset",
+		"message": "success edit asset",
 		"data": map[string]interface{}{
 			"id":    product.Id,
 			"image": product.Image,
