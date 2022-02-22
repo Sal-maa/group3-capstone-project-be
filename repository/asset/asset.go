@@ -16,7 +16,7 @@ type AssetRepository struct {
 func New(db *sql.DB) *AssetRepository {
 	return &AssetRepository{db: db}
 }
-func (ur *AssetRepository) GetAll() (assets []_entity.AssetSimplified, code int, err error) {
+func (ur *AssetRepository) GetAll(page int) (assets []_entity.AssetSimplified, code int, err error) {
 	stmt, err := ur.db.Prepare(`
 	select a.id, a.code_asset,a.image, a.name,a.short_name,a.status,b.name,a.description,a.quantity 
 	from assets a join categories b ON a.category_id = b.id
@@ -29,10 +29,7 @@ func (ur *AssetRepository) GetAll() (assets []_entity.AssetSimplified, code int,
 		return assets, code, err
 	}
 
-	var limit int
-	var page int
-	limit = 8
-	page = page % limit
+	limit := 8
 	offset := (page - 1) * limit
 
 	res, err := stmt.Query(limit, offset)
@@ -74,6 +71,58 @@ func (ur *AssetRepository) GetAll() (assets []_entity.AssetSimplified, code int,
 	}
 
 	return assets, http.StatusOK, nil
+}
+
+func (r *AssetRepository) GetAssetByCategory(category string, page int) (asset _entity.AssetSimplified, code int, err error) {
+	var totalAsset int
+	stmt, err := r.db.Prepare(`
+	select a.id, a.code_asset,a.image, a.name,a.short_name,a.status,b.name,a.description,a.quantity
+	from assets a join categories b ON a.category_id = b.id
+	where a.deleted_at is null and b.name = ? limit ? offset ?`)
+
+	if err != nil {
+		log.Println(err)
+		return asset, totalAsset, err
+	}
+
+	limit := 5
+	offset := (page - 1) * limit
+
+	res, err := stmt.Query(category, limit, offset)
+
+	if err != nil {
+		log.Println(err)
+		return asset, totalAsset, err
+	}
+
+	defer res.Close()
+	if err != nil {
+		log.Println(err)
+		code, err = http.StatusInternalServerError, errors.New("internal server error")
+		return asset, code, err
+	}
+
+	defer res.Close()
+
+	if res.Next() {
+		// var asset _entity.AssetSimplified
+		if err := res.Scan(&asset.Id, &asset.CodeAsset, &asset.Image, &asset.Name,
+			&asset.Short_Name, &asset.Status, &asset.CategoryName,
+			&asset.Description, &asset.Quantity); err != nil {
+
+			log.Println(err)
+			code, err = http.StatusInternalServerError, errors.New("internal server error")
+			return asset, totalAsset, err
+		}
+		// assets = append(assets, asset)
+	}
+
+	// if asset == (_entity.AssetSimplified{}) {
+	// 	log.Println("asset not found")
+	// 	code, err = http.StatusBadRequest, errors.New("asset not found")
+	// 	return asset, code, err
+	// }
+	return asset, totalAsset, nil
 }
 
 func (ur AssetRepository) Create(assetData _entity.Asset) (createdAsset _entity.Asset, code int, err error) {

@@ -28,8 +28,19 @@ func New(asset _assetRepo.Asset) *AssetController {
 
 func (uc AssetController) GetAll() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// calling repository
-		assets, code, err := uc.repository.GetAll()
+		p := strings.TrimSpace(c.QueryParam("page"))
+		log.Println(p)
+		if p == "" {
+			p = "1"
+		}
+
+		page, err := strconv.Atoi(p)
+		log.Println(page)
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "invalid page number"))
+		}
+
+		assets, code, err := uc.repository.GetAll(page)
 		// detect failure in repository
 		if err != nil {
 			return c.JSON(code, _common.NoDataResponse(code, err.Error()))
@@ -37,7 +48,26 @@ func (uc AssetController) GetAll() echo.HandlerFunc {
 		return c.JSON(http.StatusOK, _common.GetAllAssetsResponse(assets))
 	}
 }
+func (uc AssetController) GetAssetByCategory() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		p := strings.TrimSpace(c.QueryParam("page"))
+		log.Println(p)
+		if p == "" {
+			p = "1"
+		}
+		page, err := strconv.Atoi(p)
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "invalid page number"))
+		}
+		category := c.QueryParam("category")
 
+		asset, code, err := uc.repository.GetAssetByCategory(category, page)
+		if err != nil {
+			return c.JSON(code, _common.NoDataResponse(code, err.Error()))
+		}
+		return c.JSON(http.StatusOK, _common.GGetAssetByCategoryResponse(asset))
+	}
+}
 func (uc AssetController) GetById() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		id, err := strconv.Atoi(c.Param("id"))
