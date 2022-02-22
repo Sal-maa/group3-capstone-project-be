@@ -49,3 +49,7 @@ type CreateProcure struct {
 	RequestTime time.Time `json:"request_time" form:"request_time"`
 	Description string    `json:"description" form:"description"`
 }
+
+type UpdateProcure struct {
+	Status string `json:"status" form:"status"`
+}
