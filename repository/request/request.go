@@ -229,3 +229,20 @@ func (rr *RequestRepository) UpdateProcure(reqData _entity.Procure) (_entity.Pro
 
 	return reqData, err
 }
+
+func (rr *RequestRepository) UpdateBorrowByAdmin(reqData _entity.Borrow) (_entity.Borrow, error) {
+	statement, err := rr.db.Prepare(`
+	UPDATE borrowOrreturn_requests
+		SET status = ?, updated_at = CURRENT_TIMESTAMP
+		WHERE status = "Approve by Manager" AND deleted_at IS NULL AND id = ?`)
+	if err != nil {
+		log.Println(err)
+		return reqData, err
+	}
+
+	defer statement.Close()
+
+	_, err = statement.Exec(reqData.Status, reqData.Id)
+
+	return reqData, err
+}
