@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"strconv"
 )
 
 type AssetRepository struct {
@@ -19,8 +18,9 @@ func New(db *sql.DB) *AssetRepository {
 }
 func (ur *AssetRepository) GetAll() (assets []_entity.AssetSimplified, code int, err error) {
 	stmt, err := ur.db.Prepare(`
-	select a.id, a.image, a.name,a.status,b.name, b.id,a.description,a.quantity 
+	select a.id, a.code_asset,a.image, a.name,a.short_name,a.status,b.name,a.description,a.quantity 
 	from assets a join categories b ON a.category_id = b.id
+	limit ? offset ?
 	`)
 
 	if err != nil {
@@ -29,9 +29,13 @@ func (ur *AssetRepository) GetAll() (assets []_entity.AssetSimplified, code int,
 		return assets, code, err
 	}
 
-	defer stmt.Close()
+	var limit int
+	var page int
+	limit = 8
+	page = page % limit
+	offset := (page - 1) * limit
 
-	res, err := stmt.Query()
+	res, err := stmt.Query(limit, offset)
 
 	if err != nil {
 		log.Println(err)
@@ -43,21 +47,28 @@ func (ur *AssetRepository) GetAll() (assets []_entity.AssetSimplified, code int,
 
 	for res.Next() {
 		asset := _entity.AssetSimplified{}
-		if err := res.Scan(&asset.Id, &asset.Image, &asset.Name,
-			&asset.Status, &asset.Category.Name, &asset.Category.Id,
+		if err := res.Scan(&asset.Id, &asset.CodeAsset, &asset.Image, &asset.Name,
+			&asset.Short_Name, &asset.Status, &asset.CategoryName,
 			&asset.Description, &asset.Quantity); err != nil {
 			log.Println(err)
 			code, err = http.StatusInternalServerError, errors.New("internal server error")
 			return assets, code, err
 		}
-		var count int
+		var userCount int
+		var countBorrow int
+
 		for i := 0; i < len(asset.Status); i++ {
 			if asset.Status == "Available" {
-				count++
+				userCount++
+				// UserCount = asset.Quantity - UserCount
+			}
+			if asset.Status == "Borrowed" {
+				countBorrow++
+				// countBorrow = asset.Quantity - UserCount
 			}
 		}
-		str := strconv.Itoa(count)
-		asset.Status = str
+		asset.UserCount = userCount
+		asset.StockAvailable = countBorrow
 		asset.Image = fmt.Sprintf("https://capstone-group3.s3.ap-southeast-1.amazonaws.com/%s", asset.Image)
 		assets = append(assets, asset)
 	}

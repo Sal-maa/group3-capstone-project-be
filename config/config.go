@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"strconv"
@@ -53,6 +54,7 @@ func initConfig() *AppConfig {
 
 	// set app default configuration in aws ec2
 	defaultConfig.Port, _ = strconv.Atoi(os.Getenv("PORT"))
+
 	defaultConfig.JWT_secret = os.Getenv("JWT_SECRET")
 	defaultConfig.Database.Driver = os.Getenv("DB_DRIVER")
 	defaultConfig.Database.Host = os.Getenv("DB_HOST")
@@ -65,9 +67,9 @@ func initConfig() *AppConfig {
 	defaultConfig.AWS.Region = os.Getenv("AWS_REGION")
 	defaultConfig.AWS.Bucket = os.Getenv("AWS_BUCKET")
 
-	viper.SetConfigType("json")
+	viper.SetConfigType("mapstructure")
 	viper.SetConfigName("config")
-	viper.AddConfigPath("./config")
+	viper.AddConfigPath("./config/")
 
 	// read app custom configuration for running in local machine
 	if err := viper.ReadInConfig(); err != nil {
@@ -76,7 +78,7 @@ func initConfig() *AppConfig {
 	}
 
 	finalConfig := AppConfig{}
-
+	fmt.Println("appconfig", finalConfig)
 	if err := viper.Unmarshal(&finalConfig); err != nil {
 		log.Println(err)
 		return &defaultConfig

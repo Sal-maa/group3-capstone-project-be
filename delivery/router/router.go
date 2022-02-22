@@ -2,6 +2,8 @@ package router
 
 import (
 	_asset "capstone/be/delivery/controller/asset"
+	_history "capstone/be/delivery/controller/history"
+	_request "capstone/be/delivery/controller/request"
 	_user "capstone/be/delivery/controller/user"
 	_midware "capstone/be/delivery/middleware"
 	"net/http"
@@ -15,6 +17,8 @@ func RegisterPath(
 	e *echo.Echo,
 	userController *_user.UserController,
 	assetController *_asset.AssetController,
+	historyController *_history.HistoryController,
+	requestController *_request.RequestController,
 ) {
 	// Root
 	e.GET("/", func(c echo.Context) error {
@@ -25,8 +29,8 @@ func RegisterPath(
 	e.POST("/login", userController.Login())
 
 	// User
-	e.GET("/users", userController.GetAll())
-	e.GET("/users/:id", userController.GetById())
+	e.GET("/users", userController.GetAll(), _midware.JWTMiddleWare())
+	e.GET("/users/:id", userController.GetById(), _midware.JWTMiddleWare())
 	e.PUT("/users/:id", userController.Update(), _midware.JWTMiddleWare())
 
 	// Asset
