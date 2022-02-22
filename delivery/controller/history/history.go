@@ -93,15 +93,10 @@ func (hc HistoryController) GetDetailUsageHistoryByRequestId() echo.HandlerFunc 
 
 func (hc HistoryController) GetAllUsageHistoryOfAsset() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		asset_id, err := strconv.Atoi(c.Param("asset_id"))
-
-		// detect invalid parameter
-		if err != nil {
-			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "invalid user id"))
-		}
+		short_name := c.Param("short_name")
 
 		// calling repository
-		histories, code, err := hc.repository.GetAllUsageHistoryOfAsset(asset_id)
+		histories, code, err := hc.repository.GetAllUsageHistoryOfAsset(short_name)
 
 		// detect failure in repository
 		if err != nil {
