@@ -17,7 +17,7 @@ type Borrow struct {
 }
 
 type CreateBorrow struct {
-	AssetId     int       `json:"asset_id" form:"asset_id"`
+	AssetName   int       `json:"asset_name" form:"asset_name"`
 	Activity    string    `json:"activity" form:"activity"`
 	RequestTime time.Time `json:"request_time" form:"request_time"`
 	ReturnTime  time.Time `json:"return_time" form:"return_time"`
