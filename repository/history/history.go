@@ -2,6 +2,7 @@ package history
 
 import (
 	_entity "capstone/be/entity"
+	"fmt"
 
 	"database/sql"
 	"errors"
@@ -61,6 +62,7 @@ func (hr *HistoryRepository) GetAllUsageHistoryOfUser(user_id int, page int) (hi
 		}
 
 		history.ActivityType = "Borrowing Asset"
+		history.AssetImage = fmt.Sprintf("https://capstone-group3.s3.ap-southeast-1.amazonaws.com/%s", history.AssetImage)
 
 		histories = append(histories, history)
 	}
@@ -116,6 +118,7 @@ func (hr *HistoryRepository) GetDetailUsageHistoryByRequestId(request_id int) (h
 	}
 
 	history.Id = request_id
+	history.AssetImage = fmt.Sprintf("https://capstone-group3.s3.ap-southeast-1.amazonaws.com/%s", history.AssetImage)
 	history.Status = "Successfully returned"
 
 	stock, err := hr.getAssetStock(short_name)
@@ -175,6 +178,7 @@ func (hr *HistoryRepository) GetAllUsageHistoryOfAsset(short_name string) (histo
 			return histories, code, err
 		}
 
+		history.AssetImage = fmt.Sprintf("https://capstone-group3.s3.ap-southeast-1.amazonaws.com/%s", history.AssetImage)
 		history.Status += "ed"
 
 		histories = append(histories, history)
