@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -118,6 +119,37 @@ func (rc RequestController) Procure() echo.HandlerFunc {
 		_, err = rc.repository.Procure(reqData)
 		if err != nil {
 			fmt.Println(err)
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed create request"))
+		}
+
+		return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "Success create request"))
+	}
+}
+
+func (rc RequestController) UpdateBorrow() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		id, err := strconv.Atoi(c.Param("id"))
+
+		// detect invalid parameter
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "invalid request id"))
+		}
+		role := middleware.ExtractRole(c)
+		if role != "Manager" {
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "you don't have permission"))
+		}
+
+		newReq := _entity.UpdateBorrow{}
+		// handle failure in binding
+		if err := c.Bind(&newReq); err != nil {
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed to bind data"))
+		}
+		reqData := _entity.Borrow{}
+		reqData.Id = id
+		reqData.Status = newReq.Status
+
+		_, err = rc.repository.UpdateBorrow(reqData)
+		if err != nil {
 			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed create request"))
 		}
 
