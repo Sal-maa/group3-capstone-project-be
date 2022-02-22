@@ -239,3 +239,55 @@ func (rc RequestController) UpdateProcure() echo.HandlerFunc {
 		return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "Success create request"))
 	}
 }
+
+func (rc RequestController) UpdateBorrowByAdmin() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		idReq, err := strconv.Atoi(c.Param("id"))
+		// detect invalid parameter
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "invalid request id"))
+		}
+
+		role := middleware.ExtractRole(c)
+		if role != "Administrator" {
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "you don't have permission"))
+		}
+
+		// check manager division and employee division
+		idLogin := middleware.ExtractId(c)
+		divLogin, err := rc.repository.GetUserDivision(idLogin)
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed get division id user"))
+		}
+
+		request, err := rc.repository.GetBorrowById(idReq)
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed get request by id"))
+		}
+
+		divEmpl, err := rc.repository.GetUserDivision(request.Id)
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed get division id user"))
+		}
+
+		if divEmpl != divLogin {
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "You're not in the same division"))
+		}
+
+		newReq := _entity.UpdateBorrow{}
+		// handle failure in binding
+		if err := c.Bind(&newReq); err != nil {
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed to bind data"))
+		}
+		reqData := _entity.Borrow{}
+		reqData.Id = idReq
+		reqData.Status = newReq.Status
+
+		_, err = rc.repository.UpdateBorrowByAdmin(reqData)
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed create request"))
+		}
+
+		return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "Success create request"))
+	}
+}
