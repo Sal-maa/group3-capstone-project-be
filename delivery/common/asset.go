@@ -21,13 +21,6 @@ func CreateAssetResponse(product _entity.Asset) map[string]interface{} {
 		},
 	}
 }
-func GetAllCategoryResponse(categories []_entity.Category) map[string]interface{} {
-	return map[string]interface{}{
-		"code":    http.StatusOK,
-		"message": "success create categories",
-		"data":    categories,
-	}
-}
 
 func GetAllAssetsResponse(assets []_entity.Asset) map[string]interface{} {
 	return map[string]interface{}{
