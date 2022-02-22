@@ -1,9 +1,9 @@
 package request
 
 import (
-	"capstone/be/entity"
 	_entity "capstone/be/entity"
 	"database/sql"
+	"log"
 )
 
 type RequestRepository struct {
@@ -14,7 +14,7 @@ func New(db *sql.DB) *RequestRepository {
 	return &RequestRepository{db: db}
 }
 
-func (rr *RequestRepository) CheckMaintenance(reqData entity.Borrow) (asset entity.Asset, err error) {
+func (rr *RequestRepository) CheckMaintenance(reqData _entity.Borrow) (asset _entity.Asset, err error) {
 	stmt, err := rr.db.Prepare(`
 		SELECT status FROM assets WHERE deleted_at IS NULL AND id = ?
 	`)
@@ -42,8 +42,12 @@ func (rr *RequestRepository) CheckMaintenance(reqData entity.Borrow) (asset enti
 }
 
 func (rr *RequestRepository) Borrow(reqData _entity.Borrow) (_entity.Borrow, error) {
-	statement, err := rr.db.Prepare("INSERT INTO `borrow/return_requests` (updated_at, user_id, asset_id, activity, request_time, return_time, status, description) VALUES(?,?,?,?,?,?,?,?)")
+	statement, err := rr.db.Prepare(`
+	INSERT INTO 
+		borrowORreturn_requests (updated_at, user_id, asset_id, activity, request_time, return_time, status, description) 
+	VALUES(?,?,?,?,?,?,?,?)`)
 	if err != nil {
+		log.Println(err)
 		return reqData, err
 	}
 
@@ -54,7 +58,7 @@ func (rr *RequestRepository) Borrow(reqData _entity.Borrow) (_entity.Borrow, err
 	return reqData, err
 }
 
-func (rr *RequestRepository) GetCategoryId(newReq entity.CreateProcure) (id int, err error) {
+func (rr *RequestRepository) GetCategoryId(newReq _entity.CreateProcure) (id int, err error) {
 	stmt, err := rr.db.Prepare(`
 		SELECT id
 		FROM categories
@@ -84,7 +88,7 @@ func (rr *RequestRepository) GetCategoryId(newReq entity.CreateProcure) (id int,
 	return id, nil
 }
 
-func (rr *RequestRepository) Procure(reqData entity.Procure) (entity.Procure, error) {
+func (rr *RequestRepository) Procure(reqData _entity.Procure) (_entity.Procure, error) {
 	statement, err := rr.db.Prepare("INSERT INTO `procurement_requests` (updated_at, user_id, category_id, image, activity, request_time, status, description) VALUES(?,?,?,?,?,?,?,?)")
 	if err != nil {
 		return reqData, err
@@ -93,5 +97,22 @@ func (rr *RequestRepository) Procure(reqData entity.Procure) (entity.Procure, er
 	defer statement.Close()
 
 	_, err = statement.Exec(reqData.UpdatedAt, reqData.Category, reqData.Image, reqData.Activity, reqData.RequestTime, reqData.Status, reqData.Description)
+	return reqData, err
+}
+
+func (rr *RequestRepository) UpdateBorrow(reqData _entity.Borrow) (_entity.Borrow, error) {
+	statement, err := rr.db.Prepare(`
+	UPDATE assets
+		SET status = ?, updated_at = CURRENT_TIMESTAMP
+		WHERE deleted_at IS NULL AND id = ?`)
+	if err != nil {
+		log.Println(err)
+		return reqData, err
+	}
+
+	defer statement.Close()
+
+	_, err = statement.Exec(reqData.Status, reqData.Id)
+
 	return reqData, err
 }
