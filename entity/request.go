@@ -43,7 +43,7 @@ type Procure struct {
 }
 
 type CreateProcure struct {
-	Category    int       `json:"category" form:"category"`
+	Category    string    `json:"category" form:"category"`
 	Image       string    `json:"image" form:"image"`
 	Activity    string    `json:"activity" form:"activity"`
 	RequestTime time.Time `json:"request_time" form:"request_time"`
