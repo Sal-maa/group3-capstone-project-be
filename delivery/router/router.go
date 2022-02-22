@@ -45,10 +45,15 @@ func RegisterPath(
 	e.GET("/histories/users/:user_id/:request_id", historyController.GetDetailUsageHistoryByRequestId(), _midware.JWTMiddleWare())
 	e.GET("/histories/assets/:asset_id", historyController.GetAllUsageHistoryOfAsset(), _midware.JWTMiddleWare())
 
-	// Request
+	// Request by Employee
 	e.POST("/requests/borrow", requestController.Borrow(), _midware.JWTMiddleWare())
 	e.POST("/requests/procure", requestController.Procure(), _midware.JWTMiddleWare())
+
+	// Update by Manager
 	e.PUT("/requests/borrow/:id", requestController.UpdateBorrow(), _midware.JWTMiddleWare())
 	e.PUT("/requests/procure/:id", requestController.UpdateProcure(), _midware.JWTMiddleWare())
+
+	// Update by Administrator
 	e.PUT("/requests/borrow/:id", requestController.UpdateBorrowByAdmin(), _midware.JWTMiddleWare())
+	e.PUT("/requests/procure/:id", requestController.UpdateProcureByAdmin(), _midware.JWTMiddleWare())
 }
