@@ -17,7 +17,7 @@ func New(db *sql.DB) *HistoryRepository {
 	return &HistoryRepository{db: db}
 }
 
-func (hr *HistoryRepository) GetAllUsageHistoryOfUser(user_id int) (histories []_entity.UserUsageHistorySimplified, code int, err error) {
+func (hr *HistoryRepository) GetAllUsageHistoryOfUser(user_id int, page int) (histories []_entity.UserUsageHistorySimplified, code int, err error) {
 	if code, err = hr.checkUserExistence(user_id); err != nil {
 		return histories, code, err
 	}
@@ -30,6 +30,7 @@ func (hr *HistoryRepository) GetAllUsageHistoryOfUser(user_id int) (histories []
 		JOIN categories c
 		ON a.category_id = c.id
 		WHERE b.deleted_at IS NULL AND b.status = 'Approved by Admin' AND b.activity = 'Return' AND b.user_id = ?
+		LIMIT 5 OFFSET ?
 	`)
 
 	if err != nil {
@@ -40,7 +41,7 @@ func (hr *HistoryRepository) GetAllUsageHistoryOfUser(user_id int) (histories []
 
 	defer stmt.Close()
 
-	res, err := stmt.Query(user_id)
+	res, err := stmt.Query(user_id, (page-1)*5)
 
 	if err != nil {
 		log.Println(err)

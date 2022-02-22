@@ -6,6 +6,7 @@ import (
 	_historyRepo "capstone/be/repository/history"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/labstack/echo/v4"
 )
@@ -32,8 +33,21 @@ func (hc HistoryController) GetAllUsageHistoryOfUser() echo.HandlerFunc {
 			return c.JSON(http.StatusUnauthorized, _common.NoDataResponse(http.StatusUnauthorized, "unauthorized"))
 		}
 
+		// pagination
+		p := strings.TrimSpace(c.QueryParam("page"))
+		if p == "" {
+			p = "1"
+		}
+
+		page, err := strconv.Atoi(p)
+
+		// detect invalid page number
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "invalid page number"))
+		}
+
 		// calling repository
-		histories, code, err := hc.repository.GetAllUsageHistoryOfUser(user_id)
+		histories, code, err := hc.repository.GetAllUsageHistoryOfUser(user_id, page)
 
 		// detect failure in repository
 		if err != nil {
