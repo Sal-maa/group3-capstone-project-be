@@ -83,14 +83,22 @@ func (rc RequestController) Procure() echo.HandlerFunc {
 		reqData.User.Id = idLogin
 
 		// check category id
-		category, err := rc.repository.GetCategoryId(newReq)
-		if category == 0 {
-			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "category not found"))
+		categoryId, err := rc.repository.GetCategoryId(newReq)
+		if categoryId == 0 {
+			// add new category if category isn't exist
+			_, err := rc.repository.AddCategory(newReq.Category)
+			if err != nil {
+				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed to add new category"))
+			}
+			categoryId, err = rc.repository.GetCategoryId(newReq)
+			if err != nil {
+				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed to get category_id"))
+			}
 		}
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed to get category_id"))
 		}
-		reqData.Category = category
+		reqData.Category = categoryId
 
 		// detect image upload
 		src, file, err := c.Request().FormFile("image")
