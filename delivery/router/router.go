@@ -1,6 +1,7 @@
 package router
 
 import (
+	_activity "capstone/be/delivery/controller/activity"
 	_asset "capstone/be/delivery/controller/asset"
 	_history "capstone/be/delivery/controller/history"
 	_request "capstone/be/delivery/controller/request"
@@ -19,6 +20,7 @@ func RegisterPath(
 	assetController *_asset.AssetController,
 	historyController *_history.HistoryController,
 	requestController *_request.RequestController,
+	activityController *_activity.ActivityController,
 ) {
 	// Root
 	e.GET("/", func(c echo.Context) error {
@@ -36,6 +38,8 @@ func RegisterPath(
 	// Asset
 	e.POST("/assets", assetController.Create(), _midware.JWTMiddleWare())
 	e.GET("/assets", assetController.GetAll())
-	e.GET("/assets/:category", assetController.GetAssetByCategory())
+	// e.GET("/assets/:category", assetController.GetAssetByCategory())
+	e.GET("/assets/:id", assetController.GetById())
+
 	e.PUT("/assets/:id", assetController.Update(), _midware.JWTMiddleWare())
 }

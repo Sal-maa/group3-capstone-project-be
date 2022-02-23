@@ -17,6 +17,7 @@ func New(db *sql.DB) *AssetRepository {
 	return &AssetRepository{db: db}
 }
 func (ur *AssetRepository) GetAll(page int) (assets []_entity.AssetSimplified, code int, err error) {
+	var totalAsset int
 	stmt, err := ur.db.Prepare(`
 	select a.id, a.code_asset,a.image, a.name,a.short_name,a.status,b.name,a.description,a.quantity 
 	from assets a join categories b ON a.category_id = b.id
@@ -29,7 +30,7 @@ func (ur *AssetRepository) GetAll(page int) (assets []_entity.AssetSimplified, c
 		return assets, code, err
 	}
 
-	limit := 8
+	limit := 3
 	offset := (page - 1) * limit
 
 	res, err := stmt.Query(limit, offset)
@@ -43,6 +44,35 @@ func (ur *AssetRepository) GetAll(page int) (assets []_entity.AssetSimplified, c
 	defer res.Close()
 
 	for res.Next() {
+		stmt2, err := ur.db.Prepare(`select count(e.id)
+								from assets e 
+								where e.deleted_at is null
+								`)
+
+		if err != nil {
+			log.Println(err)
+			return assets, code, err
+
+		}
+		res2, err := stmt2.Query()
+
+		if err != nil {
+			log.Println(err)
+			return assets, code, err
+
+		}
+
+		defer res2.Close()
+
+		for res2.Next() {
+			err := res2.Scan(&totalAsset)
+
+			if err != nil {
+				log.Println(err)
+				return assets, code, err
+			}
+
+		}
 		asset := _entity.AssetSimplified{}
 		if err := res.Scan(&asset.Id, &asset.CodeAsset, &asset.Image, &asset.Name,
 			&asset.Short_Name, &asset.Status, &asset.CategoryName,
@@ -57,15 +87,14 @@ func (ur *AssetRepository) GetAll(page int) (assets []_entity.AssetSimplified, c
 		for i := 0; i < len(asset.Status); i++ {
 			if asset.Status == "Available" {
 				userCount++
-				// UserCount = asset.Quantity - UserCount
 			}
 			if asset.Status == "Borrowed" {
 				countBorrow++
-				// countBorrow = asset.Quantity - UserCount
 			}
 		}
 		asset.UserCount = userCount
 		asset.StockAvailable = countBorrow
+		asset.TotalData.TotalPage = totalAsset
 		asset.Image = fmt.Sprintf("https://capstone-group3.s3.ap-southeast-1.amazonaws.com/%s", asset.Image)
 		assets = append(assets, asset)
 	}
@@ -105,7 +134,6 @@ func (r *AssetRepository) GetAssetByCategory(category string, page int) (asset _
 	defer res.Close()
 
 	if res.Next() {
-		// var asset _entity.AssetSimplified
 		if err := res.Scan(&asset.Id, &asset.CodeAsset, &asset.Image, &asset.Name,
 			&asset.Short_Name, &asset.Status, &asset.CategoryName,
 			&asset.Description, &asset.Quantity); err != nil {
@@ -114,7 +142,6 @@ func (r *AssetRepository) GetAssetByCategory(category string, page int) (asset _
 			code, err = http.StatusInternalServerError, errors.New("internal server error")
 			return asset, totalAsset, err
 		}
-		// assets = append(assets, asset)
 	}
 
 	// if asset == (_entity.AssetSimplified{}) {
@@ -125,10 +152,10 @@ func (r *AssetRepository) GetAssetByCategory(category string, page int) (asset _
 	return asset, totalAsset, nil
 }
 
-func (ur AssetRepository) Create(assetData _entity.Asset) (createdAsset _entity.Asset, code int, err error) {
+func (ur AssetRepository) Create(assetData _entity.Asset) (createdAsset _entity.AssetSimplified, code int, err error) {
 	stmt, err := ur.db.Prepare(`
-	INSERT INTO assets (image, name,status,category_id,description,quantity)
-	VALUES (?, ?, ?, ?, ?, ?)
+	INSERT INTO assets (code_asset,image, name, short_name, status, category_id, description, quantity)
+	VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 `)
 
 	if err != nil {
@@ -138,9 +165,9 @@ func (ur AssetRepository) Create(assetData _entity.Asset) (createdAsset _entity.
 	}
 
 	defer stmt.Close()
-
-	res, err := stmt.Exec(assetData.Image, assetData.Name, assetData.Status,
-		assetData.CategoryId, assetData.Description, assetData.Quantity)
+	res, err := stmt.Exec(assetData.CodeAsset, assetData.Image, assetData.Name,
+		assetData.Short_Name, assetData.Status, assetData.Category.Id,
+		assetData.Description, assetData.Quantity)
 
 	if err != nil {
 		log.Println(err)
@@ -163,10 +190,12 @@ func (ur AssetRepository) Create(assetData _entity.Asset) (createdAsset _entity.
 	}
 
 	createdAsset.Id = int(id)
+	createdAsset.CodeAsset = assetData.CodeAsset
 	createdAsset.Image = assetData.Image
 	createdAsset.Name = assetData.Name
+	createdAsset.Short_Name = assetData.Short_Name
 	createdAsset.Status = assetData.Status
-	createdAsset.CategoryId = assetData.CategoryId
+	createdAsset.CategoryName = assetData.Category.Name
 	createdAsset.Description = assetData.Description
 	createdAsset.Quantity = assetData.Quantity
 
@@ -217,10 +246,10 @@ func (ur *AssetRepository) GetById(id int) (asset _entity.Asset, code int, err e
 	return asset, http.StatusOK, nil
 }
 
-func (ur *AssetRepository) Update(assetData _entity.Asset) (updateAsset _entity.Asset, code int, err error) {
+func (ur *AssetRepository) Update(assetData _entity.Asset) (updateAsset _entity.AssetSimplified, code int, err error) {
 	stmt, err := ur.db.Prepare(`
 		UPDATE assets
-		SET image = ?, name = ?, status = ?, description = ?,
+		SET image = ?, name = ?, short_name = ?, status = ?, description = ?,
 		quantity = ?, updated_at = CURRENT_TIMESTAMP
 		WHERE deleted_at IS NULL AND id = ?
 	`)
@@ -233,7 +262,8 @@ func (ur *AssetRepository) Update(assetData _entity.Asset) (updateAsset _entity.
 
 	defer stmt.Close()
 
-	res, err := stmt.Exec(assetData.Image, assetData.Name, assetData.Status, assetData.Description, assetData.Quantity, assetData.Id)
+	res, err := stmt.Exec(assetData.Image, assetData.Name, assetData.Short_Name, assetData.Status,
+		assetData.Description, assetData.Quantity, assetData.Id)
 
 	if err != nil {
 		log.Println(err)

@@ -3,6 +3,9 @@ package asset
 import (
 	_common "capstone/be/delivery/common"
 	_helper "capstone/be/delivery/helper"
+	"capstone/be/delivery/middleware"
+	"fmt"
+	"time"
 
 	_entity "capstone/be/entity"
 	_assetRepo "capstone/be/repository/asset"
@@ -39,9 +42,7 @@ func (uc AssetController) GetAll() echo.HandlerFunc {
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "invalid page number"))
 		}
-
 		assets, code, err := uc.repository.GetAll(page)
-		// detect failure in repository
 		if err != nil {
 			return c.JSON(code, _common.NoDataResponse(code, err.Error()))
 		}
@@ -65,7 +66,7 @@ func (uc AssetController) GetAssetByCategory() echo.HandlerFunc {
 		if err != nil {
 			return c.JSON(code, _common.NoDataResponse(code, err.Error()))
 		}
-		return c.JSON(http.StatusOK, _common.GGetAssetByCategoryResponse(asset))
+		return c.JSON(http.StatusOK, _common.GetAssetByCategoryResponse(asset))
 	}
 }
 func (uc AssetController) GetById() echo.HandlerFunc {
@@ -87,6 +88,11 @@ func (uc AssetController) GetById() echo.HandlerFunc {
 
 func (uc AssetController) Create() echo.HandlerFunc {
 	return func(c echo.Context) error {
+		role := middleware.ExtractRole(c)
+		if role != "Administrator" {
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "you don't have permission"))
+		}
+
 		assetData := _entity.CreateAsset{}
 		if err := c.Bind(&assetData); err != nil {
 			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed to bind data"))
@@ -123,14 +129,29 @@ func (uc AssetController) Create() echo.HandlerFunc {
 		}
 		// prepare input to repository
 		createAssetData := _entity.Asset{
+			CodeAsset:   assetData.CodeAsset,
 			Image:       assetData.Image,
 			Name:        assetData.Name,
+			Short_Name:  assetData.Short_Name,
 			Status:      assetData.Status,
 			Description: assetData.Description,
 			Quantity:    assetData.Quantity,
 		}
 		// calling repository
 		createAsset, code, err := uc.repository.Create(createAssetData)
+
+		// var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
+
+		// s := make([]rune, 5)
+		// for i := range s {
+		// 	s[i] = letters[rand.Intn(len(letters))]
+		// }
+		short_name := fmt.Sprintf("asset-%d", (time.Now().Unix()))
+
+		for i := 0; i < createAssetData.Quantity; i++ {
+			createAssetData.CodeAsset = fmt.Sprintf("%s-%d", short_name, i)
+			createAsset, _, _ = uc.repository.Create(createAssetData)
+		}
 
 		// detect failure in repository
 		if err != nil {
@@ -145,6 +166,11 @@ func (uc AssetController) Update() echo.HandlerFunc {
 		id, err := strconv.Atoi(c.Param("id"))
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "invalid asset id"))
+		}
+
+		role := middleware.ExtractRole(c)
+		if role != "Administrator" {
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "you don't have permission"))
 		}
 		assetData := _entity.UpdateAsset{}
 

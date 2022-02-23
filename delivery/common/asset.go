@@ -5,17 +5,19 @@ import (
 	"net/http"
 )
 
-func CreateAssetResponse(asset _entity.Asset) map[string]interface{} {
+func CreateAssetResponse(asset _entity.AssetSimplified) map[string]interface{} {
 	return map[string]interface{}{
 		"code":    http.StatusOK,
 		"message": "success create asset",
 		"data": map[string]interface{}{
 			"id":          asset.Id,
+			"code_asset":  asset.CodeAsset,
 			"image":       asset.Image,
 			"name":        asset.Name,
+			"short_name":  asset.Short_Name,
 			"status":      asset.Status,
 			"description": asset.Description,
-			"quantity":    asset.Quantity,
+			// "quantity":    asset.Quantity,
 		},
 	}
 }
@@ -27,7 +29,7 @@ func GetAllAssetsResponse(assets []_entity.AssetSimplified) map[string]interface
 		"data":    assets,
 	}
 }
-func GGetAssetByCategoryResponse(asset _entity.AssetSimplified) map[string]interface{} {
+func GetAssetByCategoryResponse(asset _entity.AssetSimplified) map[string]interface{} {
 	return map[string]interface{}{
 		"code":    http.StatusOK,
 		"message": "success get asset by category",
@@ -58,7 +60,7 @@ func GetAssetByIdResponse(asset _entity.Asset) map[string]interface{} {
 	}
 }
 
-func UpdateAssetResponse(asset _entity.Asset) map[string]interface{} {
+func UpdateAssetResponse(asset _entity.AssetSimplified) map[string]interface{} {
 	return map[string]interface{}{
 		"code":    http.StatusOK,
 		"message": "success edit asset",
@@ -70,5 +72,6 @@ func UpdateAssetResponse(asset _entity.Asset) map[string]interface{} {
 			"description": asset.Description,
 			"quantity":    asset.Quantity,
 		},
+		// "totalPage": asset.TotalPage,
 	}
 }
