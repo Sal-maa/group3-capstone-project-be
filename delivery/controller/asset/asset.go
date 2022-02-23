@@ -42,6 +42,7 @@ func (uc AssetController) GetAll() echo.HandlerFunc {
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "invalid page number"))
 		}
+		// limit := 8
 		assets, code, err := uc.repository.GetAll(page)
 		if err != nil {
 			return c.JSON(code, _common.NoDataResponse(code, err.Error()))

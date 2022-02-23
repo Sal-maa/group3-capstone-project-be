@@ -17,17 +17,21 @@ import "time"
 // }
 
 type CreateBorrow struct {
-	AssetId     int       `json:"asset_id" form:"asset_id"`
+	AssetName   int       `json:"asset_name" form:"asset_name"`
 	Activity    string    `json:"activity" form:"activity"`
 	RequestTime time.Time `json:"request_time" form:"request_time"`
 	ReturnTime  time.Time `json:"return_time" form:"return_time"`
 	Description string    `json:"description" form:"description"`
 }
 
+type UpdateBorrow struct {
+	Status string `json:"status" form:"status"`
+}
+
 type Procure struct {
 	Id          int `json:"id" form:"id"`
 	User        User
-	CategoryId  int       `json:"category_id" form:"category_id"`
+	Category    int       `json:"category" form:"category"`
 	Image       string    `json:"image" form:"image"`
 	Activity    string    `json:"activity" form:"activity"`
 	RequestTime time.Time `json:"request_time" form:"request_time"`
@@ -39,9 +43,13 @@ type Procure struct {
 }
 
 type CreateProcure struct {
-	CategoryId  int       `json:"category_id" form:"category_id"`
+	Category    string    `json:"category" form:"category"`
 	Image       string    `json:"image" form:"image"`
 	Activity    string    `json:"activity" form:"activity"`
 	RequestTime time.Time `json:"request_time" form:"request_time"`
 	Description string    `json:"description" form:"description"`
+}
+
+type UpdateProcure struct {
+	Status string `json:"status" form:"status"`
 }

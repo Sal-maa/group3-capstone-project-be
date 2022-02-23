@@ -1,0 +1,331 @@
+openapi: 3.0.3
+info:
+  title: Capstone Group 3
+  version: 1.0.0
+servers:
+  # Added by API Auto Mocking Plugin
+  - description: SwaggerHub API Auto Mocking
+    url: https://virtserver.swaggerhub.com/bagusbpg6/group3-capstone-API/1.0.0
+  - url: https://klender.xyz/
+paths:
+  /login:
+    post:
+      tags:
+        - Authentication
+      summary: How existing user login
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              properties:
+                input:
+                  type: string
+                password:
+                  type: string
+              required:
+                - input
+                - password
+            examples:
+              input email:
+                value:
+                  input: bagusbpg@gmail.com
+                  password: 74nSA&ge%#fwJ
+              input phone:
+                value:
+                  input: "08123456789"
+                  password: 74nSA&ge%#fwJ
+        required: true
+      responses:
+        '200':
+          description: Response for login successful
+          content:
+            application/json:
+              example:
+                code: 200
+                message: successful
+                data:
+                  avatar: https://capstone-group3.s3.ap-southeast-1.amazonaws.com/default_avatar.png
+                  id: 1
+                  name: Bagus Brahmantya
+                  token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRob3JpemVkIjp0cnVlLCJleHAiOjE2NDI1ODE0OTAsImlkIjoxLCJuYW1lIjoiIn0.NW5sOrXy_h9R1LovaarufA-anCJ14QAIwrzYLirkQdQ
+                  expire: 1645061762
+        '400':
+          description: Response for login failed (bad request)
+          content:
+            application/json:
+              examples:
+                failed binding:
+                  value:
+                    code: 400
+                    message: failed to bind data
+                empty string in input:
+                  value:
+                    code: 400
+                    message: input cannot be empty
+                string contains malicious character:
+                  value:
+                    code: 400
+                    message: input cannot contain forbidden character
+                invalid email or phone:
+                  value:
+                    code: 400
+                    message: invalid email or phone
+                email not found:
+                  value:
+                    code: 400
+                    message: email not found
+                phone not found:
+                  value:
+                    code: 400
+                    message: phone not found
+        '401':
+          description: Response for login failed (unauthorized)
+          content:
+            application/json:
+              example:
+                password incorrect:
+                  value:
+                    code: 401
+                    message: password does not match
+        '500':
+          description: Response for login failed (internal server error)
+          content:
+            application/json:
+              examples:
+                failed to create token:
+                  value:
+                    code: 500
+                    message: failed to create token
+                internal server error:
+                  value:
+                    code: 500
+                    message: internal server error
+  /users/{id}:
+    get:
+      tags:
+        - User
+      security:
+        - JWTAuth: []
+      summary: How to get user information by id
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+          description: Numeric id of existing user
+      responses:
+        '200':
+          description: Response for get user information successful
+          content:
+            application/json:
+              example:
+                code: 200
+                message: successful
+                data:
+                  avatar: https://capstone-group3.s3.ap-southeast-1.amazonaws.com/default_avatar.png
+                  id: 1
+                  email: bagusbpg@gmail.com
+                  name: Bagus Brahmantya
+                  phone: "08123456789"
+        '400':
+          description: Response for get user information failed (bad request)
+          content:
+            application/json:
+              examples:
+                invalid id:
+                  value:
+                    code: 400
+                    message: invalid user id
+                user not found:
+                  value:
+                    code: 400
+                    message: user not found
+        '500':
+          description: Response for get user information failed (internal server error)
+          content:
+            application/json:
+              example:
+                code: 500
+                message: internal server error
+    put:
+      tags:
+          - User
+      security:
+        - JWTAuth: []
+      summary: How to complete or update user information by id
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+          description: Numeric id of existing user
+      requestBody:
+        content:
+          'multipart/form-data':
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                phone:
+                  type: string
+                password:
+                  type: string
+                avatar:
+                  type: string
+                  format: base64
+            encoding:
+              avatar:
+                contentType: image/png, image/jpeg, image/jpg
+        required: false
+      responses:
+        '200':
+          description: Response for update user information successful
+          content:
+            application/json:
+              example:
+                code: 200
+                data:
+                  id: 1
+                  name: "Bagus Brahmantya"
+                  email: "bagusbrahmantya@mail.com"
+                  phone: "08123456789"
+                  avatar: https://capstone-group3.s3.ap-southeast-1.amazonaws.com/user-1-1644751235.jpg
+                message: success update user
+        '400':
+          description: Response for update user information failed (bad request)
+          content:
+            application/json:
+              examples:
+                invalid user id:
+                  value:
+                    code: 400
+                    message: invalid user id
+                failed binding:
+                  value:
+                    code: 400
+                    message: failed to bind data
+                user not found:
+                  value:
+                    code: 400
+                    message: user not found
+                string contains malicious character:
+                  value:
+                    code: 400
+                    message: input cannot contain forbidden character
+                email contain other than one local and domain name:
+                  value:
+                    code: 400
+                    message: email must contain exactly one local and domain name
+                local name starts or ends with dot:
+                  value:
+                    code: 400
+                    message: local name cannot start or end with dot
+                local name contain consecutive dots:
+                  value:
+                    code: 400
+                    message: local name cannot contain consecutive dots
+                local name contain forbidden character:
+                  value:
+                    code: 400
+                    message: local name cannot contain forbidden characters
+                domain name starts or ends with hyphen:
+                  value:
+                    code: 400
+                    message: domain name cannot start or end with hyphen
+                domain name starts or ends with dot:
+                  value:
+                    code: 400
+                    message: domain name cannot start or end with dot
+                domain name contain underscore:
+                  value:
+                    code: 400
+                    message: domain name cannot contain underscore
+                domain name contain forbidden character:
+                  value:
+                    code: 400
+                    message: domain name cannot contain forbidden characters
+                domain name does not have top domain:
+                  value:
+                    code: 400
+                    message: domain name must contain top domain
+                phone number contain forbidden character:
+                  value:
+                    code: 400
+                    message: phone number must contain numbers only
+                phone number too short:
+                  value:
+                    code: 400
+                    message: phone number too short
+                phone number too long:
+                  value:
+                    code: 400
+                    message: phone number too long
+                password contain blank space:
+                  value:
+                    code: 400
+                    message: password contain blank space
+                password too short:
+                  value:
+                    code: 400
+                    message: password must be minimum 6 characters long
+                password lacks lowercase:
+                  value:
+                    code: 400
+                    message: password must contain lowercase
+                password lacks uppercase:
+                  value:
+                    code: 400
+                    message: password must contain UPPERCASE
+                password lacks decimal number:
+                  value:
+                    code: 400
+                    message: password must contain decimal number
+                password lacks symbol:
+                  value:
+                    code: 400
+                    message: password must contain symbols ~!@#$%^&*
+                email already used:
+                  value:
+                    code: 400
+                    message: email already exist
+                phone already used:
+                  value:
+                    code: 400
+                    message: phone already exist
+        '401':
+          description: Response for update user information failed (unauthorized)
+          content:
+            application/json:
+              examples:
+                missing or malformed jwt:
+                  value:
+                    code: 401
+                    message: missing or malformed jwt
+                id login not same with id in path:
+                  value:
+                    code: 401
+                    message: unauthorized
+        '500':
+          description: Response for update user information failed (internal server errror)
+          content:
+            application/json:
+              examples:
+                failed hashing password:
+                  value:
+                    code: 500
+                    message: failed to hash password
+                internal server error:
+                  value:
+                    code: 500
+                    message: internal server error
+components:
+  securitySchemes:
+    JWTAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

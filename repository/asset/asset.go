@@ -19,9 +19,11 @@ func New(db *sql.DB) *AssetRepository {
 func (ur *AssetRepository) GetAll(page int) (assets []_entity.AssetSimplified, code int, err error) {
 	var totalAsset int
 	stmt, err := ur.db.Prepare(`
-	select a.id, a.code_asset,a.image, a.name,a.short_name,a.status,b.name,a.description,a.quantity 
+	select distinct a.id, a.code_asset,a.image, a.name,a.short_name,a.status,b.name,a.description,a.quantity 
 	from assets a join categories b ON a.category_id = b.id
+	group by a.name
 	limit ? offset ?
+
 	`)
 
 	if err != nil {
@@ -30,7 +32,7 @@ func (ur *AssetRepository) GetAll(page int) (assets []_entity.AssetSimplified, c
 		return assets, code, err
 	}
 
-	limit := 3
+	limit := 8
 	offset := (page - 1) * limit
 
 	res, err := stmt.Query(limit, offset)
@@ -284,11 +286,13 @@ func (ur *AssetRepository) Update(assetData _entity.Asset) (updateAsset _entity.
 		code, err = http.StatusBadRequest, errors.New("asset not updated")
 		return updateAsset, code, err
 	}
-
+	if updateAsset.Status == "Asset Uder Maintenance" {
+		updateAsset.Status = "Asset Uder Maintenance"
+		updateAsset.Status = assetData.Status
+	}
 	updateAsset.Id = assetData.Id
 	updateAsset.Image = assetData.Image
 	updateAsset.Name = assetData.Name
-	updateAsset.Status = assetData.Status
 	updateAsset.Description = assetData.Description
 	updateAsset.Quantity = assetData.Quantity
 	return updateAsset, http.StatusOK, nil
