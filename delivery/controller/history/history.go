@@ -96,13 +96,13 @@ func (hc HistoryController) GetAllUsageHistoryOfAsset() echo.HandlerFunc {
 		short_name := c.Param("short_name")
 
 		// calling repository
-		histories, code, err := hc.repository.GetAllUsageHistoryOfAsset(short_name)
+		asset, users, code, err := hc.repository.GetAllUsageHistoryOfAsset(short_name)
 
 		// detect failure in repository
 		if err != nil {
 			return c.JSON(code, _common.NoDataResponse(code, err.Error()))
 		}
 
-		return c.JSON(http.StatusOK, _common.GetAllUsageHistoryOfAsset(histories))
+		return c.JSON(http.StatusOK, _common.GetAllUsageHistoryOfAsset(asset, users))
 	}
 }

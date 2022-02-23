@@ -338,7 +338,7 @@ paths:
           required: true
           description: Numeric id of existing user
         - in: query
-          name: p
+          name: page
           schema:
             type: integer
           required: false
@@ -507,11 +507,11 @@ paths:
                   - id: 1
                     user_name: "Bagus Brahmantya"
                     request_date: "2022-02-20 09:00:00.000"
-                    status: "borrowed"
+                    status: "Borrowed"
                   - id: 2
                     user_name: "Esmining Mitarum"
                     request_date: "2022-02-10 09:00:00.000"
-                    status: "returned"
+                    status: "Rreturned"
                 message: success get all histories
         '400':
           description: Response for get list of past users of asset failed (bad request)
@@ -524,15 +524,9 @@ paths:
           description: Response for get list of past users of asset failed (unauthorized)
           content:
             application/json:
-              examples:
-                missing or malformed jwt:
-                  value:
-                    code: 401
-                    message: missing or malformed jwt
-                id login not same with id in path:
-                  value:
-                    code: 401
-                    message: unauthorized
+              example:
+                code: 401
+                message: missing or malformed jwt
         '500':
           description: Response for get list of past users of asset failed (internal server errror)
           content:

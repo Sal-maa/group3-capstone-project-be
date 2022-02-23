@@ -146,18 +146,21 @@ func (hr *HistoryRepository) GetDetailRequestHistoryByRequestId(request_id int) 
 	return history, http.StatusOK, nil
 }
 
-func (hr *HistoryRepository) GetAllUsageHistoryOfAsset(short_name string) (histories []_entity.AssetUsageHistory, code int, err error) {
-	if code, err = hr.checkAssetExistence(short_name); err != nil {
-		return histories, code, err
+func (hr *HistoryRepository) GetAllUsageHistoryOfAsset(short_name string) (asset _entity.AssetInfo, users []_entity.AssetUser, code int, err error) {
+	asset, code, err = hr.getAssetDetail(short_name)
+
+	if err != nil {
+		return asset, users, code, err
+	}
+
+	if asset == (_entity.AssetInfo{}) {
+		code, err = http.StatusBadRequest, errors.New("request not found")
+		return asset, users, code, err
 	}
 
 	stmt, err := hr.db.Prepare(`
-		SELECT b.id, c.name, a.name, a.image, u.name, b.request_time, b.activity
+		SELECT u.name, b.request_time, b.activity
 		FROM borrowORreturn_requests b
-		JOIN assets a
-		ON b.asset_id = a.id
-		JOIN categories c
-		ON a.category_id = c.id
 		JOIN users u
 		ON b.user_id = u.id
 		WHERE b.deleted_at IS NULL
@@ -168,7 +171,7 @@ func (hr *HistoryRepository) GetAllUsageHistoryOfAsset(short_name string) (histo
 	if err != nil {
 		log.Println(err)
 		code, err = http.StatusInternalServerError, errors.New("internal server error")
-		return histories, code, err
+		return asset, users, code, err
 	}
 
 	defer stmt.Close()
@@ -178,34 +181,34 @@ func (hr *HistoryRepository) GetAllUsageHistoryOfAsset(short_name string) (histo
 	if err != nil {
 		log.Println(err)
 		code, err = http.StatusInternalServerError, errors.New("internal server error")
-		return histories, code, err
+		return asset, users, code, err
 	}
 
 	defer res.Close()
 
 	for res.Next() {
-		history := _entity.AssetUsageHistory{}
+		user := _entity.AssetUser{}
 
-		if err := res.Scan(&history.Id, &history.Category, &history.AssetName, &history.AssetImage, &history.UserName, &history.RequestDate, &history.Status); err != nil {
+		if err := res.Scan(&user.Name, &user.RequestDate, &user.Status); err != nil {
 			log.Println(err)
 			code, err = http.StatusInternalServerError, errors.New("internal server error")
-			return histories, code, err
+			return asset, users, code, err
 		}
 
-		history.AssetImage = fmt.Sprintf("https://capstone-group3.s3.ap-southeast-1.amazonaws.com/%s", history.AssetImage)
-		history.Status += "ed"
+		user.Status += "ed"
 
-		histories = append(histories, history)
+		users = append(users, user)
 	}
 
-	return histories, http.StatusOK, nil
+	return asset, users, http.StatusOK, nil
 }
 
 func (hr *HistoryRepository) checkUserExistence(user_id int) (code int, err error) {
 	stmt, err := hr.db.Prepare(`
 		SELECT id
 		FROM users
-		WHERE deleted_at IS NULL AND id = ?
+		WHERE deleted_at IS NULL
+		  AND id = ?
 	`)
 
 	if err != nil {
@@ -273,17 +276,20 @@ func (hr *HistoryRepository) getHistoryCount(user_id int) (count int, code int, 
 	return count, http.StatusOK, nil
 }
 
-func (hr *HistoryRepository) checkAssetExistence(short_name string) (code int, err error) {
+func (hr *HistoryRepository) getAssetDetail(short_name string) (asset _entity.AssetInfo, code int, err error) {
 	stmt, err := hr.db.Prepare(`
-		SELECT id
-		FROM assets
-		WHERE deleted_at IS NULL AND short_name = ?
+		SELECT c.name, a.name, a.image
+		FROM assets a
+		JOIN categories c
+		ON a.category_id = c.id
+		WHERE deleted_at IS NULL
+		  AND short_name = ?
 	`)
 
 	if err != nil {
 		log.Println(err)
 		code, err = http.StatusInternalServerError, errors.New("internal server error")
-		return code, err
+		return asset, code, err
 	}
 
 	defer stmt.Close()
@@ -293,24 +299,31 @@ func (hr *HistoryRepository) checkAssetExistence(short_name string) (code int, e
 	if err != nil {
 		log.Println(err)
 		code, err = http.StatusInternalServerError, errors.New("internal server error")
-		return code, err
+		return asset, code, err
 	}
 
 	defer res.Close()
 
-	if !res.Next() {
-		code, err = http.StatusBadRequest, errors.New("asset not exist")
-		return code, err
+	if res.Next() {
+		if err = res.Scan(&asset.Category, &asset.AssetName, &asset.AssetImage); err != nil {
+			log.Println(err)
+			code, err = http.StatusInternalServerError, errors.New("internal server error")
+			return asset, code, err
+		}
 	}
 
-	return http.StatusOK, nil
+	asset.AssetImage = fmt.Sprintf("https://capstone-group3.s3.ap-southeast-1.amazonaws.com/%s", asset.AssetImage)
+
+	return asset, http.StatusOK, nil
 }
 
 func (hr *HistoryRepository) getAssetStock(short_name string) (stock int, err error) {
 	stmt, err := hr.db.Prepare(`
 		SELECT COUNT(id)
 		FROM assets
-		WHERE deleted_at IS NULL AND status = 'Available' AND short_name = ?
+		WHERE deleted_at IS NULL
+		  AND status = 'Available'
+		  AND short_name = ?
 		GROUP BY short_name
 	`)
 
