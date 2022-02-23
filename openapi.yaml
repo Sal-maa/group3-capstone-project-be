@@ -323,6 +323,223 @@ paths:
                   value:
                     code: 500
                     message: internal server error
+  /histories/users/{user_id}:
+    get:
+      tags:
+        - History
+      security:
+        - JWTAuth: []
+      summary: How to get all previous request history of user
+      parameters:
+        - in: path
+          name: user_id
+          schema:
+            type: integer
+          required: true
+          description: Numeric id of existing user
+        - in: query
+          name: p
+          schema:
+            type: integer
+          required: false
+          description: Numeric page
+      responses:
+        '200':
+          description: Response for get all request history of user successful
+          content:
+            application/json:
+              example:
+                code: 200
+                data:
+                  count: 2
+                  histories:
+                  - id: 1
+                    category: "Computer"
+                    asset_name: "Dell Vostro 3490"
+                    asset_image: https://capstone-group3.s3.ap-southeast-1.amazonaws.com/asset-1-1645359981.png
+                    request_date: "2022-02-20 09:00:00.000"
+                    activity_type: "Borrowing Asset"
+                  - id: 2
+                    category: "Printer"
+                    asset_name: "HP LaserJet LP300"
+                    asset_image: https://capstone-group3.s3.ap-southeast-1.amazonaws.com/asset-2-1645359982.png
+                    request_date: "2022-02-20 09:00:00.000"
+                    activity_type: "Borrowing Asset"
+                message: success get all histories
+        '400':
+          description: Response for get all request history of user failed (bad request)
+          content:
+            application/json:
+              examples:
+                invalid user id:
+                  value:
+                    code: 400
+                    message: invalid user id
+                invalid page number:
+                  value:
+                    code: 400
+                    message: invalid page number
+                user not exist:
+                  value:
+                    code: 400
+                    message: user not found
+        '401':
+          description: Response for get all request history of user failed (unauthorized)
+          content:
+            application/json:
+              examples:
+                missing or malformed jwt:
+                  value:
+                    code: 401
+                    message: missing or malformed jwt
+                id login not same with id in path:
+                  value:
+                    code: 401
+                    message: unauthorized
+        '500':
+          description: Response for get all request history of user failed (internal server errror)
+          content:
+            application/json:
+              example:
+                code: 500
+                message: internal server error
+  /histories/users/{user_id}/{request_id}:
+    get:
+      tags:
+        - History
+      security:
+        - JWTAuth: []
+      summary: How to get detailed past request of user
+      parameters:
+        - in: path
+          name: user_id
+          schema:
+            type: integer
+          required: true
+          description: Numeric id of existing user
+        - in: path
+          name: request_id
+          schema:
+            type: integer
+          required: true
+          description: Numeric id of past request
+      responses:
+        '200':
+          description: Response for get detailed past request of user successful
+          content:
+            application/json:
+              example:
+                code: 200
+                data:
+                  id: 1
+                  category: "Computer"
+                  asset_name: "Dell Vostro 3490"
+                  asset_image: https://capstone-group3.s3.ap-southeast-1.amazonaws.com/asset-1-1645359981.png
+                  stock_left: 20
+                  user_name: "Bagus Brahmantya"
+                  request_date: "2022-02-20 09:00:00.000"
+                  return_date: "2022-03-20 09:00:00.000"
+                  status: "successfully returned"
+                message: success get detail history
+        '400':
+          description: Response for get detailed past request of user failed (bad request)
+          content:
+            application/json:
+              examples:
+                invalid user id:
+                  value:
+                    code: 400
+                    message: invalid user id
+                invalid page number:
+                  value:
+                    code: 400
+                    message: invalid request id
+                user not exist:
+                  value:
+                    code: 400
+                    message: request not found
+        '401':
+          description: Response for get detailed past request of user failed (unauthorized)
+          content:
+            application/json:
+              examples:
+                missing or malformed jwt:
+                  value:
+                    code: 401
+                    message: missing or malformed jwt
+                id login not same with id in path:
+                  value:
+                    code: 401
+                    message: unauthorized
+        '500':
+          description: Response for get detailed past request of user failed (internal server errror)
+          content:
+            application/json:
+              example:
+                code: 500
+                message: internal server error
+  /histories/assets/{short_name}:
+    get:
+      tags:
+        - History
+      security:
+        - JWTAuth: []
+      summary: How to get list of past users of asset
+      parameters:
+        - in: path
+          name: short_name
+          schema:
+            type: string
+          required: true
+          description: unique code of existing asset
+      responses:
+        '200':
+          description: Response for get list of past users of asset successful
+          content:
+            application/json:
+              example:
+                code: 200
+                data:
+                  category: "Computer"
+                  asset_name: "Dell Vostro 3490"
+                  asset_image: https://capstone-group3.s3.ap-southeast-1.amazonaws.com/asset-1-1645359981.png
+                  users:
+                  - id: 1
+                    user_name: "Bagus Brahmantya"
+                    request_date: "2022-02-20 09:00:00.000"
+                    status: "borrowed"
+                  - id: 2
+                    user_name: "Esmining Mitarum"
+                    request_date: "2022-02-10 09:00:00.000"
+                    status: "returned"
+                message: success get all histories
+        '400':
+          description: Response for get list of past users of asset failed (bad request)
+          content:
+            application/json:
+              example:
+                code: 400
+                message: "asset not exist"
+        '401':
+          description: Response for get list of past users of asset failed (unauthorized)
+          content:
+            application/json:
+              examples:
+                missing or malformed jwt:
+                  value:
+                    code: 401
+                    message: missing or malformed jwt
+                id login not same with id in path:
+                  value:
+                    code: 401
+                    message: unauthorized
+        '500':
+          description: Response for get list of past users of asset failed (internal server errror)
+          content:
+            application/json:
+              example:
+                code: 500
+                message: internal server error
 components:
   securitySchemes:
     JWTAuth:

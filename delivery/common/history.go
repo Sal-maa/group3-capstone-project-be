@@ -5,15 +5,18 @@ import (
 	"net/http"
 )
 
-func GetAllUsageHistoryOfUserResponse(histories []_entity.UserUsageHistorySimplified) map[string]interface{} {
+func GetAllRequestHistoryOfUserResponse(histories []_entity.UserRequestHistorySimplified, count int) map[string]interface{} {
 	return map[string]interface{}{
 		"code":    http.StatusOK,
 		"message": "success get all histories",
-		"data":    histories,
+		"data": map[string]interface{}{
+			"count":     count,
+			"histories": histories,
+		},
 	}
 }
 
-func GetDetailUsageHistoryByRequestId(history _entity.UserUsageHistory) map[string]interface{} {
+func GetDetailRequestHistoryByRequestId(history _entity.UserRequestHistory) map[string]interface{} {
 	return map[string]interface{}{
 		"code":    http.StatusOK,
 		"message": "success get detail history",

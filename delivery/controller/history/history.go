@@ -19,7 +19,7 @@ func New(history _historyRepo.History) *HistoryController {
 	return &HistoryController{repository: history}
 }
 
-func (hc HistoryController) GetAllUsageHistoryOfUser() echo.HandlerFunc {
+func (hc HistoryController) GetAllRequestHistoryOfUser() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		user_id, err := strconv.Atoi(c.Param("user_id"))
 
@@ -47,18 +47,18 @@ func (hc HistoryController) GetAllUsageHistoryOfUser() echo.HandlerFunc {
 		}
 
 		// calling repository
-		histories, code, err := hc.repository.GetAllUsageHistoryOfUser(user_id, page)
+		count, histories, code, err := hc.repository.GetAllRequestHistoryOfUser(user_id, page)
 
 		// detect failure in repository
 		if err != nil {
 			return c.JSON(code, _common.NoDataResponse(code, err.Error()))
 		}
 
-		return c.JSON(http.StatusOK, _common.GetAllUsageHistoryOfUserResponse(histories))
+		return c.JSON(http.StatusOK, _common.GetAllRequestHistoryOfUserResponse(histories, count))
 	}
 }
 
-func (hc HistoryController) GetDetailUsageHistoryByRequestId() echo.HandlerFunc {
+func (hc HistoryController) GetDetailRequestHistoryByRequestId() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		user_id, err := strconv.Atoi(c.Param("user_id"))
 
@@ -80,14 +80,14 @@ func (hc HistoryController) GetDetailUsageHistoryByRequestId() echo.HandlerFunc 
 		}
 
 		// calling repository
-		history, code, err := hc.repository.GetDetailUsageHistoryByRequestId(request_id)
+		history, code, err := hc.repository.GetDetailRequestHistoryByRequestId(request_id)
 
 		// detect failure in repository
 		if err != nil {
 			return c.JSON(code, _common.NoDataResponse(code, err.Error()))
 		}
 
-		return c.JSON(http.StatusOK, _common.GetDetailUsageHistoryByRequestId(history))
+		return c.JSON(http.StatusOK, _common.GetDetailRequestHistoryByRequestId(history))
 	}
 }
 

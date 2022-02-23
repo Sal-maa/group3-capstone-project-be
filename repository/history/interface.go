@@ -5,7 +5,7 @@ import (
 )
 
 type History interface {
-	GetAllUsageHistoryOfUser(user_id int, page int) (histories []_entity.UserUsageHistorySimplified, code int, err error)
-	GetDetailUsageHistoryByRequestId(request_id int) (history _entity.UserUsageHistory, code int, err error)
+	GetAllRequestHistoryOfUser(user_id int, page int) (count int, histories []_entity.UserRequestHistorySimplified, code int, err error)
+	GetDetailRequestHistoryByRequestId(request_id int) (history _entity.UserRequestHistory, code int, err error)
 	GetAllUsageHistoryOfAsset(short_name string) (histories []_entity.AssetUsageHistory, code int, err error)
 }

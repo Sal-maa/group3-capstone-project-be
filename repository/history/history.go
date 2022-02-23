@@ -18,9 +18,9 @@ func New(db *sql.DB) *HistoryRepository {
 	return &HistoryRepository{db: db}
 }
 
-func (hr *HistoryRepository) GetAllUsageHistoryOfUser(user_id int, page int) (histories []_entity.UserUsageHistorySimplified, code int, err error) {
+func (hr *HistoryRepository) GetAllRequestHistoryOfUser(user_id int, page int) (count int, histories []_entity.UserRequestHistorySimplified, code int, err error) {
 	if code, err = hr.checkUserExistence(user_id); err != nil {
-		return histories, code, err
+		return count, histories, code, err
 	}
 
 	stmt, err := hr.db.Prepare(`
@@ -30,14 +30,17 @@ func (hr *HistoryRepository) GetAllUsageHistoryOfUser(user_id int, page int) (hi
 		ON b.asset_id = a.id
 		JOIN categories c
 		ON a.category_id = c.id
-		WHERE b.deleted_at IS NULL AND b.status = 'Approved by Admin' AND b.activity = 'Return' AND b.user_id = ?
+		WHERE b.deleted_at IS NULL
+		  AND b.status = 'Approved by Admin'
+		  AND b.activity = 'Return'
+		  AND b.user_id = ?
 		LIMIT 5 OFFSET ?
 	`)
 
 	if err != nil {
 		log.Println(err)
 		code, err = http.StatusInternalServerError, errors.New("internal server error")
-		return histories, code, err
+		return count, histories, code, err
 	}
 
 	defer stmt.Close()
@@ -47,18 +50,18 @@ func (hr *HistoryRepository) GetAllUsageHistoryOfUser(user_id int, page int) (hi
 	if err != nil {
 		log.Println(err)
 		code, err = http.StatusInternalServerError, errors.New("internal server error")
-		return histories, code, err
+		return count, histories, code, err
 	}
 
 	defer res.Close()
 
 	for res.Next() {
-		history := _entity.UserUsageHistorySimplified{}
+		history := _entity.UserRequestHistorySimplified{}
 
 		if err := res.Scan(&history.Id, &history.RequestDate, &history.Category, &history.AssetName, &history.AssetImage); err != nil {
 			log.Println(err)
 			code, err = http.StatusInternalServerError, errors.New("internal server error")
-			return histories, code, err
+			return count, histories, code, err
 		}
 
 		history.ActivityType = "Borrowing Asset"
@@ -67,10 +70,16 @@ func (hr *HistoryRepository) GetAllUsageHistoryOfUser(user_id int, page int) (hi
 		histories = append(histories, history)
 	}
 
-	return histories, http.StatusOK, nil
+	count, code, err = hr.getHistoryCount(user_id)
+
+	if err != nil {
+		return count, histories, code, err
+	}
+
+	return count, histories, http.StatusOK, nil
 }
 
-func (hr *HistoryRepository) GetDetailUsageHistoryByRequestId(request_id int) (history _entity.UserUsageHistory, code int, err error) {
+func (hr *HistoryRepository) GetDetailRequestHistoryByRequestId(request_id int) (history _entity.UserRequestHistory, code int, err error) {
 	stmt, err := hr.db.Prepare(`
 		SELECT c.name, a.name, a.image, u.name, b.request_time, b.return_time, b.description, b.short_name
 		FROM borrowORreturn_requests b
@@ -80,7 +89,10 @@ func (hr *HistoryRepository) GetDetailUsageHistoryByRequestId(request_id int) (h
 		ON a.category_id = c.id
 		JOIN users u
 		ON b.user_id = u.id
-		WHERE b.deleted_at IS NULL AND b.status = 'Approved by Admin' AND b.activity = 'Return' AND b.id = ?
+		WHERE b.deleted_at IS NULL
+		  AND b.status = 'Approved by Admin'
+		  AND b.activity = 'Return'
+		  AND b.id = ?
 	`)
 
 	if err != nil {
@@ -111,7 +123,7 @@ func (hr *HistoryRepository) GetDetailUsageHistoryByRequestId(request_id int) (h
 		}
 	}
 
-	if history == (_entity.UserUsageHistory{}) {
+	if history == (_entity.UserRequestHistory{}) {
 		log.Println("request not found")
 		code, err = http.StatusBadRequest, errors.New("request not found")
 		return history, code, err
@@ -148,7 +160,9 @@ func (hr *HistoryRepository) GetAllUsageHistoryOfAsset(short_name string) (histo
 		ON a.category_id = c.id
 		JOIN users u
 		ON b.user_id = u.id
-		WHERE b.deleted_at IS NULL AND b.status = 'Approved by Admin' AND b.asset_id = ?
+		WHERE b.deleted_at IS NULL
+		  AND b.status = 'Approved by Admin'
+		  AND b.asset_id = ?
 	`)
 
 	if err != nil {
@@ -213,11 +227,50 @@ func (hr *HistoryRepository) checkUserExistence(user_id int) (code int, err erro
 	defer res.Close()
 
 	if !res.Next() {
-		code, err = http.StatusBadRequest, errors.New("user not exist")
+		code, err = http.StatusBadRequest, errors.New("user not found")
 		return code, err
 	}
 
 	return http.StatusOK, nil
+}
+
+func (hr *HistoryRepository) getHistoryCount(user_id int) (count int, code int, err error) {
+	stmt, err := hr.db.Prepare(`
+		SELECT COUNT(id)
+		FROM borrowORreturn_requests
+		WHERE deleted_at IS NULL
+		  AND status = 'Approved by Admin'
+		  AND activity = 'Return'
+		  AND user_id = ?
+	`)
+
+	if err != nil {
+		log.Println(err)
+		code, err = http.StatusInternalServerError, errors.New("internal server error")
+		return count, code, err
+	}
+
+	defer stmt.Close()
+
+	res, err := stmt.Query(user_id)
+
+	if err != nil {
+		log.Println(err)
+		code, err = http.StatusInternalServerError, errors.New("internal server error")
+		return count, code, err
+	}
+
+	defer res.Close()
+
+	if res.Next() {
+		if err := res.Scan(&count); err != nil {
+			log.Println(err)
+			code, err = http.StatusInternalServerError, errors.New("internal server error")
+			return count, code, err
+		}
+	}
+
+	return count, http.StatusOK, nil
 }
 
 func (hr *HistoryRepository) checkAssetExistence(short_name string) (code int, err error) {

@@ -42,8 +42,8 @@ func RegisterPath(
 	e.GET("/stats", assetController.GetStats(), _midware.JWTMiddleWare())
 
 	// History
-	e.GET("/histories/users/:user_id", historyController.GetAllUsageHistoryOfUser(), _midware.JWTMiddleWare())
-	e.GET("/histories/users/:user_id/:request_id", historyController.GetDetailUsageHistoryByRequestId(), _midware.JWTMiddleWare())
+	e.GET("/histories/users/:user_id", historyController.GetAllRequestHistoryOfUser(), _midware.JWTMiddleWare())
+	e.GET("/histories/users/:user_id/:request_id", historyController.GetDetailRequestHistoryByRequestId(), _midware.JWTMiddleWare())
 	e.GET("/histories/assets/:short_name", historyController.GetAllUsageHistoryOfAsset(), _midware.JWTMiddleWare())
 
 	// Request
