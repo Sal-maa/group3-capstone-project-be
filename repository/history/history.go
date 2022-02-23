@@ -2,6 +2,7 @@ package history
 
 import (
 	_entity "capstone/be/entity"
+	"fmt"
 
 	"database/sql"
 	"errors"
@@ -17,19 +18,20 @@ func New(db *sql.DB) *HistoryRepository {
 	return &HistoryRepository{db: db}
 }
 
-func (hr *HistoryRepository) GetAllUsageHistoryOfUser(user_id int) (histories []_entity.UserUsageHistorySimplified, code int, err error) {
+func (hr *HistoryRepository) GetAllUsageHistoryOfUser(user_id int, page int) (histories []_entity.UserUsageHistorySimplified, code int, err error) {
 	if code, err = hr.checkUserExistence(user_id); err != nil {
 		return histories, code, err
 	}
 
 	stmt, err := hr.db.Prepare(`
 		SELECT b.id, b.request_time, c.name, a.name, a.image
-		FROM borrow_return_requests b
+		FROM borrowORreturn_requests b
 		JOIN assets a
 		ON b.asset_id = a.id
 		JOIN categories c
 		ON a.category_id = c.id
 		WHERE b.deleted_at IS NULL AND b.status = 'Approved by Admin' AND b.activity = 'Return' AND b.user_id = ?
+		LIMIT 5 OFFSET ?
 	`)
 
 	if err != nil {
@@ -40,7 +42,7 @@ func (hr *HistoryRepository) GetAllUsageHistoryOfUser(user_id int) (histories []
 
 	defer stmt.Close()
 
-	res, err := stmt.Query(user_id)
+	res, err := stmt.Query(user_id, (page-1)*5)
 
 	if err != nil {
 		log.Println(err)
@@ -60,6 +62,7 @@ func (hr *HistoryRepository) GetAllUsageHistoryOfUser(user_id int) (histories []
 		}
 
 		history.ActivityType = "Borrowing Asset"
+		history.AssetImage = fmt.Sprintf("https://capstone-group3.s3.ap-southeast-1.amazonaws.com/%s", history.AssetImage)
 
 		histories = append(histories, history)
 	}
@@ -69,8 +72,8 @@ func (hr *HistoryRepository) GetAllUsageHistoryOfUser(user_id int) (histories []
 
 func (hr *HistoryRepository) GetDetailUsageHistoryByRequestId(request_id int) (history _entity.UserUsageHistory, code int, err error) {
 	stmt, err := hr.db.Prepare(`
-		SELECT c.name, a.name, a.image, u.name, b.request_time, b.return_time, b.description, b.asset_id
-		FROM borrow_return_requests b
+		SELECT c.name, a.name, a.image, u.name, b.request_time, b.return_time, b.description, b.short_name
+		FROM borrowORreturn_requests b
 		JOIN assets a
 		ON b.asset_id = a.id
 		JOIN categories c
@@ -98,10 +101,10 @@ func (hr *HistoryRepository) GetDetailUsageHistoryByRequestId(request_id int) (h
 
 	defer res.Close()
 
-	asset_id := 0
+	short_name := ""
 
 	if res.Next() {
-		if err := res.Scan(&history.Category, &history.AssetName, &history.AssetImage, &history.UserName, &history.RequestDate, &history.ReturnDate, &history.Description, &asset_id); err != nil {
+		if err := res.Scan(&history.Category, &history.AssetName, &history.AssetImage, &history.UserName, &history.RequestDate, &history.ReturnDate, &history.Description, &short_name); err != nil {
 			log.Println(err)
 			code, err = http.StatusInternalServerError, errors.New("internal server error")
 			return history, code, err
@@ -115,9 +118,10 @@ func (hr *HistoryRepository) GetDetailUsageHistoryByRequestId(request_id int) (h
 	}
 
 	history.Id = request_id
+	history.AssetImage = fmt.Sprintf("https://capstone-group3.s3.ap-southeast-1.amazonaws.com/%s", history.AssetImage)
 	history.Status = "Successfully returned"
 
-	stock, err := hr.getAssetStock(asset_id)
+	stock, err := hr.getAssetStock(short_name)
 
 	if err != nil {
 		log.Println(err)
@@ -130,14 +134,14 @@ func (hr *HistoryRepository) GetDetailUsageHistoryByRequestId(request_id int) (h
 	return history, http.StatusOK, nil
 }
 
-func (hr *HistoryRepository) GetAllUsageHistoryOfAsset(asset_id int) (histories []_entity.AssetUsageHistory, code int, err error) {
-	if code, err = hr.checkAssetExistence(asset_id); err != nil {
+func (hr *HistoryRepository) GetAllUsageHistoryOfAsset(short_name string) (histories []_entity.AssetUsageHistory, code int, err error) {
+	if code, err = hr.checkAssetExistence(short_name); err != nil {
 		return histories, code, err
 	}
 
 	stmt, err := hr.db.Prepare(`
 		SELECT b.id, c.name, a.name, a.image, u.name, b.request_time, b.activity
-		FROM borrow_return_requests b
+		FROM borrowORreturn_requests b
 		JOIN assets a
 		ON b.asset_id = a.id
 		JOIN categories c
@@ -155,7 +159,7 @@ func (hr *HistoryRepository) GetAllUsageHistoryOfAsset(asset_id int) (histories 
 
 	defer stmt.Close()
 
-	res, err := stmt.Query(asset_id)
+	res, err := stmt.Query(short_name)
 
 	if err != nil {
 		log.Println(err)
@@ -174,6 +178,7 @@ func (hr *HistoryRepository) GetAllUsageHistoryOfAsset(asset_id int) (histories 
 			return histories, code, err
 		}
 
+		history.AssetImage = fmt.Sprintf("https://capstone-group3.s3.ap-southeast-1.amazonaws.com/%s", history.AssetImage)
 		history.Status += "ed"
 
 		histories = append(histories, history)
@@ -215,11 +220,11 @@ func (hr *HistoryRepository) checkUserExistence(user_id int) (code int, err erro
 	return http.StatusOK, nil
 }
 
-func (hr *HistoryRepository) checkAssetExistence(asset_id int) (code int, err error) {
+func (hr *HistoryRepository) checkAssetExistence(short_name string) (code int, err error) {
 	stmt, err := hr.db.Prepare(`
 		SELECT id
 		FROM assets
-		WHERE deleted_at IS NULL AND id = ?
+		WHERE deleted_at IS NULL AND short_name = ?
 	`)
 
 	if err != nil {
@@ -230,7 +235,7 @@ func (hr *HistoryRepository) checkAssetExistence(asset_id int) (code int, err er
 
 	defer stmt.Close()
 
-	res, err := stmt.Query(asset_id)
+	res, err := stmt.Query(short_name)
 
 	if err != nil {
 		log.Println(err)
@@ -248,43 +253,12 @@ func (hr *HistoryRepository) checkAssetExistence(asset_id int) (code int, err er
 	return http.StatusOK, nil
 }
 
-func (hr *HistoryRepository) getAssetStock(asset_id int) (stock int, err error) {
+func (hr *HistoryRepository) getAssetStock(short_name string) (stock int, err error) {
 	stmt, err := hr.db.Prepare(`
-		SELECT status
-		FROM assets
-		WHERE id = ?
-	`)
-
-	if err != nil {
-		return 0, err
-	}
-
-	defer stmt.Close()
-
-	res, err := stmt.Query(asset_id)
-
-	if err != nil {
-		return 0, err
-	}
-
-	defer res.Close()
-
-	status := ""
-
-	if res.Next() {
-		if err = res.Scan(&status); err != nil {
-			return 0, err
-		}
-	}
-
-	if status == "Asset under maintenance" {
-		return 0, nil
-	}
-
-	stmt, err = hr.db.Prepare(`
 		SELECT COUNT(id)
-		FROM borrow_return_requests
-		WHERE deleted_at IS NULL AND status = 'Waiting approval from Admin' OR status = 'Waiting approval from Manager' OR status = 'Approved by Manager' OR status = 'Approved by Admin' AND b.asset_id = ?
+		FROM assets
+		WHERE deleted_at IS NULL AND status = 'Available' AND short_name = ?
+		GROUP BY short_name
 	`)
 
 	if err != nil {
@@ -293,7 +267,7 @@ func (hr *HistoryRepository) getAssetStock(asset_id int) (stock int, err error) 
 
 	defer stmt.Close()
 
-	res, err = stmt.Query(asset_id)
+	res, err := stmt.Query(short_name)
 
 	if err != nil {
 		return 0, err

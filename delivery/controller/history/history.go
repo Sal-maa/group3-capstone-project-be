@@ -6,6 +6,7 @@ import (
 	_historyRepo "capstone/be/repository/history"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/labstack/echo/v4"
 )
@@ -32,8 +33,21 @@ func (hc HistoryController) GetAllUsageHistoryOfUser() echo.HandlerFunc {
 			return c.JSON(http.StatusUnauthorized, _common.NoDataResponse(http.StatusUnauthorized, "unauthorized"))
 		}
 
+		// pagination
+		p := strings.TrimSpace(c.QueryParam("page"))
+		if p == "" {
+			p = "1"
+		}
+
+		page, err := strconv.Atoi(p)
+
+		// detect invalid page number
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "invalid page number"))
+		}
+
 		// calling repository
-		histories, code, err := hc.repository.GetAllUsageHistoryOfUser(user_id)
+		histories, code, err := hc.repository.GetAllUsageHistoryOfUser(user_id, page)
 
 		// detect failure in repository
 		if err != nil {
@@ -79,15 +93,10 @@ func (hc HistoryController) GetDetailUsageHistoryByRequestId() echo.HandlerFunc 
 
 func (hc HistoryController) GetAllUsageHistoryOfAsset() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		asset_id, err := strconv.Atoi(c.Param("asset_id"))
-
-		// detect invalid parameter
-		if err != nil {
-			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "invalid user id"))
-		}
+		short_name := c.Param("short_name")
 
 		// calling repository
-		histories, code, err := hc.repository.GetAllUsageHistoryOfAsset(asset_id)
+		histories, code, err := hc.repository.GetAllUsageHistoryOfAsset(short_name)
 
 		// detect failure in repository
 		if err != nil {
