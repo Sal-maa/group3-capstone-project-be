@@ -29,6 +29,7 @@ func GetAllAssetsResponse(assets []_entity.Asset) map[string]interface{} {
 		"data":    assets,
 	}
 }
+
 func GetAssetByIdResponse(asset _entity.Asset) map[string]interface{} {
 	return map[string]interface{}{
 		"code":    http.StatusOK,
@@ -59,5 +60,13 @@ func UpdateAssetResponse(product _entity.Asset) map[string]interface{} {
 			"description": product.Description,
 			"quantity":    product.Quantity,
 		},
+	}
+}
+
+func GetStatsResponse(statistics _entity.Statistics) map[string]interface{} {
+	return map[string]interface{}{
+		"code":    http.StatusOK,
+		"message": "success get statistics",
+		"data":    statistics,
 	}
 }

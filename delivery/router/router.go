@@ -31,16 +31,15 @@ func RegisterPath(
 	e.POST("/login", userController.Login())
 
 	// User
-	e.GET("/users", userController.GetAll(), _midware.JWTMiddleWare())
 	e.GET("/users/:id", userController.GetById(), _midware.JWTMiddleWare())
 	e.PUT("/users/:id", userController.Update(), _midware.JWTMiddleWare())
 
 	// Asset
-	e.POST("/assets", assetController.Create())
-
-	e.GET("/assets", assetController.GetAll())
-	e.GET("/assets/:id", assetController.GetById())
-	e.PUT("/assets/:id", assetController.Update())
+	e.POST("/assets", assetController.Create(), _midware.JWTMiddleWare())
+	e.GET("/assets", assetController.GetAll(), _midware.JWTMiddleWare())
+	e.GET("/assets/:id", assetController.GetById(), _midware.JWTMiddleWare())
+	e.PUT("/assets/:id", assetController.Update(), _midware.JWTMiddleWare())
+	e.GET("/stats", assetController.GetStats(), _midware.JWTMiddleWare())
 
 	// History
 	e.GET("/histories/users/:user_id", historyController.GetAllUsageHistoryOfUser(), _midware.JWTMiddleWare())

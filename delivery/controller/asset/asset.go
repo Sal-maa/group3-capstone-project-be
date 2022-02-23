@@ -26,10 +26,10 @@ func New(asset _assetRepo.Asset) *AssetController {
 	return &AssetController{repository: asset}
 }
 
-func (uc AssetController) GetAll() echo.HandlerFunc {
+func (ac AssetController) GetAll() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		// calling repository
-		assets, code, err := uc.repository.GetAll()
+		assets, code, err := ac.repository.GetAll()
 
 		// detect failure in repository
 		if err != nil {
@@ -40,7 +40,7 @@ func (uc AssetController) GetAll() echo.HandlerFunc {
 	}
 }
 
-func (uc AssetController) GetById() echo.HandlerFunc {
+func (ac AssetController) GetById() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		id, err := strconv.Atoi(c.Param("id"))
 
@@ -50,7 +50,7 @@ func (uc AssetController) GetById() echo.HandlerFunc {
 		}
 
 		// calling repository
-		asset, code, err := uc.repository.GetById(id)
+		asset, code, err := ac.repository.GetById(id)
 
 		// detect failure in repository
 		if err != nil {
@@ -61,7 +61,7 @@ func (uc AssetController) GetById() echo.HandlerFunc {
 	}
 }
 
-func (uc AssetController) Create() echo.HandlerFunc {
+func (ac AssetController) Create() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		// role := "Administrator"
 		// println(role)
@@ -129,7 +129,7 @@ func (uc AssetController) Create() echo.HandlerFunc {
 		}
 
 		// calling repository
-		createAsset, code, err := uc.repository.Create(createAssetData)
+		createAsset, code, err := ac.repository.Create(createAssetData)
 
 		// detect failure in repository
 		if err != nil {
@@ -140,7 +140,7 @@ func (uc AssetController) Create() echo.HandlerFunc {
 	}
 }
 
-func (uc AssetController) Update() echo.HandlerFunc {
+func (ac AssetController) Update() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		id, err := strconv.Atoi(c.Param("id"))
 		if err != nil {
@@ -168,7 +168,7 @@ func (uc AssetController) Update() echo.HandlerFunc {
 
 		quantity := assetData.Quantity
 		// calling repository to get existing user data
-		updateAssetData, code, err := uc.repository.GetById(id)
+		updateAssetData, code, err := ac.repository.GetById(id)
 
 		// detect failure in repository
 		if err != nil {
@@ -205,7 +205,7 @@ func (uc AssetController) Update() echo.HandlerFunc {
 		// detect avatar image upload
 
 		// calling repository
-		UpdateAsset, code, err := uc.repository.Update(updateAssetData)
+		UpdateAsset, code, err := ac.repository.Update(updateAssetData)
 
 		// detect failure in repository
 		if err != nil {
@@ -213,5 +213,19 @@ func (uc AssetController) Update() echo.HandlerFunc {
 		}
 
 		return c.JSON(http.StatusOK, _common.UpdateAssetResponse(UpdateAsset))
+	}
+}
+
+func (ac AssetController) GetStats() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// calling repository
+		statistics, code, err := ac.repository.GetStats()
+
+		// detect failure in repository
+		if err != nil {
+			return c.JSON(code, _common.NoDataResponse(code, err.Error()))
+		}
+
+		return c.JSON(http.StatusOK, _common.GetStatsResponse(statistics))
 	}
 }

@@ -170,50 +170,6 @@ func (ur *UserRepository) GetById(id int) (user _entity.User, code int, err erro
 	return user, http.StatusOK, nil
 }
 
-func (ur *UserRepository) GetAll() (users []_entity.UserSimplified, code int, err error) {
-	stmt, err := ur.db.Prepare(`
-		SELECT u.id, d.name, u.role, u.name, u.email, u.phone, u.gender, u.address, u.avatar
-		FROM users u
-		JOIN divisions d
-		ON u.division_id = d.id
-		WHERE u.deleted_at IS NULL
-	`)
-
-	if err != nil {
-		log.Println(err)
-		code, err = http.StatusInternalServerError, errors.New("internal server error")
-		return users, code, err
-	}
-
-	defer stmt.Close()
-
-	res, err := stmt.Query()
-
-	if err != nil {
-		log.Println(err)
-		code, err = http.StatusInternalServerError, errors.New("internal server error")
-		return users, code, err
-	}
-
-	defer res.Close()
-
-	for res.Next() {
-		user := _entity.UserSimplified{}
-
-		if err := res.Scan(&user.Id, &user.Division, &user.Role, &user.Name, &user.Email, &user.Phone, &user.Gender, &user.Address, &user.Avatar); err != nil {
-			log.Println(err)
-			code, err = http.StatusInternalServerError, errors.New("internal server error")
-			return users, code, err
-		}
-
-		user.Avatar = fmt.Sprintf("https://capstone-group3.s3.ap-southeast-1.amazonaws.com/%s", user.Avatar)
-
-		users = append(users, user)
-	}
-
-	return users, http.StatusOK, nil
-}
-
 func (ur *UserRepository) Update(userData _entity.User) (updatedUser _entity.UserSimplified, code int, err error) {
 	id, err := ur.checkEmailExistence(userData.Email)
 
