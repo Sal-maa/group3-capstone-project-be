@@ -16,12 +16,13 @@ type AssetRepository struct {
 func New(db *sql.DB) *AssetRepository {
 	return &AssetRepository{db: db}
 }
-func (ur *AssetRepository) GetAll() (assets []_entity.Asset, code int, err error) {
-	stmt, err := ur.db.Prepare(`
-	select a.id, a.image, a.name,a.status,a.category_id,
-	a.description,a.quantity 
-	from assets a JOIN 
-	categories b ON a.category_id = b.id
+
+func (ar *AssetRepository) GetAll() (assets []_entity.Asset, code int, err error) {
+	stmt, err := ar.db.Prepare(`
+		SELECT a.id, a.image, a.name, a.status, a.category_id, a.description, a.quantity 
+		FROM assets a
+		JOIN categories c
+		ON a.category_id = c.id
 	`)
 
 	if err != nil {
@@ -59,11 +60,11 @@ func (ur *AssetRepository) GetAll() (assets []_entity.Asset, code int, err error
 	return assets, http.StatusOK, nil
 }
 
-func (ur AssetRepository) Create(assetData _entity.Asset) (createdAsset _entity.Asset, code int, err error) {
-	stmt, err := ur.db.Prepare(`
-	INSERT INTO assets (image, name,status,category_id,description,quantity)
-	VALUES (?, ?, ?, ?, ?, ?)
-`)
+func (ar AssetRepository) Create(assetData _entity.Asset) (createdAsset _entity.Asset, code int, err error) {
+	stmt, err := ar.db.Prepare(`
+		INSERT INTO assets (image, name,status,category_id,description,quantity)
+		VALUES (?, ?, ?, ?, ?, ?)
+	`)
 
 	if err != nil {
 		log.Println(err)
@@ -107,13 +108,13 @@ func (ur AssetRepository) Create(assetData _entity.Asset) (createdAsset _entity.
 	return createdAsset, http.StatusOK, nil
 }
 
-func (ur *AssetRepository) GetById(id int) (asset _entity.Asset, code int, err error) {
-	stmt, err := ur.db.Prepare(`
-	select a.id, a.image, a.name,a.status,a.category_id,
-	a.description,a.quantity 
-	from assets a JOIN 
-	categories b ON a.category_id = b.id
-	where a.deleted_at IS NULL AND a.id = ?
+func (ar *AssetRepository) GetById(id int) (asset _entity.Asset, code int, err error) {
+	stmt, err := ar.db.Prepare(`
+		SELECT a.id, a.image, a.name, a.status, a.category_id, a.description, a.quantity 
+		FROM assets a
+		JOIN categories c
+		ON a.category_id = c.id
+		WHERE a.deleted_at IS NULL AND a.id = ?
 	`)
 
 	if err != nil {
@@ -155,8 +156,8 @@ func (ur *AssetRepository) GetById(id int) (asset _entity.Asset, code int, err e
 	return asset, http.StatusOK, nil
 }
 
-func (ur *AssetRepository) Update(assetData _entity.Asset) (updateAsset _entity.Asset, code int, err error) {
-	stmt, err := ur.db.Prepare(`
+func (ar *AssetRepository) Update(assetData _entity.Asset) (updateAsset _entity.Asset, code int, err error) {
+	stmt, err := ar.db.Prepare(`
 		UPDATE assets
 		SET image = ?, name = ?, status = ?, description = ?,
 		quantity = ?, updated_at = CURRENT_TIMESTAMP
@@ -200,4 +201,53 @@ func (ur *AssetRepository) Update(assetData _entity.Asset) (updateAsset _entity.
 	updateAsset.Description = assetData.Description
 	updateAsset.Quantity = assetData.Quantity
 	return updateAsset, http.StatusOK, nil
+}
+
+func (ar *AssetRepository) GetStats() (statistics _entity.Statistics, code int, err error) {
+	stmt, err := ar.db.Prepare(`
+		SELECT status, count(status)
+		FROM assets
+		GROUP BY status
+	`)
+
+	if err != nil {
+		log.Println(err)
+		code, err = http.StatusInternalServerError, errors.New("internal server error")
+		return statistics, code, err
+	}
+
+	defer stmt.Close()
+
+	res, err := stmt.Query()
+
+	if err != nil {
+		log.Println(err)
+		code, err = http.StatusInternalServerError, errors.New("internal server error")
+		return statistics, code, err
+	}
+
+	defer res.Close()
+
+	for res.Next() {
+		status, count := "", 0
+
+		if err := res.Scan(&status, &count); err != nil {
+			log.Println(err)
+			code, err = http.StatusInternalServerError, errors.New("internal server error")
+			return statistics, code, err
+		}
+
+		switch status {
+		case "Asset Under Maintenance":
+			statistics.UnderMaintenance = count
+		case "Available":
+			statistics.Available = count
+		case "Borrowed":
+			statistics.Borrowed = count
+		default:
+			log.Println("there exist illegal status")
+		}
+	}
+
+	return statistics, http.StatusOK, nil
 }

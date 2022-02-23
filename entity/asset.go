@@ -34,3 +34,10 @@ type UpdateAsset struct {
 	Description string `json:"description" form:"description"`
 	Quantity    int    `json:"quantity" form:"quantity"`
 }
+
+type Statistics struct {
+	TotalAsset       int `json:"total_asset" form:"total_asset"`
+	UnderMaintenance int `json:"under_maintenance" form:"under_maintenance"`
+	Borrowed         int `json:"borrowed" form:"borrowed"`
+	Available        int `json:"available" form:"available"`
+}
