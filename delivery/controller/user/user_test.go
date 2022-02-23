@@ -212,46 +212,6 @@ func TestGetByIdSuccess(t *testing.T) {
 	})
 }
 
-func TestGetAllSuccess(t *testing.T) {
-	t.Run("TestGetAllSuccess", func(t *testing.T) {
-		request := httptest.NewRequest(http.MethodGet, "/", nil)
-
-		response := httptest.NewRecorder()
-
-		e := echo.New()
-
-		context := e.NewContext(request, response)
-		context.SetPath("/users")
-
-		userController := New(mockRepoSuccess{})
-		userController.GetAll()(context)
-
-		actual := map[string]interface{}{}
-		body := response.Body.String()
-		json.Unmarshal([]byte(body), &actual)
-
-		expected := map[string]interface{}{
-			"code":    float64(http.StatusOK),
-			"message": "success get all users",
-			"data": []interface{}{
-				map[string]interface{}{
-					"id":       float64(1),
-					"name":     "Salmaa",
-					"division": "Human Capital",
-					"role":     "Manager",
-					"email":    "salma@sirclo.com",
-					"phone":    "08123456789",
-					"gender":   "Female",
-					"address":  "Jl. Sudirman No. 1, Tebet, Jakarta Selatan",
-					"avatar":   "https://capstone-group3.s3.ap-southeast-1.amazonaws.com/default_avatar.png",
-				},
-			},
-		}
-
-		assert.Equal(t, expected, actual)
-	})
-}
-
 func TestUpdateSuccess(t *testing.T) {
 	t.Run("TestUpdateSuccess", func(t *testing.T) {
 		token, _, _ := _midware.CreateToken(1, "Manager")
@@ -1197,33 +1157,6 @@ func TestGetByIdFailRepo(t *testing.T) {
 
 		userController := New(mockRepoFail{})
 		userController.GetById()(context)
-
-		actual := map[string]interface{}{}
-		body := response.Body.String()
-		json.Unmarshal([]byte(body), &actual)
-
-		expected := map[string]interface{}{
-			"code":    float64(http.StatusInternalServerError),
-			"message": "internal server error",
-		}
-
-		assert.Equal(t, expected, actual)
-	})
-}
-
-func TestGetAllFailRepo(t *testing.T) {
-	t.Run("TestGetAllFailRepo", func(t *testing.T) {
-		request := httptest.NewRequest(http.MethodGet, "/", nil)
-
-		response := httptest.NewRecorder()
-
-		e := echo.New()
-
-		context := e.NewContext(request, response)
-		context.SetPath("/users")
-
-		userController := New(mockRepoFail{})
-		userController.GetAll()(context)
 
 		actual := map[string]interface{}{}
 		body := response.Body.String()
