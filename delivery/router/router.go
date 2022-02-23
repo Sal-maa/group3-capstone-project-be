@@ -37,7 +37,5 @@ func RegisterPath(
 	e.POST("/assets", assetController.Create(), _midware.JWTMiddleWare())
 	e.GET("/assets", assetController.GetAll())
 	e.GET("/assets/:category", assetController.GetAssetByCategory())
-
-	// e.GET("/assets/:id", assetController.GetById())
 	e.PUT("/assets/:id", assetController.Update(), _midware.JWTMiddleWare())
 }
