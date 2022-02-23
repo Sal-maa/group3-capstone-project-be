@@ -46,31 +46,31 @@ func (rr *RequestRepository) GetAssetId(newReq _entity.CreateBorrow) (id int, er
 	return id, nil
 }
 
-func (rr *RequestRepository) CheckMaintenance(reqData _entity.Borrow) (asset _entity.Asset, err error) {
+func (rr *RequestRepository) CheckMaintenance(assetId int) (statAsset string, err error) {
 	stmt, err := rr.db.Prepare(`
-		SELECT status FROM assets WHERE deleted_at IS NULL AND name = ?
+		SELECT status FROM assets WHERE deleted_at IS NULL AND id = ?
 	`)
 
 	if err != nil {
-		return asset, err
+		return statAsset, err
 	}
 
 	defer stmt.Close()
 
-	res, err := stmt.Query(reqData.Asset.Name)
+	res, err := stmt.Query(assetId)
 
 	if err != nil {
-		return asset, err
+		return statAsset, err
 	}
 
 	defer res.Close()
 
 	if res.Next() {
-		if err := res.Scan(&asset.Status); err != nil {
-			return asset, err
+		if err := res.Scan(&statAsset); err != nil {
+			return statAsset, err
 		}
 	}
-	return asset, nil
+	return statAsset, nil
 }
 
 func (rr *RequestRepository) Borrow(reqData _entity.Borrow) (_entity.Borrow, error) {

@@ -6,7 +6,7 @@ import (
 
 type Request interface {
 	GetAssetId(newReq _entity.CreateBorrow) (id int, err error)
-	CheckMaintenance(reqData _entity.Borrow) (asset _entity.Asset, err error)
+	CheckMaintenance(assetId int) (statAsset string, err error)
 	Borrow(reqData _entity.Borrow) (_entity.Borrow, error)
 	GetCategoryId(newReq _entity.CreateProcure) (id int, err error)
 	AddCategory(category string) (string, error)
