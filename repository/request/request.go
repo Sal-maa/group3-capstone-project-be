@@ -120,6 +120,23 @@ func (rr *RequestRepository) GetCategoryId(newReq _entity.CreateProcure) (id int
 	return id, nil
 }
 
+func (rr *RequestRepository) AddCategory(category string) (string, error) {
+	statement, err := rr.db.Prepare(`
+	INSERT INTO 
+		categories (name) 
+	VALUES(?)`)
+	if err != nil {
+		log.Println(err)
+		return category, err
+	}
+
+	defer statement.Close()
+
+	_, err = statement.Exec(category)
+
+	return category, err
+}
+
 func (rr *RequestRepository) Procure(reqData _entity.Procure) (_entity.Procure, error) {
 	statement, err := rr.db.Prepare("INSERT INTO `procurement_requests` (updated_at, user_id, category_id, image, activity, request_time, status, description) VALUES(?,?,?,?,?,?,?,?)")
 	if err != nil {

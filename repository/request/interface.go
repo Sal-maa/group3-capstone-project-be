@@ -9,6 +9,7 @@ type Request interface {
 	CheckMaintenance(reqData _entity.Borrow) (asset _entity.Asset, err error)
 	Borrow(reqData _entity.Borrow) (_entity.Borrow, error)
 	GetCategoryId(newReq _entity.CreateProcure) (id int, err error)
+	AddCategory(category string) (string, error)
 	Procure(reqData _entity.Procure) (_entity.Procure, error)
 	GetUserDivision(id int) (divId int, err error)
 	GetBorrowById(id int) (req _entity.Borrow, err error)
