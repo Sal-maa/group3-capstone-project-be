@@ -70,6 +70,43 @@ func (rc RequestController) Borrow() echo.HandlerFunc {
 	}
 }
 
+func (rc RequestController) CancelBorrow() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		idReq, err := strconv.Atoi(c.Param("id"))
+		// detect invalid parameter
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "invalid request id"))
+		}
+
+		// check user login and user request maker
+		idLogin := middleware.ExtractId(c)
+
+		request, err := rc.repository.GetBorrowById(idReq)
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed get request by id"))
+		}
+		if idLogin != request.User.Id {
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "you don't have permission"))
+		}
+
+		newReq := _entity.UpdateBorrow{}
+		// handle failure in binding
+		if err := c.Bind(&newReq); err != nil {
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed to bind data"))
+		}
+		reqData := _entity.Borrow{}
+		reqData.Id = idReq
+		reqData.Status = newReq.Status
+
+		_, err = rc.repository.UpdateBorrow(reqData)
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed update request"))
+		}
+
+		return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "Success update request"))
+	}
+}
+
 func (rc RequestController) Procure() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		idLogin := middleware.ExtractId(c)
@@ -141,6 +178,43 @@ func (rc RequestController) Procure() echo.HandlerFunc {
 		}
 
 		return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "Success create request"))
+	}
+}
+
+func (rc RequestController) CancelProcure() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		idReq, err := strconv.Atoi(c.Param("id"))
+		// detect invalid parameter
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "invalid request id"))
+		}
+
+		// check user login and user request maker
+		idLogin := middleware.ExtractId(c)
+
+		request, err := rc.repository.GetProcureById(idReq)
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed get request by id"))
+		}
+		if idLogin != request.User.Id {
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "you don't have permission"))
+		}
+
+		newReq := _entity.UpdateProcure{}
+		// handle failure in binding
+		if err := c.Bind(&newReq); err != nil {
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed to bind data"))
+		}
+		reqData := _entity.Procure{}
+		reqData.Id = idReq
+		reqData.Status = newReq.Status
+
+		_, err = rc.repository.UpdateProcure(reqData)
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed update request"))
+		}
+
+		return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "Success update request"))
 	}
 }
 
