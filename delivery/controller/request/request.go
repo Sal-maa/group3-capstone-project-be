@@ -32,41 +32,81 @@ func (rc RequestController) Borrow() echo.HandlerFunc {
 		if err := c.Bind(&newReq); err != nil {
 			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed to bind data"))
 		}
-		reqData := _entity.Borrow{}
-		// prepare input string
-		reqData.User.Id = idLogin
 
-		// handle get asset id
-		assetId, err := rc.repository.GetAssetId(newReq)
-		if err != nil {
-			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed to check asset id"))
-		}
-		if assetId == 0 {
-			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "asset not found"))
-		}
-		reqData.Asset.Id = assetId
+		role := middleware.ExtractRole(c)
+		switch role {
+		case "Administrator":
+			reqData := _entity.Borrow{}
+			// prepare input string
+			reqData.User.Id = idLogin
 
-		// handle maintenance status
-		asset, err := rc.repository.CheckMaintenance(reqData)
-		if err != nil {
-			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed to check asset status"))
-		}
-		if asset.Status == "Asset Under Maintenance" {
-			return c.JSON(http.StatusForbidden, _common.NoDataResponse(http.StatusForbidden, "Sorry, asset is under maintenace"))
-		}
-		reqData.Activity = newReq.Activity
-		reqData.RequestTime = newReq.RequestTime
-		reqData.ReturnTime = newReq.ReturnTime
-		reqData.Status = "Waiting Approval"
-		reqData.Description = newReq.Description
-		reqData.UpdatedAt = time.Now()
+			// handle get asset id
+			assetId, err := rc.repository.GetAssetId(newReq)
+			if err != nil {
+				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed to check asset id"))
+			}
+			if assetId == 0 {
+				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "asset not found"))
+			}
+			reqData.Asset.Id = assetId
 
-		_, err = rc.repository.Borrow(reqData)
-		if err != nil {
-			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed create request"))
-		}
+			// handle maintenance status
+			statAsset, err := rc.repository.CheckMaintenance(assetId)
+			if err != nil {
+				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed to check asset status"))
+			}
+			if statAsset == "Asset Under Maintenance" {
+				return c.JSON(http.StatusForbidden, _common.NoDataResponse(http.StatusForbidden, "Sorry, asset is under maintenace"))
+			}
+			reqData.Activity = newReq.Activity
+			reqData.RequestTime = time.Now()
+			reqData.ReturnTime = newReq.ReturnTime
+			reqData.Status = "Waiting Approval"
+			reqData.Description = newReq.Description
+			reqData.UpdatedAt = time.Now()
 
-		return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "Success create request"))
+			_, err = rc.repository.Borrow(reqData)
+			if err != nil {
+				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed create request"))
+			}
+			return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "Success create request"))
+		case "Employee":
+			reqData := _entity.Borrow{}
+			// prepare input string
+			reqData.User.Id = idLogin
+
+			// handle get asset id
+			assetId, err := rc.repository.GetAssetId(newReq)
+			if err != nil {
+				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed to check asset id"))
+			}
+			if assetId == 0 {
+				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "asset not found"))
+			}
+			reqData.Asset.Id = assetId
+
+			// handle maintenance status
+			statAsset, err := rc.repository.CheckMaintenance(assetId)
+			if err != nil {
+				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed to check asset status"))
+			}
+			if statAsset == "Asset Under Maintenance" {
+				return c.JSON(http.StatusForbidden, _common.NoDataResponse(http.StatusForbidden, "Sorry, asset is under maintenace"))
+			}
+			reqData.Activity = newReq.Activity
+			reqData.RequestTime = time.Now()
+			reqData.Status = "Waiting Approval"
+			reqData.Description = newReq.Description
+			reqData.UpdatedAt = time.Now()
+
+			_, err = rc.repository.Borrow(reqData)
+			if err != nil {
+				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed create request"))
+			}
+			return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "Success create request"))
+		default:
+			return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "Invalid input request"))
+		}
 	}
 }
 
@@ -129,7 +169,7 @@ func (rc RequestController) Procure() echo.HandlerFunc {
 		}
 
 		reqData.Activity = newReq.Activity
-		reqData.RequestTime = newReq.RequestTime
+		reqData.RequestTime = time.Now()
 		reqData.Status = "Waiting Approval from Admin"
 		reqData.Description = newReq.Description
 		reqData.UpdatedAt = time.Now()
@@ -191,7 +231,6 @@ func (rc RequestController) UpdateBorrow() echo.HandlerFunc {
 			if err != nil {
 				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed update request"))
 			}
-
 			return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "Success update request"))
 		case "Administrator":
 			if request.Status != "Approve by Manager" {
@@ -203,8 +242,10 @@ func (rc RequestController) UpdateBorrow() echo.HandlerFunc {
 			if err != nil {
 				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed update request"))
 			}
+			return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "Success update request"))
+		default:
+			return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "Invalid input request"))
 		}
-		return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "Success update request"))
 	}
 }
 
@@ -255,6 +296,7 @@ func (rc RequestController) UpdateProcure() echo.HandlerFunc {
 			if err != nil {
 				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed update request"))
 			}
+			return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "Success update request"))
 		case "Administrator":
 			if request.Status != "Approve by Manager" {
 				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Rejected by Manager/Administrator Only"))
@@ -265,7 +307,9 @@ func (rc RequestController) UpdateProcure() echo.HandlerFunc {
 			if err != nil {
 				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed update request"))
 			}
+			return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "Success update request"))
+		default:
+			return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "Invalid input request"))
 		}
-		return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "Success update request"))
 	}
 }
