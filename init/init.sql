@@ -43,7 +43,7 @@ CREATE TABLE `categories` (
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- capstone.assets definition
-SET FOREIGN_KEY_CHECKS=0
+-- SET FOREIGN_KEY_CHECKS=0
 CREATE TABLE `assets` (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT,
   `name` longtext,
@@ -52,18 +52,20 @@ CREATE TABLE `assets` (
   `quantity` bigint,
   `status` longtext,
   `image` longtext,
+  `code` longtext,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `deleted_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `id` (`id`),
+  UNIQUE KEY `code` (`code`),
   KEY `category_id` (`category_id`),
   CONSTRAINT `assets_ibfk_1` FOREIGN KEY (`category_id`) REFERENCES `categories` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-SET FOREIGN_KEY_CHECKS=1
+-- SET FOREIGN_KEY_CHECKS=1
 -- capstone.borrow/return_requests definition
 
-CREATE TABLE `borrow/return_requests` (
+CREATE TABLE `borrowORreturn_requests` (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT,
   `user_id` bigint unsigned DEFAULT NULL,
   `asset_id` bigint unsigned DEFAULT NULL,
@@ -72,7 +74,6 @@ CREATE TABLE `borrow/return_requests` (
   `request_time` datetime,
   `return_time` datetime,
   `description` longtext,
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `deleted_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
@@ -91,10 +92,9 @@ CREATE TABLE `procurement_requests` (
   `category_id` bigint unsigned DEFAULT NULL,
   `activity` longtext,
   `status` longtext,
-  `request_time` datetime,
+  `request_time` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `description` longtext,
   `image` longtext,
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `deleted_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
