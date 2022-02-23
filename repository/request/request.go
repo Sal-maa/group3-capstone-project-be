@@ -213,6 +213,38 @@ func (rr *RequestRepository) GetBorrowById(id int) (req _entity.Borrow, err erro
 	return req, nil
 }
 
+func (rr *RequestRepository) GetProcureById(id int) (req _entity.Procure, err error) {
+	stmt, err := rr.db.Prepare(`
+		SELECT 
+			id, user_id, category_id, image, activity, request_time, status, description 
+		FROM 
+			procurement_requests 
+		WHERE status = "Waiting Approval" AND deleted_at IS NULL AND id = ? 
+		ORDER BY id ASC LIMIT 1
+	`)
+
+	if err != nil {
+		return req, err
+	}
+
+	defer stmt.Close()
+
+	res, err := stmt.Query(id)
+
+	if err != nil {
+		return req, err
+	}
+
+	defer res.Close()
+
+	if res.Next() {
+		if err := res.Scan(&req.Id, &req.User.Id, &req.Category, &req.Image, &req.Activity, &req.RequestTime, &req.Status, &req.Description); err != nil {
+			return req, err
+		}
+	}
+	return req, nil
+}
+
 func (rr *RequestRepository) UpdateBorrow(reqData _entity.Borrow) (_entity.Borrow, error) {
 	statement, err := rr.db.Prepare(`
 	UPDATE borrowOrreturn_requests
