@@ -46,13 +46,14 @@ CREATE TABLE `categories` (
 -- SET FOREIGN_KEY_CHECKS=0
 CREATE TABLE `assets` (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `code` longtext,
+  `short_name` longtext,
   `name` longtext,
   `category_id` bigint unsigned DEFAULT NULL,
   `description` longtext,
   `quantity` bigint,
   `status` longtext,
   `image` longtext,
-  `code` longtext,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `deleted_at` timestamp NULL DEFAULT NULL,
