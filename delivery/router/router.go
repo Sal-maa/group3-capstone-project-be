@@ -42,4 +42,26 @@ func RegisterPath(
 	e.GET("/assets/keyword/:keyword", assetController.GetAssetByKeyword())
 	e.GET("/assets/:id", assetController.GetById())
 	e.PUT("/assets/:id", assetController.Update(), _midware.JWTMiddleWare())
+<<<<<<< HEAD
+=======
+	e.GET("/stats", assetController.GetStats(), _midware.JWTMiddleWare())
+
+	// History
+	e.GET("/histories/users/:user_id", historyController.GetAllRequestHistoryOfUser(), _midware.JWTMiddleWare())
+	e.GET("/histories/users/:user_id/:request_id", historyController.GetDetailRequestHistoryByRequestId(), _midware.JWTMiddleWare())
+	e.GET("/histories/assets/:short_name", historyController.GetAllUsageHistoryOfAsset(), _midware.JWTMiddleWare())
+
+	// Request by Employee
+	e.POST("/requests/borrow", requestController.Borrow(), _midware.JWTMiddleWare())
+	e.POST("/requests/procure", requestController.Procure(), _midware.JWTMiddleWare())
+
+	// Update by Manager and Manager
+	e.PUT("/requests/borrow/:id", requestController.UpdateBorrow(), _midware.JWTMiddleWare())
+	e.PUT("/requests/procure/:id", requestController.UpdateProcure(), _midware.JWTMiddleWare())
+
+	// Activity
+	e.GET("/activities/:user_id", activityController.GetAllActivityOfUser(), _midware.JWTMiddleWare())
+	e.GET("/activities/:user_id/:request_id", activityController.GetDetailActivityByRequestId(), _midware.JWTMiddleWare())
+	e.PUT("/activities/:user_id/:request_id", activityController.UpdateRequestStatus(), _midware.JWTMiddleWare())
+>>>>>>> main
 }

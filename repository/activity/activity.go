@@ -24,7 +24,7 @@ func (ar ActivityRepository) GetAllActivityOfUser(user_id int) (activities []_en
 	}
 
 	stmt, err := ar.db.Prepare(`
-		SELECT b.id, a.name, a.image, b.status, b.request_time
+		SELECT b.id, a.name, a.image, b.activity, b.status, b.request_time
 		FROM borrowORreturn_requests b
 		JOIN assets a
 		ON b.asset_id = a.id
@@ -55,7 +55,7 @@ func (ar ActivityRepository) GetAllActivityOfUser(user_id int) (activities []_en
 	for res.Next() {
 		activity := _entity.ActivitySimplified{}
 
-		if err := res.Scan(&activity.Id, &activity.AssetName, &activity.AssetImage, &activity.Status, &activity.RequestDate); err != nil {
+		if err := res.Scan(&activity.Id, &activity.AssetName, &activity.AssetImage, &activity.ActivityType, &activity.Status, &activity.RequestDate); err != nil {
 			log.Println(err)
 			code, err = http.StatusInternalServerError, errors.New("internal server error")
 			return activities, code, err
