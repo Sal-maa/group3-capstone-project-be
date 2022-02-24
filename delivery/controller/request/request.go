@@ -69,6 +69,10 @@ func (rc RequestController) Borrow() echo.HandlerFunc {
 			if err != nil {
 				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed create request"))
 			}
+			_, err = rc.repository.UpdateAssetStatus(assetId)
+			if err != nil {
+				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed update asset status"))
+			}
 			return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "Success create request"))
 		case "Employee":
 			reqData := _entity.Borrow{}
@@ -102,6 +106,10 @@ func (rc RequestController) Borrow() echo.HandlerFunc {
 			_, err = rc.repository.Borrow(reqData)
 			if err != nil {
 				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed create request"))
+			}
+			_, err = rc.repository.UpdateAssetStatus(assetId)
+			if err != nil {
+				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed update asset status"))
 			}
 			return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "Success create request"))
 		default:
