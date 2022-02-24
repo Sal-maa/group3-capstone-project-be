@@ -31,14 +31,19 @@ func RegisterPath(
 	e.POST("/login", userController.Login())
 
 	// User
+	// e.GET("/users", userController.GetAll(), _midware.JWTMiddleWare())
 	e.GET("/users/:id", userController.GetById(), _midware.JWTMiddleWare())
 	e.PUT("/users/:id", userController.Update(), _midware.JWTMiddleWare())
 
 	// Asset
 	e.POST("/assets", assetController.Create(), _midware.JWTMiddleWare())
-	e.GET("/assets", assetController.GetAll(), _midware.JWTMiddleWare())
-	e.GET("/assets/:id", assetController.GetById(), _midware.JWTMiddleWare())
+	e.GET("/assets", assetController.GetAll())
+	e.GET("/assets/category/:category", assetController.GetAssetByCategory())
+	e.GET("/assets/keyword/:keyword", assetController.GetAssetByKeyword())
+	e.GET("/assets/:id", assetController.GetById())
 	e.PUT("/assets/:id", assetController.Update(), _midware.JWTMiddleWare())
+<<<<<<< HEAD
+=======
 	e.GET("/stats", assetController.GetStats(), _midware.JWTMiddleWare())
 
 	// History
@@ -58,4 +63,5 @@ func RegisterPath(
 	e.GET("/activities/:user_id", activityController.GetAllActivityOfUser(), _midware.JWTMiddleWare())
 	e.GET("/activities/:user_id/:request_id", activityController.GetDetailActivityByRequestId(), _midware.JWTMiddleWare())
 	e.PUT("/activities/:user_id/:request_id", activityController.UpdateRequestStatus(), _midware.JWTMiddleWare())
+>>>>>>> main
 }
