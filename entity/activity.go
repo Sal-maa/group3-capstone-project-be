@@ -17,11 +17,12 @@ type Activity struct {
 }
 
 type ActivitySimplified struct {
-	Id          int       `json:"id" form:"id"`
-	AssetImage  string    `json:"asset_image" form:"asset_image"`
-	AssetName   string    `json:"asset_name" form:"asset_name"`
-	Status      string    `json:"status" form:"status"`
-	RequestDate time.Time `json:"request_date" form:"request_date"`
+	Id           int       `json:"id" form:"id"`
+	AssetImage   string    `json:"asset_image" form:"asset_image"`
+	AssetName    string    `json:"asset_name" form:"asset_name"`
+	ActivityType string    `json:"activity_type" form:"activity_type"`
+	Status       string    `json:"status" form:"status"`
+	RequestDate  time.Time `json:"request_date" form:"request_date"`
 }
 
 type UpdateActivityStatus struct {

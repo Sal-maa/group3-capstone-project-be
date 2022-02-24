@@ -25,6 +25,7 @@ func GetDetailActivityByRequestId(activity _entity.Activity) map[string]interfac
 			"user_name":    activity.UserName,
 			"request_date": activity.RequestDate,
 			"return_date":  activity.ReturnDate,
+			"activity":     activity.ActivityType,
 			"status":       activity.Status,
 			"description":  activity.Description,
 			"stock_left":   activity.StockLeft,

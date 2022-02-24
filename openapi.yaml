@@ -141,6 +141,10 @@ paths:
                   value:
                     code: 400
                     message: user not found
+                invalid or expired jwt:
+                  value:
+                    code: 400
+                    message: invalid or expired jwt
         '500':
           description: Response for get user information failed (internal server error)
           content:
@@ -191,8 +195,8 @@ paths:
                 code: 200
                 data:
                   id: 1
-                  name: "Bagus Brahmantya"
-                  email: "bagusbrahmantya@mail.com"
+                  name: Bagus Brahmantya
+                  email: bagusbrahmantya@mail.com
                   phone: "08123456789"
                   avatar: https://capstone-group3.s3.ap-southeast-1.amazonaws.com/user-1-1644751235.jpg
                 message: success update user
@@ -297,6 +301,10 @@ paths:
                   value:
                     code: 400
                     message: phone already exist
+                invalid or expired jwt:
+                  value:
+                    code: 400
+                    message: invalid or expired jwt
         '401':
           description: Response for update user information failed (unauthorized)
           content:
@@ -323,6 +331,224 @@ paths:
                   value:
                     code: 500
                     message: internal server error
+  /activities/{user_id}:
+    get:
+      tags:
+        - Request
+      security:
+        - JWTAuth: []
+      summary: How user get all his/her active requests
+      parameters:
+        - in: path
+          name: user_id
+          schema:
+            type: integer
+          required: true
+          description: Numeric id of existing user
+      responses:
+        '200':
+          description: Response for get all active requests successful
+          content:
+            application/json:
+              example:
+                code: 200
+                data:
+                - id: 1
+                  asset_name: Dell Vostro 3490
+                  asset_image: https://capstone-group3.s3.ap-southeast-1.amazonaws.com/asset-1-1645359981.png
+                  request_date: "2022-02-20 09:00:00.000"
+                  status: Approved by Manager
+                - id: 2
+                  asset_name: HP LaserJet LP300
+                  asset_image: https://capstone-group3.s3.ap-southeast-1.amazonaws.com/asset-2-1645359982.png
+                  request_date: "2022-02-20 09:00:00.000"
+                  status: Waiting approval
+                message: success get all activities
+        '400':
+          description: Response for get all active requests failed (bad request)
+          content:
+            application/json:
+              examples:
+                invalid user id:
+                  value:
+                    code: 400
+                    message: invalid user id
+                invalid or expired jwt:
+                  value:
+                    code: 400
+                    message: invalid or expired jwt
+        '500':
+          description: Response for get all active requests failed (internal server errror)
+          content:
+            application/json:
+              example:
+                code: 500
+                message: internal server error
+  /activities/{user_id}/{request_id}:
+    get:
+      tags:
+        - Request
+      security:
+        - JWTAuth: []
+      summary: How user get his/her active request by id
+      parameters:
+        - in: path
+          name: user_id
+          schema:
+            type: integer
+          required: true
+          description: Numeric id of existing user
+        - in: path
+          name: request_id
+          schema:
+            type: integer
+          required: true
+          description: Numeric id of existing request
+      responses:
+        '200':
+          description: Response for get active request by id successful
+          content:
+            application/json:
+              examples:
+                activity borrow:
+                  value:
+                    code: 200
+                    data:
+                      id: 1
+                      category: Computer
+                      asset_name: Dell Vostro 3490
+                      asset_image: https://capstone-group3.s3.ap-southeast-1.amazonaws.com/asset-1-1645359981.png
+                      user_name: Bagus Brahmantya
+                      request_date: "2022-02-20 09:00:00.000"
+                      return_date: 
+                      activity: Borrow
+                      status: Approved by Manager
+                    message: success get detail activity
+                activity return:
+                  value:  
+                    code: 200
+                    data:
+                      id: 1
+                      category: Computer
+                      asset_name: Dell Vostro 3490
+                      asset_image: https://capstone-group3.s3.ap-southeast-1.amazonaws.com/asset-1-1645359981.png
+                      user_name: Bagus Brahmantya
+                      request_date: "2022-02-15 09:00:00.000"
+                      return_date: 
+                      activity: Return
+                      status: Waiting approval
+                    message: success get detail activity
+        '400':
+          description: Response for get active request by id failed (bad request)
+          content:
+            application/json:
+              examples:
+                invalid user id:
+                  value:
+                    code: 400
+                    message: invalid user id
+                invalid page number:
+                  value:
+                    code: 400
+                    message: invalid request id
+                user not exist:
+                  value:
+                    code: 400
+                    message: request not found
+                invalid or expired jwt:
+                  value:
+                    code: 400
+                    message: invalid or expired jwt
+        '401':
+          description: Response for get active request by id failed (unauthorized)
+          content:
+            application/json:
+              examples:
+                missing or malformed jwt:
+                  value:
+                    code: 401
+                    message: missing or malformed jwt
+                id login not same with id in path:
+                  value:
+                    code: 401
+                    message: unauthorized
+        '500':
+          description: Response for get active request by id failed (internal server errror)
+          content:
+            application/json:
+              example:
+                code: 500
+                message: internal server error
+    put:
+      tags:
+        - Request
+      security:
+        - JWTAuth: []
+      summary: How to request for return or cancel
+      parameters:
+        - in: path
+          name: user_id
+          schema:
+            type: integer
+          required: true
+          description: Numeric id of existing user
+        - in: path
+          name: request_id
+          schema:
+            type: integer
+          required: true
+          description: Numeric id of existing request
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              properties:
+                status:
+                  type: string
+              required:
+                - status
+            examples:
+              request for return:
+                value:
+                  status: return
+              request for cancel:
+                value:
+                  status: cancel
+        required: true
+      responses:
+        '200':
+          description: Response for request for return or cancel successful
+          content:
+            application/json:
+              examples:
+                request for return:
+                  value:
+                    code: 200
+                    data:
+                      id: 1
+                      category: Computer
+                      asset_name: Dell Vostro 3490
+                      asset_image: https://capstone-group3.s3.ap-southeast-1.amazonaws.com/asset-1-1645359981.png
+                      user_name: Bagus Brahmantya
+                      request_date: "2022-02-20 09:00:00.000"
+                      return_date: "2022-02-21 09:00:00.000"
+                      activity: Return
+                      status: Waiting approval
+                    message: success get detail activity
+                request for cancel:
+                  value:  
+                    code: 200
+                    data:
+                      id: 1
+                      category: Computer
+                      asset_name: Dell Vostro 3490
+                      asset_image: https://capstone-group3.s3.ap-southeast-1.amazonaws.com/asset-1-1645359981.png
+                      user_name: Bagus Brahmantya
+                      request_date: "2022-02-15 09:00:00.000"
+                      return_date: 
+                      activity: Borrow
+                      status: Cancelled
+                    message: success get detail activity
   /histories/users/{user_id}:
     get:
       tags:
@@ -354,17 +580,17 @@ paths:
                   count: 2
                   histories:
                   - id: 1
-                    category: "Computer"
-                    asset_name: "Dell Vostro 3490"
+                    category: Computer
+                    asset_name: Dell Vostro 3490
                     asset_image: https://capstone-group3.s3.ap-southeast-1.amazonaws.com/asset-1-1645359981.png
                     request_date: "2022-02-20 09:00:00.000"
-                    activity_type: "Borrowing Asset"
+                    activity_type: Borrow
                   - id: 2
-                    category: "Printer"
-                    asset_name: "HP LaserJet LP300"
+                    category: Printer
+                    asset_name: HP LaserJet LP300
                     asset_image: https://capstone-group3.s3.ap-southeast-1.amazonaws.com/asset-2-1645359982.png
                     request_date: "2022-02-20 09:00:00.000"
-                    activity_type: "Borrowing Asset"
+                    activity_type: Borrow
                 message: success get all histories
         '400':
           description: Response for get all request history of user failed (bad request)
@@ -383,6 +609,10 @@ paths:
                   value:
                     code: 400
                     message: user not found
+                invalid or expired jwt:
+                  value:
+                    code: 400
+                    message: invalid or expired jwt
         '401':
           description: Response for get all request history of user failed (unauthorized)
           content:
@@ -432,14 +662,14 @@ paths:
                 code: 200
                 data:
                   id: 1
-                  category: "Computer"
-                  asset_name: "Dell Vostro 3490"
+                  category: Computer
+                  asset_name: Dell Vostro 3490
                   asset_image: https://capstone-group3.s3.ap-southeast-1.amazonaws.com/asset-1-1645359981.png
                   stock_left: 20
-                  user_name: "Bagus Brahmantya"
+                  user_name: Bagus Brahmantya
                   request_date: "2022-02-20 09:00:00.000"
                   return_date: "2022-03-20 09:00:00.000"
-                  status: "successfully returned"
+                  status: Approved by Admin
                 message: success get detail history
         '400':
           description: Response for get detailed past request of user failed (bad request)
@@ -458,6 +688,10 @@ paths:
                   value:
                     code: 400
                     message: request not found
+                invalid or expired jwt:
+                  value:
+                    code: 400
+                    message: invalid or expired jwt
         '401':
           description: Response for get detailed past request of user failed (unauthorized)
           content:
@@ -500,26 +734,32 @@ paths:
               example:
                 code: 200
                 data:
-                  category: "Computer"
-                  asset_name: "Dell Vostro 3490"
+                  category: Computer
+                  asset_name: Dell Vostro 3490
                   asset_image: https://capstone-group3.s3.ap-southeast-1.amazonaws.com/asset-1-1645359981.png
                   users:
                   - id: 1
-                    user_name: "Bagus Brahmantya"
+                    user_name: Bagus Brahmantya
                     request_date: "2022-02-20 09:00:00.000"
-                    status: "Borrowed"
+                    status: Borrowed
                   - id: 2
-                    user_name: "Esmining Mitarum"
+                    user_name: Esmining Mitarum
                     request_date: "2022-02-10 09:00:00.000"
-                    status: "Rreturned"
+                    status: Returned
                 message: success get all histories
         '400':
           description: Response for get list of past users of asset failed (bad request)
           content:
             application/json:
-              example:
-                code: 400
-                message: "asset not exist"
+              examples:
+                asset not exist:
+                  value:
+                    code: 400
+                    message: asset not exist
+                invalid or expired jwt:
+                  value:
+                    code: 400
+                    message: invalid or expired jwt
         '401':
           description: Response for get list of past users of asset failed (unauthorized)
           content:
