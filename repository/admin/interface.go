@@ -5,5 +5,5 @@ import (
 )
 
 type Admin interface {
-	GetAllNewRequest(limit, offset, int) (requests []_entity.RequestResponse, err error)
+	GetAllNewRequest(limit, offset int) (requests []_entity.RequestResponse, err error)
 }
