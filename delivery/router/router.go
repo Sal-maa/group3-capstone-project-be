@@ -33,19 +33,22 @@ func RegisterPath(
 	e.POST("/login", userController.Login())
 
 	// User
+	// e.GET("/users", userController.GetAll(), _midware.JWTMiddleWare())
 	e.GET("/users/:id", userController.GetById(), _midware.JWTMiddleWare())
 	e.PUT("/users/:id", userController.Update(), _midware.JWTMiddleWare())
 
 	// Asset
 	e.POST("/assets", assetController.Create(), _midware.JWTMiddleWare())
 	e.GET("/assets", assetController.GetAll(), _midware.JWTMiddleWare())
+	e.GET("/assets/category/:category", assetController.GetAssetByCategory())
+	e.GET("/assets/keyword/:keyword", assetController.GetAssetByKeyword())
 	e.GET("/assets/:id", assetController.GetById(), _midware.JWTMiddleWare())
 	e.PUT("/assets/:id", assetController.Update(), _midware.JWTMiddleWare())
 	e.GET("/stats", assetController.GetStats(), _midware.JWTMiddleWare())
 
 	// History
-	e.GET("/histories/users/:user_id", historyController.GetAllUsageHistoryOfUser(), _midware.JWTMiddleWare())
-	e.GET("/histories/users/:user_id/:request_id", historyController.GetDetailUsageHistoryByRequestId(), _midware.JWTMiddleWare())
+	e.GET("/histories/users/:user_id", historyController.GetAllRequestHistoryOfUser(), _midware.JWTMiddleWare())
+	e.GET("/histories/users/:user_id/:request_id", historyController.GetDetailRequestHistoryByRequestId(), _midware.JWTMiddleWare())
 	e.GET("/histories/assets/:short_name", historyController.GetAllUsageHistoryOfAsset(), _midware.JWTMiddleWare())
 
 	// Request by Employee
