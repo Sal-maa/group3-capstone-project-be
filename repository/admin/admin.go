@@ -14,7 +14,7 @@ func New(db *sql.DB) *AdminRepository {
 	return &AdminRepository{db: db}
 }
 
-func (ar *AdminRepository) GetAllNewRequest() (requests []_entity.RequestResponse, err error) {
+func (ar *AdminRepository) GetAllNewRequest(limit, offset int) (requests []_entity.RequestResponse, err error) {
 	stmt, err := ar.db.Prepare(`
 	SELECT 
 		b.id, b.user_id, u.name, a.id, a.name, a.image, c.name, b.activity, b.request_time, b.return_time, b.status, b.description
@@ -27,6 +27,7 @@ func (ar *AdminRepository) GetAllNewRequest() (requests []_entity.RequestRespons
 		ON a.category_id = c.id
 	WHERE b.request_time = DATE(NOW())
 	ORDER BY b.request_time DESC
+	LIMIT ? OFFSET ?
 	`)
 
 	if err != nil {
@@ -36,7 +37,7 @@ func (ar *AdminRepository) GetAllNewRequest() (requests []_entity.RequestRespons
 
 	defer stmt.Close()
 
-	res, err := stmt.Query()
+	res, err := stmt.Query(limit, offset)
 
 	if err != nil {
 		log.Println(err)
