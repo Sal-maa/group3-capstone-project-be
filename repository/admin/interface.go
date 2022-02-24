@@ -5,5 +5,6 @@ import (
 )
 
 type Admin interface {
-	GetAllNewRequest(limit, offset int, status, date string) (requests []_entity.RequestResponse, err error)
+	GetAllAdmin(limit, offset int, status, category, date string) (requests []_entity.RequestResponse, err error)
+	GetAllManager(divLogin, limit, offset int, status, category, date string) (requests []_entity.RequestResponse, err error)
 }
