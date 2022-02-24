@@ -5,20 +5,10 @@ import (
 	"net/http"
 )
 
-func CreateAssetResponse(asset _entity.AssetSimplified) map[string]interface{} {
+func CreateAssetResponse() map[string]interface{} {
 	return map[string]interface{}{
 		"code":    http.StatusOK,
 		"message": "success create asset",
-		"data": map[string]interface{}{
-			"id":            asset.Id,
-			"code_asset":    asset.CodeAsset,
-			"image":         asset.Image,
-			"name":          asset.Name,
-			"short_name":    asset.Short_Name,
-			"status":        asset.Status,
-			"description":   asset.Description,
-			"category_name": asset.CategoryName,
-		},
 	}
 }
 
@@ -30,51 +20,24 @@ func GetAllAssetsResponse(assets []_entity.AssetSimplified) map[string]interface
 	}
 }
 
-func GetAssetByCategoryResponse(asset _entity.AssetSimplified) map[string]interface{} {
+func GetByShortNameResponse(total int, asset _entity.AssetSimplified) map[string]interface{} {
 	return map[string]interface{}{
 		"code":    http.StatusOK,
-		"message": "success get asset by category",
+		"message": "success get asset detail",
 		"data": map[string]interface{}{
-			"id":            asset.Id,
-			"image":         asset.Image,
-			"name":          asset.Name,
-			"status":        asset.Status,
-			"category_name": asset.CategoryName,
-			"description":   asset.Description,
-			"quantity":      asset.Quantity,
+			"category":    asset.Category,
+			"name":        asset.Name,
+			"image":       asset.Image,
+			"description": asset.Description,
+			"total_asset": total,
 		},
 	}
 }
 
-func GetAssetByIdResponse(asset _entity.Asset) map[string]interface{} {
-	return map[string]interface{}{
-		"code":    http.StatusOK,
-		"message": "success get asset by id",
-		"data": map[string]interface{}{
-			"id":            asset.Id,
-			"image":         asset.Image,
-			"name":          asset.Name,
-			"status":        asset.Status,
-			"category_name": asset.Category.Name,
-			"description":   asset.Description,
-			"quantity":      asset.Quantity,
-		},
-	}
-}
-
-func UpdateAssetResponse(asset _entity.AssetSimplified) map[string]interface{} {
+func UpdateAssetResponse() map[string]interface{} {
 	return map[string]interface{}{
 		"code":    http.StatusOK,
 		"message": "success edit asset",
-		"data": map[string]interface{}{
-			"id":          asset.Id,
-			"image":       asset.Image,
-			"name":        asset.Name,
-			"status":      asset.Status,
-			"description": asset.Description,
-			"quantity":    asset.Quantity,
-		},
-		// "totalPage": asset.TotalPage,
 	}
 }
 

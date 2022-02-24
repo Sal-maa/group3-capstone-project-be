@@ -13,7 +13,6 @@ import (
 	// _userRepo "capstone/be/repository/user"
 
 	"log"
-	"strconv"
 
 	"net/http"
 	"strings"
@@ -29,220 +28,204 @@ func New(asset _assetRepo.Asset) *AssetController {
 	return &AssetController{repository: asset}
 }
 
-func (ac AssetController) GetAll() echo.HandlerFunc {
-	return func(c echo.Context) error {
-		p := strings.TrimSpace(c.QueryParam("page"))
-		log.Println(p)
-		if p == "" {
-			p = "1"
-		}
-
-		page, err := strconv.Atoi(p)
-		log.Println(page)
-		if err != nil {
-			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "invalid page number"))
-		}
-		// limit := 8
-		assets, code, err := ac.repository.GetAll(page)
-		if err != nil {
-			return c.JSON(code, _common.NoDataResponse(code, err.Error()))
-		}
-		return c.JSON(http.StatusOK, _common.GetAllAssetsResponse(assets))
-	}
-}
-func (ac AssetController) GetAssetByCategory() echo.HandlerFunc {
-	return func(c echo.Context) error {
-		p := strings.TrimSpace(c.QueryParam("page"))
-		log.Println(p)
-		if p == "" {
-			p = "1"
-		}
-		page, err := strconv.Atoi(p)
-		if err != nil {
-			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "invalid page number"))
-		}
-		category := c.QueryParam("category")
-
-		asset, code, err := ac.repository.GetAssetByCategory(category, page)
-		if err != nil {
-			return c.JSON(code, _common.NoDataResponse(code, err.Error()))
-		}
-		return c.JSON(http.StatusOK, _common.GetAssetByCategoryResponse(asset))
-	}
-}
-func (ac AssetController) GetById() echo.HandlerFunc {
-	return func(c echo.Context) error {
-		id, err := strconv.Atoi(c.Param("id"))
-		// detect invalid parameter
-		if err != nil {
-			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "invalid asset id"))
-		}
-		// calling repository
-		asset, code, err := ac.repository.GetById(id)
-		// detect failure in repository
-		if err != nil {
-			return c.JSON(code, _common.NoDataResponse(code, err.Error()))
-		}
-		return c.JSON(http.StatusOK, _common.GetAssetByIdResponse(asset))
-	}
-}
-
 func (ac AssetController) Create() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		role := middleware.ExtractRole(c)
-		if role != "Administrator" {
-			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "you don't have permission"))
+		// check authorization
+		if role := middleware.ExtractRole(c); role != "Administrator" {
+			return c.JSON(http.StatusUnauthorized, _common.NoDataResponse(http.StatusUnauthorized, "unauthorized"))
 		}
 
 		assetData := _entity.CreateAsset{}
+
+		// detect failure in binding
 		if err := c.Bind(&assetData); err != nil {
 			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed to bind data"))
 		}
 
-		image := strings.Title(strings.ToLower(strings.TrimSpace(assetData.Image)))
-		name := strings.Title(strings.ToLower(strings.TrimSpace(assetData.Name)))
-		status := strings.Title(strings.ToLower(strings.TrimSpace(assetData.Status)))
-		description := strings.Title(strings.ToLower(strings.TrimSpace(assetData.Description)))
-		quantity := assetData.Quantity
-		check := []string{image, name, status, description}
+		// prepare input
+		name := strings.TrimSpace(assetData.Name)
+		category := strings.Title(strings.TrimSpace(assetData.Category))
+		description := strings.TrimSpace(assetData.Description)
+
+		// check input string
+		check := []string{name, category, description}
 
 		for _, s := range check {
 			// check empty string in required input
-			if image == "" {
+			if s == "" {
 				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "input cannot be empty"))
 			}
-			if name == "" {
-				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "input cannot be empty"))
-			}
-			if status == "" {
-				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "input cannot be empty"))
-			}
-			if description == "" {
-				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "input cannot be empty"))
-			}
+
 			// check malicious character in input
 			if err := _helper.CheckStringInput(s); err != nil {
 				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, s+": "+err.Error()))
 			}
 		}
-		if quantity == 0 || quantity < 0 {
-			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "quantity cannot be null or negative value"))
+
+		// check input quantity
+		if assetData.Quantity <= 0 {
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "quantity must be greater than zero"))
 		}
+
 		// prepare input to repository
-		createAssetData := _entity.Asset{
-			CodeAsset:   assetData.CodeAsset,
-			Image:       assetData.Image,
-			Name:        assetData.Name,
-			Short_Name:  assetData.Short_Name,
-			Status:      assetData.Status,
-			Description: assetData.Description,
-			Quantity:    assetData.Quantity,
-		}
-		// calling repository
-		createAsset, code, err := ac.repository.Create(createAssetData)
+		createAssetData := _entity.Asset{}
+		createAssetData.Name = name
+		createAssetData.Description = description
 
-		short_name := fmt.Sprintf("asset-%d", (time.Now().Unix()))
-
-		for i := 0; i < createAssetData.Quantity; i++ {
-			createAssetData.CodeAsset = fmt.Sprintf("%s-%d", short_name, i)
-			createAsset, _, _ = ac.repository.Create(createAssetData)
-		}
+		// get category id via repository
+		id, code, err := ac.repository.GetCategoryId(category)
 
 		// detect failure in repository
 		if err != nil {
 			return c.JSON(code, _common.NoDataResponse(code, err.Error()))
 		}
-		return c.JSON(http.StatusOK, _common.CreateAssetResponse(createAsset))
+
+		createAssetData.CategoryId = id
+
+		short_name := fmt.Sprintf("asset-%d", (time.Now().Unix()))
+		createAssetData.ShortName = short_name
+
+		if assetData.UnderMaintenance {
+			createAssetData.Status = "Asset Under Maintenance"
+		} else {
+			createAssetData.Status = "Available"
+		}
+
+		// detect asset image upload
+		src, file, err := c.Request().FormFile("image")
+
+		// detect failure in parsing file
+		switch err {
+		case nil:
+			defer src.Close()
+
+			// upload avatar to amazon s3
+			id := middleware.ExtractId(c)
+			image, code, err := _helper.UploadImage("asset", id, file, src)
+
+			// detect failure while uploading avatar
+			if err != nil {
+				return c.JSON(code, _common.NoDataResponse(code, err.Error()))
+			}
+
+			createAssetData.Image = image
+		case http.ErrMissingFile:
+			log.Println(err)
+			createAssetData.Image = "default_image.png"
+		case http.ErrNotMultipart:
+			log.Println(err)
+			createAssetData.Image = "default_image.png"
+		default:
+			log.Println(err)
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed to upload image"))
+		}
+
+		for i := 1; i <= assetData.Quantity; i++ {
+			createAssetData.Code = fmt.Sprintf("%s-%d", short_name, i)
+
+			// calling repository
+			code, err := ac.repository.Create(createAssetData)
+
+			// detect failure in repository
+			if err != nil {
+				return c.JSON(code, _common.NoDataResponse(code, err.Error()))
+			}
+		}
+
+		return c.JSON(http.StatusOK, _common.CreateAssetResponse())
+	}
+}
+
+func (ac AssetController) GetAll() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// filter by category
+		category := strings.Title(strings.TrimSpace(c.QueryParam("category")))
+
+		if category != "" {
+			// get category id via repository
+			id, code, err := ac.repository.GetCategoryId(category)
+
+			// detect failure in repository
+			if err != nil {
+				return c.JSON(code, _common.NoDataResponse(code, err.Error()))
+			}
+
+			// calling repository
+			assets, code, err := ac.repository.GetAssetsByCategory(id)
+
+			// detect failure in repository
+			if err != nil {
+				return c.JSON(code, _common.NoDataResponse(code, err.Error()))
+			}
+
+			return c.JSON(http.StatusOK, _common.GetAllAssetsResponse(assets))
+		}
+
+		// calling repository
+		assets, code, err := ac.repository.GetAll()
+
+		// detect failure in repository
+		if err != nil {
+			return c.JSON(code, _common.NoDataResponse(code, err.Error()))
+		}
+
+		return c.JSON(http.StatusOK, _common.GetAllAssetsResponse(assets))
+	}
+}
+
+func (ac AssetController) GetByShortName() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		short_name := c.Param("short_name")
+
+		// calling repository
+		total, asset, code, err := ac.repository.GetByShortName(short_name)
+
+		// detect failure in repository
+		if err != nil {
+			return c.JSON(code, _common.NoDataResponse(code, err.Error()))
+		}
+
+		return c.JSON(http.StatusOK, _common.GetByShortNameResponse(total, asset))
 	}
 }
 
 func (ac AssetController) Update() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		id, err := strconv.Atoi(c.Param("id"))
-		if err != nil {
-			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "invalid asset id"))
+		short_name := c.Param("short_name")
+
+		if role := middleware.ExtractRole(c); role != "Administrator" {
+			return c.JSON(http.StatusUnauthorized, _common.NoDataResponse(http.StatusUnauthorized, "unauthorized"))
 		}
 
-		role := middleware.ExtractRole(c)
-		if role != "Administrator" {
-			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "you don't have permission"))
-		}
-		assetData := _entity.UpdateAsset{}
+		updateData := _entity.UpdateAsset{}
 
 		// detect failure in binding
-		if err := c.Bind(&assetData); err != nil {
+		if err := c.Bind(&updateData); err != nil {
 			log.Println(err)
 			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed to bind data"))
 		}
-		// prepare input string
-		image := strings.Title(strings.ToLower(strings.TrimSpace(assetData.Image)))
-		name := strings.Title(strings.ToLower(strings.TrimSpace(assetData.Name)))
-		status := strings.Title(strings.ToLower(strings.TrimSpace(assetData.Status)))
-		description := strings.Title(strings.ToLower(strings.TrimSpace(assetData.Description)))
-		quantity := assetData.Quantity
-		// calling repository to get existing user data
-		updateAssetData, code, err := ac.repository.GetById(id)
 
-		// detect failure in repository
-		if err != nil {
-			return c.JSON(code, _common.NoDataResponse(code, err.Error()))
+		if updateData.UnderMaintenance {
+			// calling repository
+			code, err := ac.repository.SetMaintenance(short_name)
+
+			// detect failure in repository
+			if err != nil {
+				return c.JSON(code, _common.NoDataResponse(code, err.Error()))
+			}
+
+			return c.JSON(http.StatusOK, _common.UpdateAssetResponse())
 		}
 
-		check := []string{image, name, status, description}
-
-		for _, s := range check {
-			// check empty string in required input
-			if image == "" {
-				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "input cannot be empty"))
-			}
-			if name == "" {
-				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "input cannot be empty"))
-			}
-			if status == "" {
-				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "input cannot be empty"))
-			}
-			if description == "" {
-				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "input cannot be empty"))
-			}
-			// check malicious character in input
-			if err := _helper.CheckStringInput(s); err != nil {
-				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, s+": "+err.Error()))
-			}
-		}
-		if quantity == 0 || quantity < 0 {
-			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "quantity cannot be null or negative value"))
-		}
 		// calling repository
-		UpdateAsset, code, err := ac.repository.Update(updateAssetData)
+		code, err := ac.repository.SetAvailable(short_name)
 
 		// detect failure in repository
 		if err != nil {
 			return c.JSON(code, _common.NoDataResponse(code, err.Error()))
 		}
-		return c.JSON(http.StatusOK, _common.UpdateAssetResponse(UpdateAsset))
-	}
-}
 
-func (ac AssetController) GetAssetByKeyword() echo.HandlerFunc {
-	return func(c echo.Context) error {
-		p := strings.TrimSpace(c.QueryParam("page"))
-		log.Println(p)
-		if p == "" {
-			p = "1"
-		}
-		page, err := strconv.Atoi(p)
-		if err != nil {
-			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "invalid page number"))
-		}
-		keyword := c.QueryParam("keyword")
-		if keyword == "" {
-			keyword = "dell"
-		}
-		asset, code, err := ac.repository.GetAssetByKeyword(keyword, page)
-		if err != nil {
-			return c.JSON(code, _common.NoDataResponse(code, err.Error()))
-		}
-		return c.JSON(http.StatusOK, _common.GetAssetByCategoryResponse(asset))
+		return c.JSON(http.StatusOK, _common.UpdateAssetResponse())
 	}
 }
 
