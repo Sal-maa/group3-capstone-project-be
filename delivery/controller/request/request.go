@@ -61,7 +61,7 @@ func (rc RequestController) Borrow() echo.HandlerFunc {
 			reqData.Activity = newReq.Activity
 			reqData.RequestTime = time.Now()
 			reqData.ReturnTime = newReq.ReturnTime
-			reqData.Status = "Waiting Approval"
+			reqData.Status = "Waiting Approval from Manager"
 			reqData.Description = newReq.Description
 			reqData.UpdatedAt = time.Now()
 
@@ -99,7 +99,7 @@ func (rc RequestController) Borrow() echo.HandlerFunc {
 			}
 			reqData.Activity = newReq.Activity
 			reqData.RequestTime = time.Now()
-			reqData.Status = "Waiting Approval"
+			reqData.Status = "Waiting Approval from Admin"
 			reqData.Description = newReq.Description
 			reqData.UpdatedAt = time.Now()
 
@@ -133,15 +133,16 @@ func (rc RequestController) Procure() echo.HandlerFunc {
 		// check category id
 		categoryId, err := rc.repository.GetCategoryId(newReq)
 		if categoryId == 0 {
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "category not found"))
 			// add new category if category isn't exist
-			_, err := rc.repository.AddCategory(newReq.Category)
-			if err != nil {
-				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed to add new category"))
-			}
-			categoryId, err = rc.repository.GetCategoryId(newReq)
-			if err != nil {
-				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed to get category_id"))
-			}
+			// _, err := rc.repository.AddCategory(newReq.Category)
+			// if err != nil {
+			// 	return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed to add new category"))
+			// }
+			// categoryId, err = rc.repository.GetCategoryId(newReq)
+			// if err != nil {
+			// 	return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed to get category_id"))
+			// }
 		}
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed to get category_id"))
@@ -231,8 +232,8 @@ func (rc RequestController) UpdateBorrow() echo.HandlerFunc {
 				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "You're not in the same division"))
 			}
 
-			if request.Status != "Waiting Approval" {
-				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Approval by Manager Only"))
+			if request.Status != "Waiting Approval from Manager" {
+				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Update by Manager Only"))
 			}
 			request.Status = newReq.Status
 			_, err = rc.repository.UpdateBorrow(request)
@@ -241,16 +242,30 @@ func (rc RequestController) UpdateBorrow() echo.HandlerFunc {
 			}
 			return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "Success update request"))
 		case "Administrator":
-			if request.Status != "Approve by Manager" {
-				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Rejected by Manager/Administrator Only"))
-			}
-			request.Status = newReq.Status
+			switch request.Status {
+			case "Waiting Approval From Admin":
+				if newReq.Status != "Waiting Approval from Manager" {
+					return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Status must be WAITING APPROVAL FROM MANAGER"))
+				}
+				request.Status = newReq.Status
+				_, err = rc.repository.UpdateBorrowByAdmin(request)
+				if err != nil {
+					return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed update request"))
+				}
+				return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "Success update request"))
+			case "Approve by Manager":
+				request.Status = newReq.Status
 
-			_, err = rc.repository.UpdateBorrowByAdmin(request)
-			if err != nil {
-				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed update request"))
+				_, err = rc.repository.UpdateBorrowByAdmin(request)
+				if err != nil {
+					return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed update request"))
+				}
+				return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "Success update request"))
+			case "Rejected by Manager":
+				return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "Admin no need any update"))
+			default:
+				return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "Invalid input request"))
 			}
-			return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "Success update request"))
 		default:
 			return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "Invalid input request"))
 		}
@@ -295,8 +310,8 @@ func (rc RequestController) UpdateProcure() echo.HandlerFunc {
 			if divEmpl != divLogin {
 				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "You're not in the same division"))
 			}
-			if request.Status != "Waiting Approval" {
-				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Approval by Manager Only"))
+			if request.Status != "Waiting Approval from Manager" {
+				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Update by Manager Only"))
 			}
 			request.Status = newReq.Status
 
@@ -306,16 +321,30 @@ func (rc RequestController) UpdateProcure() echo.HandlerFunc {
 			}
 			return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "Success update request"))
 		case "Administrator":
-			if request.Status != "Approve by Manager" {
-				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Rejected by Manager/Administrator Only"))
+			switch request.Status {
+			case "Waiting Approval From Admin":
+				if newReq.Status != "Waiting Approval from Manager" {
+					return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Status must be WAITING APPROVAL FROM MANAGER"))
+				}
+				request.Status = newReq.Status
+				_, err = rc.repository.UpdateProcureByAdmin(request)
+				if err != nil {
+					return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed update request"))
+				}
+				return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "Success update request"))
+			case "Approve by Manager":
+				request.Status = newReq.Status
+				_, err = rc.repository.UpdateProcureByAdmin(request)
+				if err != nil {
+					return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed update request"))
+				}
+				return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "Success update request"))
+			case "Rejected by Manager":
+				return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "Admin no need any update"))
+			default:
+				return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "Invalid input request"))
 			}
-			request.Status = newReq.Status
 
-			_, err = rc.repository.UpdateProcureByAdmin(request)
-			if err != nil {
-				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed update request"))
-			}
-			return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "Success update request"))
 		default:
 			return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "Invalid input request"))
 		}

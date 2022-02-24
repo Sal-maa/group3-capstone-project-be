@@ -52,7 +52,7 @@ func main() {
 	assetController := _assetController.New(assetRepo)
 	historyController := _historyController.New(historyRepo)
 	requestController := _requestController.New(requestRepo)
-	adminController := _adminController.New(adminRepo)
+	adminController := _adminController.New(adminRepo, requestRepo)
 
 	e := echo.New()
 
