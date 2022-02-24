@@ -16,13 +16,16 @@ type AssetRepository struct {
 func New(db *sql.DB) *AssetRepository {
 	return &AssetRepository{db: db}
 }
-func (ur *AssetRepository) GetAll(page int) (assets []_entity.AssetSimplified, code int, err error) {
-	var totalAsset int
-	stmt, err := ur.db.Prepare(`
-	select distinct a.id, a.code_asset,a.image, a.name,a.short_name,a.status,b.name,a.description,a.quantity 
-	from assets a join categories b ON a.category_id = b.id
-	limit ? offset ?
 
+func (ar *AssetRepository) GetAll(page int) (assets []_entity.AssetSimplified, code int, err error) {
+	var totalAsset int
+
+	stmt, err := ar.db.Prepare(`
+		SELECT DISTINCT a.id, a.code_asset, a.image, a.name, a.short_name, a.status, b.name, a.description, a.quantity 
+		FROM assets a
+		JOIN categories b
+		ON a.category_id = b.id
+		LIMIT ? OFFSET ?
 	`)
 
 	if err != nil {
@@ -45,10 +48,11 @@ func (ur *AssetRepository) GetAll(page int) (assets []_entity.AssetSimplified, c
 	defer res.Close()
 
 	for res.Next() {
-		stmt2, err := ur.db.Prepare(`select count(e.id)
-								from assets e 
-								where e.deleted_at is null
-								`)
+		stmt2, err := ar.db.Prepare(`
+			SELECT COUNT(id)
+			FROM assets
+			WHERE deleted_at is null
+		`)
 
 		if err != nil {
 			log.Println(err)
@@ -75,6 +79,7 @@ func (ur *AssetRepository) GetAll(page int) (assets []_entity.AssetSimplified, c
 
 		}
 		asset := _entity.AssetSimplified{}
+
 		if err := res.Scan(&asset.Id, &asset.CodeAsset, &asset.Image, &asset.Name,
 			&asset.Short_Name, &asset.Status, &asset.CategoryName,
 			&asset.Description, &asset.Quantity); err != nil {
@@ -82,6 +87,7 @@ func (ur *AssetRepository) GetAll(page int) (assets []_entity.AssetSimplified, c
 			code, err = http.StatusInternalServerError, errors.New("internal server error")
 			return assets, code, err
 		}
+
 		var userCount int
 		var countBorrow int
 
@@ -93,6 +99,7 @@ func (ur *AssetRepository) GetAll(page int) (assets []_entity.AssetSimplified, c
 				countBorrow++
 			}
 		}
+
 		asset.UserCount = userCount
 		asset.StockAvailable = countBorrow
 		asset.TotalData.TotalPage = totalAsset
@@ -103,12 +110,18 @@ func (ur *AssetRepository) GetAll(page int) (assets []_entity.AssetSimplified, c
 	return assets, http.StatusOK, nil
 }
 
-func (r *AssetRepository) GetAssetByCategory(category string, page int) (asset _entity.AssetSimplified, code int, err error) {
+func (ar *AssetRepository) GetAssetByCategory(category string, page int) (asset _entity.AssetSimplified, code int, err error) {
 	var totalAsset int
-	stmt, err := r.db.Prepare(`
-	select a.id, a.code_asset,a.image, a.name,a.short_name,a.status,b.name,a.description,a.quantity
-	from assets a join categories b ON a.category_id = b.id
-	where a.deleted_at is null and b.name = ? limit ? offset ?`)
+
+	stmt, err := ar.db.Prepare(`
+		SELECT a.id, a.code_asset, a.image, a.name, a.short_name, a.status, b.name, a.description, a.quantity
+		FROM assets a
+		JOIN categories b
+		ON a.category_id = b.id
+		WHERE a.deleted_at IS NULL
+		  AND b.name = ?
+		LIMIT ? OFFSET ?
+	`)
 
 	if err != nil {
 		log.Println(err)
@@ -135,29 +148,21 @@ func (r *AssetRepository) GetAssetByCategory(category string, page int) (asset _
 	defer res.Close()
 
 	if res.Next() {
-		if err := res.Scan(&asset.Id, &asset.CodeAsset, &asset.Image, &asset.Name,
-			&asset.Short_Name, &asset.Status, &asset.CategoryName,
-			&asset.Description, &asset.Quantity); err != nil {
-
+		if err := res.Scan(&asset.Id, &asset.CodeAsset, &asset.Image, &asset.Name, &asset.Short_Name, &asset.Status, &asset.CategoryName, &asset.Description, &asset.Quantity); err != nil {
 			log.Println(err)
 			code, err = http.StatusInternalServerError, errors.New("internal server error")
 			return asset, totalAsset, err
 		}
 	}
 
-	// if asset == (_entity.AssetSimplified{}) {
-	// 	log.Println("asset not found")
-	// 	code, err = http.StatusBadRequest, errors.New("asset not found")
-	// 	return asset, code, err
-	// }
 	return asset, totalAsset, nil
 }
 
-func (ur AssetRepository) Create(assetData _entity.Asset) (createdAsset _entity.AssetSimplified, code int, err error) {
-	stmt, err := ur.db.Prepare(`
-	INSERT INTO assets (code_asset,image, name, short_name, status, category_id, description, quantity)
-	VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-`)
+func (ar AssetRepository) Create(assetData _entity.Asset) (createdAsset _entity.AssetSimplified, code int, err error) {
+	stmt, err := ar.db.Prepare(`
+		INSERT INTO assets (code_asset,image, name, short_name, status, category_id, description, quantity)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+	`)
 
 	if err != nil {
 		log.Println(err)
@@ -166,6 +171,7 @@ func (ur AssetRepository) Create(assetData _entity.Asset) (createdAsset _entity.
 	}
 
 	defer stmt.Close()
+
 	res, err := stmt.Exec(assetData.CodeAsset, assetData.Image, assetData.Name,
 		assetData.Short_Name, assetData.Status, assetData.Category.Id,
 		assetData.Description, assetData.Quantity)
@@ -175,6 +181,7 @@ func (ur AssetRepository) Create(assetData _entity.Asset) (createdAsset _entity.
 		code, err = http.StatusInternalServerError, errors.New("internal server error")
 		return createdAsset, code, err
 	}
+
 	rowsAffected, _ := res.RowsAffected()
 
 	if rowsAffected == 0 {
@@ -182,6 +189,7 @@ func (ur AssetRepository) Create(assetData _entity.Asset) (createdAsset _entity.
 		code, err = http.StatusInternalServerError, fmt.Errorf("asset not created")
 		return createdAsset, code, err
 	}
+
 	id, err := res.LastInsertId()
 
 	if err != nil {
@@ -203,12 +211,14 @@ func (ur AssetRepository) Create(assetData _entity.Asset) (createdAsset _entity.
 	return createdAsset, http.StatusOK, nil
 }
 
-func (ur *AssetRepository) GetById(id int) (asset _entity.Asset, code int, err error) {
-	stmt, err := ur.db.Prepare(`
-	select distinct a.id,a.image, a.name,a.short_name,
-	a.status,b.name,a.description 
-	from assets a join categories b ON a.category_id = b.id
-	where a.deleted_at IS NULL AND a.id = ?
+func (ar *AssetRepository) GetById(id int) (asset _entity.Asset, code int, err error) {
+	stmt, err := ar.db.Prepare(`
+		SELECT DISTINCT a.id, a.image, a.name, a.short_name, a.status, b.name, a.description 
+		FROM assets a
+		JOIN categories b
+		ON a.category_id = b.id
+		WHERE a.deleted_at IS NULL
+		  AND a.id = ?
 	`)
 
 	if err != nil {
@@ -246,11 +256,10 @@ func (ur *AssetRepository) GetById(id int) (asset _entity.Asset, code int, err e
 	return asset, http.StatusOK, nil
 }
 
-func (ur *AssetRepository) Update(assetData _entity.Asset) (updateAsset _entity.AssetSimplified, code int, err error) {
-	stmt, err := ur.db.Prepare(`
+func (ar *AssetRepository) Update(assetData _entity.Asset) (updateAsset _entity.AssetSimplified, code int, err error) {
+	stmt, err := ar.db.Prepare(`
 		UPDATE assets
-		SET image = ?, name = ?, short_name = ?, status = ?, description = ?,
-		quantity = ?, updated_at = CURRENT_TIMESTAMP
+		SET image = ?, name = ?, short_name = ?, status = ?, description = ?, quantity = ?, updated_at = CURRENT_TIMESTAMP
 		WHERE deleted_at IS NULL AND id = ?
 	`)
 
@@ -284,31 +293,35 @@ func (ur *AssetRepository) Update(assetData _entity.Asset) (updateAsset _entity.
 		code, err = http.StatusBadRequest, errors.New("asset not updated")
 		return updateAsset, code, err
 	}
+
 	if updateAsset.Status == "Asset Under Maintenance" {
 		updateAsset.Status = "Asset Under Maintenance"
 		updateAsset.Status = assetData.Status
 	}
+
 	updateAsset.Id = assetData.Id
 	updateAsset.Image = fmt.Sprintf("https://capstone-group3.s3.ap-southeast-1.amazonaws.com/%s", assetData.Image)
 	updateAsset.Name = assetData.Name
 	updateAsset.Description = assetData.Description
 	updateAsset.Quantity = assetData.Quantity
+
 	return updateAsset, http.StatusOK, nil
 }
 
-func (ur *AssetRepository) GetAssetByKeyword(keyword string, page int) (asset _entity.AssetSimplified, code int, err error) {
-
-	stmt, err := ur.db.Prepare(`
-	select distinct a.id,a.code_asset,a.image, a.name,a.short_name,
-	a.status,b.name,a.description 
-	from assets a join categories b ON a.category_id = b.id
-	where a.deleted_at IS NULL AND
-	a.name like ? limit ? offset ?
+func (ar *AssetRepository) GetAssetByKeyword(keyword string, page int) (asset _entity.AssetSimplified, code int, err error) {
+	stmt, err := ar.db.Prepare(`
+		SELECT distinct a.id,a.code_asset,a.image, a.name,a.short_name, a.status,b.name,a.description 
+		FROM assets a
+		JOIN categories b
+		ON a.category_id = b.id
+		WHERE a.deleted_at IS NULL
+		  AND a.name like ?
+		LIMIT ? OFFSET ?
 	`)
+
 	if err != nil {
 		log.Println(err)
 		return asset, code, err
-
 	}
 
 	like := "%" + keyword + "%"
@@ -325,9 +338,7 @@ func (ur *AssetRepository) GetAssetByKeyword(keyword string, page int) (asset _e
 	defer res.Close()
 
 	if res.Next() {
-		if err := res.Scan(&asset.Id, &asset.CodeAsset, &asset.Image, &asset.Name, &asset.Short_Name, &asset.Status,
-			&asset.CategoryName, &asset.Description); err != nil {
-
+		if err := res.Scan(&asset.Id, &asset.CodeAsset, &asset.Image, &asset.Name, &asset.Short_Name, &asset.Status, &asset.CategoryName, &asset.Description); err != nil {
 			log.Println(err)
 			code, err = http.StatusInternalServerError, errors.New("internal server error")
 			return asset, code, err
@@ -339,38 +350,57 @@ func (ur *AssetRepository) GetAssetByKeyword(keyword string, page int) (asset _e
 		code, err = http.StatusBadRequest, errors.New("asset not found")
 		return asset, code, err
 	}
+
 	return asset, http.StatusOK, nil
+}
 
-	// stmt2, err := ur.db.Prepare(`select count(e.id)
-	// 							from events e
-	// 							where e.deleted_at is null and e.name like ?
-	// 							`)
+func (ar *AssetRepository) GetStats() (statistics _entity.Statistics, code int, err error) {
+	stmt, err := ar.db.Prepare(`
+		SELECT status, count(status)
+		FROM assets
+		GROUP BY status
+	`)
 
-	// if err != nil {
-	// 	log.Println(err)
-	// 	return asset, totalEvent, err
-	// }
+	if err != nil {
+		log.Println(err)
+		code, err = http.StatusInternalServerError, errors.New("internal server error")
+		return statistics, code, err
+	}
 
-	// like2 := "%" + keyword + "%"
+	defer stmt.Close()
 
-	// res2, err := stmt2.Query(like2)
+	res, err := stmt.Query()
 
-	// if err != nil {
-	// 	log.Println(err)
-	// 	return asset, totalEvent, err
-	// }
+	if err != nil {
+		log.Println(err)
+		code, err = http.StatusInternalServerError, errors.New("internal server error")
+		return statistics, code, err
+	}
 
-	// defer res2.Close()
+	defer res.Close()
 
-	// for res2.Next() {
+	for res.Next() {
+		status, count := "", 0
 
-	// 	err := res2.Scan(&totalEvent)
+		if err := res.Scan(&status, &count); err != nil {
+			log.Println(err)
+			code, err = http.StatusInternalServerError, errors.New("internal server error")
+			return statistics, code, err
+		}
 
-	// 	if err != nil {
-	// 		log.Println(err)
-	// 		return asset, totalEvent, err
-	// 	}
+		switch status {
+		case "Asset Under Maintenance":
+			statistics.UnderMaintenance = count
+		case "Available":
+			statistics.Available = count
+		case "Borrowed":
+			statistics.Borrowed = count
+		default:
+			log.Println("there exist illegal status")
+		}
+	}
 
-	// }
-	// return asset, totalEvent, nil
+	statistics.TotalAsset = statistics.Borrowed + statistics.UnderMaintenance + statistics.Available
+
+	return statistics, http.StatusOK, nil
 }

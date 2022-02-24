@@ -43,6 +43,7 @@ type UpdateAsset struct {
 type TotalData struct {
 	TotalPage int `json:"total_page" form:"total_page"`
 }
+
 type AssetSimplified struct {
 	Id             int    `json:"id" form:"id"`
 	CodeAsset      string `json:"code_asset" form:"code_asset"`
@@ -56,4 +57,11 @@ type AssetSimplified struct {
 	StockAvailable int    `json:"stock_available" form:"stock_available"`
 	CategoryName   string `json:"category_name" form:"category_name"`
 	TotalData      TotalData
+}
+
+type Statistics struct {
+	TotalAsset       int `json:"total_asset" form:"total_asset"`
+	UnderMaintenance int `json:"under_maintenance" form:"under_maintenance"`
+	Borrowed         int `json:"borrowed" form:"borrowed"`
+	Available        int `json:"available" form:"available"`
 }

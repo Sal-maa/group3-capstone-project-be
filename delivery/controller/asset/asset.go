@@ -29,7 +29,7 @@ func New(asset _assetRepo.Asset) *AssetController {
 	return &AssetController{repository: asset}
 }
 
-func (uc AssetController) GetAll() echo.HandlerFunc {
+func (ac AssetController) GetAll() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		p := strings.TrimSpace(c.QueryParam("page"))
 		log.Println(p)
@@ -43,14 +43,14 @@ func (uc AssetController) GetAll() echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "invalid page number"))
 		}
 		// limit := 8
-		assets, code, err := uc.repository.GetAll(page)
+		assets, code, err := ac.repository.GetAll(page)
 		if err != nil {
 			return c.JSON(code, _common.NoDataResponse(code, err.Error()))
 		}
 		return c.JSON(http.StatusOK, _common.GetAllAssetsResponse(assets))
 	}
 }
-func (uc AssetController) GetAssetByCategory() echo.HandlerFunc {
+func (ac AssetController) GetAssetByCategory() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		p := strings.TrimSpace(c.QueryParam("page"))
 		log.Println(p)
@@ -63,14 +63,14 @@ func (uc AssetController) GetAssetByCategory() echo.HandlerFunc {
 		}
 		category := c.QueryParam("category")
 
-		asset, code, err := uc.repository.GetAssetByCategory(category, page)
+		asset, code, err := ac.repository.GetAssetByCategory(category, page)
 		if err != nil {
 			return c.JSON(code, _common.NoDataResponse(code, err.Error()))
 		}
 		return c.JSON(http.StatusOK, _common.GetAssetByCategoryResponse(asset))
 	}
 }
-func (uc AssetController) GetById() echo.HandlerFunc {
+func (ac AssetController) GetById() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		id, err := strconv.Atoi(c.Param("id"))
 		// detect invalid parameter
@@ -78,7 +78,7 @@ func (uc AssetController) GetById() echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "invalid asset id"))
 		}
 		// calling repository
-		asset, code, err := uc.repository.GetById(id)
+		asset, code, err := ac.repository.GetById(id)
 		// detect failure in repository
 		if err != nil {
 			return c.JSON(code, _common.NoDataResponse(code, err.Error()))
@@ -87,7 +87,7 @@ func (uc AssetController) GetById() echo.HandlerFunc {
 	}
 }
 
-func (uc AssetController) Create() echo.HandlerFunc {
+func (ac AssetController) Create() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		role := middleware.ExtractRole(c)
 		if role != "Administrator" {
@@ -139,19 +139,13 @@ func (uc AssetController) Create() echo.HandlerFunc {
 			Quantity:    assetData.Quantity,
 		}
 		// calling repository
-		createAsset, code, err := uc.repository.Create(createAssetData)
+		createAsset, code, err := ac.repository.Create(createAssetData)
 
-		// var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
-
-		// s := make([]rune, 5)
-		// for i := range s {
-		// 	s[i] = letters[rand.Intn(len(letters))]
-		// }
 		short_name := fmt.Sprintf("asset-%d", (time.Now().Unix()))
 
 		for i := 0; i < createAssetData.Quantity; i++ {
 			createAssetData.CodeAsset = fmt.Sprintf("%s-%d", short_name, i)
-			createAsset, _, _ = uc.repository.Create(createAssetData)
+			createAsset, _, _ = ac.repository.Create(createAssetData)
 		}
 
 		// detect failure in repository
@@ -162,7 +156,7 @@ func (uc AssetController) Create() echo.HandlerFunc {
 	}
 }
 
-func (uc AssetController) Update() echo.HandlerFunc {
+func (ac AssetController) Update() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		id, err := strconv.Atoi(c.Param("id"))
 		if err != nil {
@@ -187,7 +181,7 @@ func (uc AssetController) Update() echo.HandlerFunc {
 		description := strings.Title(strings.ToLower(strings.TrimSpace(assetData.Description)))
 		quantity := assetData.Quantity
 		// calling repository to get existing user data
-		updateAssetData, code, err := uc.repository.GetById(id)
+		updateAssetData, code, err := ac.repository.GetById(id)
 
 		// detect failure in repository
 		if err != nil {
@@ -219,7 +213,7 @@ func (uc AssetController) Update() echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "quantity cannot be null or negative value"))
 		}
 		// calling repository
-		UpdateAsset, code, err := uc.repository.Update(updateAssetData)
+		UpdateAsset, code, err := ac.repository.Update(updateAssetData)
 
 		// detect failure in repository
 		if err != nil {
@@ -229,7 +223,7 @@ func (uc AssetController) Update() echo.HandlerFunc {
 	}
 }
 
-func (uc AssetController) GetAssetByKeyword() echo.HandlerFunc {
+func (ac AssetController) GetAssetByKeyword() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		p := strings.TrimSpace(c.QueryParam("page"))
 		log.Println(p)
@@ -244,10 +238,24 @@ func (uc AssetController) GetAssetByKeyword() echo.HandlerFunc {
 		if keyword == "" {
 			keyword = "dell"
 		}
-		asset, code, err := uc.repository.GetAssetByKeyword(keyword, page)
+		asset, code, err := ac.repository.GetAssetByKeyword(keyword, page)
 		if err != nil {
 			return c.JSON(code, _common.NoDataResponse(code, err.Error()))
 		}
 		return c.JSON(http.StatusOK, _common.GetAssetByCategoryResponse(asset))
+	}
+}
+
+func (ac AssetController) GetStats() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// calling repository
+		statistics, code, err := ac.repository.GetStats()
+
+		// detect failure in repository
+		if err != nil {
+			return c.JSON(code, _common.NoDataResponse(code, err.Error()))
+		}
+
+		return c.JSON(http.StatusOK, _common.GetStatsResponse(statistics))
 	}
 }

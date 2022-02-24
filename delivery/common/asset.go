@@ -29,6 +29,7 @@ func GetAllAssetsResponse(assets []_entity.AssetSimplified) map[string]interface
 		"data":    assets,
 	}
 }
+
 func GetAssetByCategoryResponse(asset _entity.AssetSimplified) map[string]interface{} {
 	return map[string]interface{}{
 		"code":    http.StatusOK,
@@ -44,6 +45,7 @@ func GetAssetByCategoryResponse(asset _entity.AssetSimplified) map[string]interf
 		},
 	}
 }
+
 func GetAssetByIdResponse(asset _entity.Asset) map[string]interface{} {
 	return map[string]interface{}{
 		"code":    http.StatusOK,
@@ -73,5 +75,13 @@ func UpdateAssetResponse(asset _entity.AssetSimplified) map[string]interface{} {
 			"quantity":    asset.Quantity,
 		},
 		// "totalPage": asset.TotalPage,
+	}
+}
+
+func GetStatsResponse(statistics _entity.Statistics) map[string]interface{} {
+	return map[string]interface{}{
+		"code":    http.StatusOK,
+		"message": "success get statistics",
+		"data":    statistics,
 	}
 }
