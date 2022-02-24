@@ -90,6 +90,23 @@ func (rr *RequestRepository) Borrow(reqData _entity.Borrow) (_entity.Borrow, err
 	return reqData, err
 }
 
+func (rr *RequestRepository) UpdateAssetStatus(assetId int) (assetUpdate string, err error) {
+	statement, err := rr.db.Prepare(`
+	UPDATE assets 
+	SET updated_at = CURRENT_TIMESTAMP, status = "Borrowed" 
+	WHERE status = "Available", deleted_at IS NULL AND id = ?`)
+	if err != nil {
+		log.Println(err)
+		return assetUpdate, err
+	}
+
+	defer statement.Close()
+
+	_, err = statement.Exec()
+
+	return assetUpdate, err
+}
+
 func (rr *RequestRepository) GetCategoryId(newReq _entity.CreateProcure) (id int, err error) {
 	stmt, err := rr.db.Prepare(`
 		SELECT id
