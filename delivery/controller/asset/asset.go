@@ -228,3 +228,26 @@ func (uc AssetController) Update() echo.HandlerFunc {
 		return c.JSON(http.StatusOK, _common.UpdateAssetResponse(UpdateAsset))
 	}
 }
+
+func (uc AssetController) GetAssetByKeyword() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		p := strings.TrimSpace(c.QueryParam("page"))
+		log.Println(p)
+		if p == "" {
+			p = "1"
+		}
+		page, err := strconv.Atoi(p)
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "invalid page number"))
+		}
+		keyword := c.QueryParam("keyword")
+		if keyword == "" {
+			keyword = "dell"
+		}
+		asset, code, err := uc.repository.GetAssetByKeyword(keyword, page)
+		if err != nil {
+			return c.JSON(code, _common.NoDataResponse(code, err.Error()))
+		}
+		return c.JSON(http.StatusOK, _common.GetAssetByCategoryResponse(asset))
+	}
+}

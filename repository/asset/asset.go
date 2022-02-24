@@ -21,7 +21,6 @@ func (ur *AssetRepository) GetAll(page int) (assets []_entity.AssetSimplified, c
 	stmt, err := ur.db.Prepare(`
 	select distinct a.id, a.code_asset,a.image, a.name,a.short_name,a.status,b.name,a.description,a.quantity 
 	from assets a join categories b ON a.category_id = b.id
-	group by a.name
 	limit ? offset ?
 
 	`)
@@ -206,10 +205,9 @@ func (ur AssetRepository) Create(assetData _entity.Asset) (createdAsset _entity.
 
 func (ur *AssetRepository) GetById(id int) (asset _entity.Asset, code int, err error) {
 	stmt, err := ur.db.Prepare(`
-	select a.id, a.image, a.name,a.status,a.category_id,
-	a.description,a.quantity 
-	from assets a JOIN 
-	categories b ON a.category_id = b.id
+	select distinct a.id,a.image, a.name,a.short_name,
+	a.status,b.name,a.description 
+	from assets a join categories b ON a.category_id = b.id
 	where a.deleted_at IS NULL AND a.id = ?
 	`)
 
@@ -231,8 +229,8 @@ func (ur *AssetRepository) GetById(id int) (asset _entity.Asset, code int, err e
 	defer res.Close()
 
 	if res.Next() {
-		if err := res.Scan(&asset.Id, &asset.Image, &asset.Name, &asset.Status,
-			&asset.CategoryId, &asset.Description, &asset.Quantity); err != nil {
+		if err := res.Scan(&asset.Id, &asset.Image, &asset.Name, &asset.Short_Name, &asset.Status,
+			&asset.Category.Name, &asset.Description); err != nil {
 
 			log.Println(err)
 			code, err = http.StatusInternalServerError, errors.New("internal server error")
@@ -286,14 +284,93 @@ func (ur *AssetRepository) Update(assetData _entity.Asset) (updateAsset _entity.
 		code, err = http.StatusBadRequest, errors.New("asset not updated")
 		return updateAsset, code, err
 	}
-	if updateAsset.Status == "Asset Uder Maintenance" {
-		updateAsset.Status = "Asset Uder Maintenance"
+	if updateAsset.Status == "Asset Under Maintenance" {
+		updateAsset.Status = "Asset Under Maintenance"
 		updateAsset.Status = assetData.Status
 	}
 	updateAsset.Id = assetData.Id
-	updateAsset.Image = assetData.Image
+	updateAsset.Image = fmt.Sprintf("https://capstone-group3.s3.ap-southeast-1.amazonaws.com/%s", assetData.Image)
 	updateAsset.Name = assetData.Name
 	updateAsset.Description = assetData.Description
 	updateAsset.Quantity = assetData.Quantity
 	return updateAsset, http.StatusOK, nil
+}
+
+func (ur *AssetRepository) GetAssetByKeyword(keyword string, page int) (asset _entity.AssetSimplified, code int, err error) {
+
+	stmt, err := ur.db.Prepare(`
+	select distinct a.id,a.code_asset,a.image, a.name,a.short_name,
+	a.status,b.name,a.description 
+	from assets a join categories b ON a.category_id = b.id
+	where a.deleted_at IS NULL AND
+	a.name like ? limit ? offset ?
+	`)
+	if err != nil {
+		log.Println(err)
+		return asset, code, err
+
+	}
+
+	like := "%" + keyword + "%"
+	limit := 8
+	offset := (page - 1) * limit
+
+	res, err := stmt.Query(like, limit, offset)
+
+	if err != nil {
+		log.Println(err)
+		return asset, code, err
+	}
+
+	defer res.Close()
+
+	if res.Next() {
+		if err := res.Scan(&asset.Id, &asset.CodeAsset, &asset.Image, &asset.Name, &asset.Short_Name, &asset.Status,
+			&asset.CategoryName, &asset.Description); err != nil {
+
+			log.Println(err)
+			code, err = http.StatusInternalServerError, errors.New("internal server error")
+			return asset, code, err
+		}
+	}
+
+	if asset == (_entity.AssetSimplified{}) {
+		log.Println("asset not found")
+		code, err = http.StatusBadRequest, errors.New("asset not found")
+		return asset, code, err
+	}
+	return asset, http.StatusOK, nil
+
+	// stmt2, err := ur.db.Prepare(`select count(e.id)
+	// 							from events e
+	// 							where e.deleted_at is null and e.name like ?
+	// 							`)
+
+	// if err != nil {
+	// 	log.Println(err)
+	// 	return asset, totalEvent, err
+	// }
+
+	// like2 := "%" + keyword + "%"
+
+	// res2, err := stmt2.Query(like2)
+
+	// if err != nil {
+	// 	log.Println(err)
+	// 	return asset, totalEvent, err
+	// }
+
+	// defer res2.Close()
+
+	// for res2.Next() {
+
+	// 	err := res2.Scan(&totalEvent)
+
+	// 	if err != nil {
+	// 		log.Println(err)
+	// 		return asset, totalEvent, err
+	// 	}
+
+	// }
+	// return asset, totalEvent, nil
 }
