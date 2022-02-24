@@ -14,9 +14,10 @@ func New(db *sql.DB) *AdminRepository {
 	return &AdminRepository{db: db}
 }
 
-func (ar *AdminRepository) GetAllNewRequest(limit, offset int) (requests []_entity.RequestResponse, err error) {
-	stmt, err := ar.db.Prepare(`
-	SELECT 
+func (ar *AdminRepository) GetAllNewRequest(limit, offset int, status, date string) (requests []_entity.RequestResponse, err error) {
+	query := ""
+	if status == "all" {
+		query = `SELECT 
 		b.id, b.user_id, u.name, a.id, a.name, a.image, c.name, b.activity, b.request_time, b.return_time, b.status, b.description
 	FROM borrowORreturn_requests b
 	JOIN users u 
@@ -25,10 +26,25 @@ func (ar *AdminRepository) GetAllNewRequest(limit, offset int) (requests []_enti
 		ON b.asset_id = a.id
 	JOIN category c
 		ON a.category_id = c.id
-	WHERE b.request_time = DATE(NOW())
+	WHERE b.request_time = '?'
 	ORDER BY b.request_time DESC
-	LIMIT ? OFFSET ?
-	`)
+	LIMIT ? OFFSET ?`
+	} else {
+		query = `SELECT 
+		b.id, b.user_id, u.name, a.id, a.name, a.image, c.name, b.activity, b.request_time, b.return_time, b.status, b.description
+	FROM borrowORreturn_requests b
+	JOIN users u 
+		ON b.user_id = u.id
+	JOIN assets a
+		ON b.asset_id = a.id
+	JOIN category c
+		ON a.category_id = c.id
+	WHERE status LIKE 'a%' AND b.request_time = '?'
+	ORDER BY b.request_time DESC
+	LIMIT ? OFFSET ?`
+	}
+
+	stmt, err := ar.db.Prepare(query)
 
 	if err != nil {
 		log.Println(err)
@@ -37,7 +53,7 @@ func (ar *AdminRepository) GetAllNewRequest(limit, offset int) (requests []_enti
 
 	defer stmt.Close()
 
-	res, err := stmt.Query(limit, offset)
+	res, err := stmt.Query(date, limit, offset)
 
 	if err != nil {
 		log.Println(err)
