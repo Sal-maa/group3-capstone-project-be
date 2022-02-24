@@ -331,6 +331,56 @@ paths:
                   value:
                     code: 500
                     message: internal server error
+  /assets:
+    get:
+      tags:
+        - Asset
+      security:
+        - JWTAuth: []
+      summary: How to get all assets
+      responses:
+        '200':
+          description: Response for get all assets successful
+          content:
+            application/json:
+              example:
+                code: 200
+                data:
+                message: success get all assets
+  /stats:
+    get:
+      tags:
+        - Asset
+      security:
+        - JWTAuth: []
+      summary: How to get asset statistics for dashboard
+      responses:
+        '200':
+          description: Response for get asset statistics for dashboard successful
+          content:
+            application/json:
+              example:
+                code: 200
+                data:
+                  total_asset: 200
+                  under_maintenance: 50
+                  borrowed: 100
+                  available: 50
+                message: success get statistics
+        '400':
+          description: Response for get asset statistics for dashboard failed (bad request)
+          content:
+            application/json:
+              example:
+                code: 400
+                message: invalid or expired jwt
+        '500':
+          description: Response for get asset statistics for dashboard failed (internal server errror)
+          content:
+            application/json:
+              example:
+                code: 500
+                message: internal server error
   /activities/{user_id}:
     get:
       tags:
@@ -534,7 +584,7 @@ paths:
                       return_date: "2022-02-21 09:00:00.000"
                       activity: Return
                       status: Waiting approval
-                    message: success get detail activity
+                    message: success return request
                 request for cancel:
                   value:  
                     code: 200
@@ -548,7 +598,7 @@ paths:
                       return_date: 
                       activity: Borrow
                       status: Cancelled
-                    message: success get detail activity
+                    message: success cancel request
   /histories/users/{user_id}:
     get:
       tags:
