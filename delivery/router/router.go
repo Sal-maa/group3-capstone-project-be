@@ -2,6 +2,7 @@ package router
 
 import (
 	_activity "capstone/be/delivery/controller/activity"
+	_admin "capstone/be/delivery/controller/admin"
 	_asset "capstone/be/delivery/controller/asset"
 	_history "capstone/be/delivery/controller/history"
 	_request "capstone/be/delivery/controller/request"
@@ -21,6 +22,7 @@ func RegisterPath(
 	historyController *_history.HistoryController,
 	requestController *_request.RequestController,
 	activityController *_activity.ActivityController,
+	adminController *_admin.AdminController,
 ) {
 	// Root
 	e.GET("/", func(c echo.Context) error {
@@ -53,6 +55,9 @@ func RegisterPath(
 	// Update by Manager and Manager
 	e.PUT("/requests/borrow/:id", requestController.UpdateBorrow(), _midware.JWTMiddleWare())
 	e.PUT("/requests/procure/:id", requestController.UpdateProcure(), _midware.JWTMiddleWare())
+
+	//Admin
+	e.GET("/requests/admin", adminController.HomePageGetAll(), _midware.JWTMiddleWare())
 
 	// Activity
 	e.GET("/activities/:user_id", activityController.GetAllActivityOfUser(), _midware.JWTMiddleWare())
