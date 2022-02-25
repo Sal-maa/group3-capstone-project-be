@@ -893,8 +893,8 @@ paths:
                 - category
                 - asset_name
                 - employee_name
-                - input
-                - password
+                - activity
+                - description
             examples:
               login as employee:
                 value:
@@ -970,10 +970,6 @@ paths:
           content:
             application/json:
               examples:
-                failed to create token:
-                  value:
-                    code: 500
-                    message: failed to create token
                 failed to get category id:
                   value:
                     code: 500
@@ -994,6 +990,91 @@ paths:
                   value:
                     code: 500
                     message: failed to get employee id
+  /request/procure:
+    post:
+      tags:
+        - Request
+      summary: Create New Request for Procurement
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              properties:
+                image:
+                  type: string
+                category:
+                  type: string
+                description:
+                  type: string
+                activity:
+                  type: string
+              required:
+                - image
+                - category
+                - description
+                - activity
+            examples:
+              Login as Admin:
+                value:
+                  image: "gambar.jpg"
+                  category: "Computer"
+                  activity: "Peminjaman Aset"
+                  description: "Perlu macbook air untuk kebutuhan BE"
+        required: true
+      responses:
+        '200':
+          description: Response creating request successful
+          content:
+            application/json:
+              examples:
+                Success Create Request:
+                  value:
+                    code: 200
+                    message: Success Create Request
+                Invalid User Login:
+                  value:
+                    code: 200
+                    message: Success Create Request
+        '400':
+          description: Response Failed Create Request (bad request)
+          content:
+            application/json:
+              examples:
+                failed binding:
+                  value:
+                    code: 400
+                    message: failed to bind data
+                category not found:
+                  value:
+                    code: 400
+                    message: category not found
+                failed to upload image:
+                  value:
+                    code: 400
+                    message: failed to upload image
+                failed create request:
+                  value:
+                    code: 400
+                    message: failed create request
+
+        '403':
+          description: Response for forbidden request (forbidden)
+          content:
+            application/json:
+              examples:
+                login not as admin:
+                  value:
+                    code: 403
+                    message: only admin can create request
+        '500':
+          description: Response for create request failed (internal server error)
+          content:
+            application/json:
+              examples:
+                failed to get category id:
+                  value:
+                    code: 500
+                    message: failed to get cetegory id
   /histories/users/{user_id}:
     get:
       tags:
