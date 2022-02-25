@@ -871,6 +871,8 @@ paths:
     post:
       tags:
         - Request
+      security:
+        - JWTAuth: []
       summary: Create New Request for Borrow/Return
       requestBody:
         content:
@@ -922,7 +924,7 @@ paths:
                 Invalid User Login:
                   value:
                     code: 200
-                    message: Success Create Request
+                    message: Invalid User Login
         '400':
           description: Response Failed Create Request (bad request)
           content:
@@ -994,7 +996,9 @@ paths:
     post:
       tags:
         - Request
-      summary: Create New Request for Procurement
+      security:
+        - JWTAuth: []
+      summary: Create New Request for Procurement by Admin
       requestBody:
         content:
           'application/json':
@@ -1028,10 +1032,6 @@ paths:
             application/json:
               examples:
                 Success Create Request:
-                  value:
-                    code: 200
-                    message: Success Create Request
-                Invalid User Login:
                   value:
                     code: 200
                     message: Success Create Request
@@ -1075,6 +1075,191 @@ paths:
                   value:
                     code: 500
                     message: failed to get cetegory id
+  /request/borrow/{request_id}:
+    put:
+      tags:
+        - Request
+      security:
+        - JWTAuth: []
+      summary: Update borrow request by Admin and Manager
+      parameters:
+        - in: path
+          name: request_id
+          schema:
+            type: integer
+          required: true
+          description: Numeric id of existing request
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              properties:
+                status:
+                  type: string
+              required:
+                - status
+            examples:
+              login as admin:
+                value:
+                  status: "Waiting Aprroval from Manager"
+              login as manager:
+                value:
+                  status: "Approved by Manager"
+        required: true
+      responses:
+        '200':
+          description: Response updating request successful
+          content:
+            application/json:
+              examples:
+                success update request:
+                  value:
+                    code: 200
+                    message: success update request
+                invalid input request:
+                  value:
+                    code: 200
+                    message: invalid input request
+                manager rejected:
+                  value:
+                    code: 200
+                    message: admin no need any update
+        '400':
+          description: Response Failed Update Request (bad request)
+          content:
+            application/json:
+              examples:
+                invalid request id:
+                  value:
+                    code: 400
+                    message: invalid request id
+                failed binding:
+                  value:
+                    code: 400
+                    message: failed to bind data 
+                failed update request:
+                  value:
+                    code: 400
+                    message: failed update request
+        '403':
+          description: Response for forbidden update request (forbidden)
+          content:
+            application/json:
+              examples:
+                manager and user request got different division:
+                  value:
+                    code: 403
+                    message: you're not in the same division
+                request status is not "Waiting Approval from Manager":
+                  value:
+                    code: 403
+                    message: update by manager only
+        '500':
+          description: Response for create request failed (internal server error)
+          content:
+            application/json:
+              examples:
+                failed get request by id:
+                  value:
+                    code: 500
+                    message: failed get request by id
+                failed get division id user login:
+                  value:
+                    code: 500
+                    message: failed get division id user login
+                failed get division id user request:
+                  value:
+                    code: 500
+                    message: failed get division id user request
+  /request/procure/{request_id}:
+    put:
+      tags:
+        - Request
+      security:
+        - JWTAuth: []
+      summary: Update procure request by Manger
+      parameters:
+        - in: path
+          name: request_id
+          schema:
+            type: integer
+          required: true
+          description: Numeric id of existing request
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              properties:
+                status:
+                  type: string
+              required:
+                - status
+            examples:
+              login as manager:
+                value:
+                  status: "Approved by Manager"
+        required: true
+      responses:
+        '200':
+          description: Response updating request successful
+          content:
+            application/json:
+              examples:
+                success update request:
+                  value:
+                    code: 200
+                    message: success update request
+        '400':
+          description: Response Failed Update Request (bad request)
+          content:
+            application/json:
+              examples:
+                invalid request id:
+                  value:
+                    code: 400
+                    message: invalid request id
+                failed binding:
+                  value:
+                    code: 400
+                    message: failed to bind data 
+                failed update request:
+                  value:
+                    code: 400
+                    message: failed update request
+        '403':
+          description: Response for forbidden update request (forbidden)
+          content:
+            application/json:
+              examples:
+                login as not manager:
+                  value:
+                    code: 403
+                    message: only manager can do approval
+                manager and user request got different division:
+                  value:
+                    code: 403
+                    message: you're not in the same division
+                request status is not "Waiting Approval from Manager":
+                  value:
+                    code: 403
+                    message: update by manager only
+        '500':
+          description: Response for create request failed (internal server error)
+          content:
+            application/json:
+              examples:
+                failed get request by id:
+                  value:
+                    code: 500
+                    message: failed get request by id
+                failed get division id user login:
+                  value:
+                    code: 500
+                    message: failed get division id user login
+                failed get division id user request:
+                  value:
+                    code: 500
+                    message: failed get division id user request
   /histories/users/{user_id}:
     get:
       tags:
