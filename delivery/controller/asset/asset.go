@@ -44,7 +44,7 @@ func (ac AssetController) Create() echo.HandlerFunc {
 
 		// prepare input
 		name := strings.TrimSpace(assetData.Name)
-		category := strings.Title(strings.TrimSpace(assetData.Category))
+		category := strings.TrimSpace(assetData.Category)
 		description := strings.TrimSpace(assetData.Description)
 
 		// check input string

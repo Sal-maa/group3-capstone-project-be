@@ -29,7 +29,6 @@ type UpdateAsset struct {
 }
 
 type AssetSimplified struct {
-	Id             int    `json:"id" form:"id"`
 	Category       string `json:"category" form:"category"`
 	Name           string `json:"name" form:"name"`
 	Image          string `json:"image" form:"image"`

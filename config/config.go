@@ -1,7 +1,6 @@
 package config
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"strconv"
@@ -67,7 +66,7 @@ func initConfig() *AppConfig {
 	defaultConfig.AWS.Region = os.Getenv("AWS_REGION")
 	defaultConfig.AWS.Bucket = os.Getenv("AWS_BUCKET")
 
-	viper.SetConfigType("mapstructure")
+	viper.SetConfigType("json")
 	viper.SetConfigName("config")
 	viper.AddConfigPath("./config/")
 
@@ -78,7 +77,7 @@ func initConfig() *AppConfig {
 	}
 
 	finalConfig := AppConfig{}
-	fmt.Println("appconfig", finalConfig)
+
 	if err := viper.Unmarshal(&finalConfig); err != nil {
 		log.Println(err)
 		return &defaultConfig

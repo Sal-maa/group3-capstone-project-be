@@ -37,7 +37,7 @@ func GetByShortNameResponse(total int, asset _entity.AssetSimplified) map[string
 func UpdateAssetResponse() map[string]interface{} {
 	return map[string]interface{}{
 		"code":    http.StatusOK,
-		"message": "success edit asset",
+		"message": "success update asset status",
 	}
 }
 

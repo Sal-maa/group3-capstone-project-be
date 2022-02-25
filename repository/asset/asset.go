@@ -20,7 +20,7 @@ func New(db *sql.DB) *AssetRepository {
 func (ar AssetRepository) Create(assetData _entity.Asset) (code int, err error) {
 	stmt, err := ar.db.Prepare(`
 		INSERT INTO assets (code, name, short_name, category_id, description, status, image, created_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+		VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
 	`)
 
 	if err != nil {
@@ -116,7 +116,7 @@ func (ar *AssetRepository) GetAssetsByCategory(category_id int) (assets []_entit
 
 	defer stmt.Close()
 
-	res, err := stmt.Query()
+	res, err := stmt.Query(category_id)
 
 	if err != nil {
 		log.Println(err)
@@ -155,7 +155,7 @@ func (ar *AssetRepository) GetAssetsByCategory(category_id int) (assets []_entit
 
 func (ar *AssetRepository) GetByShortName(short_name string) (total int, asset _entity.AssetSimplified, code int, err error) {
 	stmt, err := ar.db.Prepare(`
-		SELECT c.name, a.name, a.image, a.description, COUNT(id)
+		SELECT c.name, a.name, a.image, a.description, COUNT(a.id)
 		FROM assets a
 		JOIN categories c
 		ON a.category_id = c.id
@@ -182,7 +182,7 @@ func (ar *AssetRepository) GetByShortName(short_name string) (total int, asset _
 	defer res.Close()
 
 	if res.Next() {
-		if err := res.Scan(&asset.Category, &asset.Name, &asset.Image, &asset.Description, total); err != nil {
+		if err := res.Scan(&asset.Category, &asset.Name, &asset.Image, &asset.Description, &total); err != nil {
 			log.Println(err)
 			code, err = http.StatusInternalServerError, errors.New("internal server error")
 			return total, asset, code, err
@@ -217,7 +217,7 @@ func (ar *AssetRepository) SetMaintenance(short_name string) (code int, err erro
 
 	defer stmt.Close()
 
-	res, err := stmt.Exec()
+	res, err := stmt.Exec(short_name)
 
 	if err != nil {
 		log.Println(err)
@@ -259,7 +259,7 @@ func (ar *AssetRepository) SetAvailable(short_name string) (code int, err error)
 
 	defer stmt.Close()
 
-	res, err := stmt.Exec()
+	res, err := stmt.Exec(short_name)
 
 	if err != nil {
 		log.Println(err)

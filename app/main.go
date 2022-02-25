@@ -26,7 +26,7 @@ import (
 )
 
 func init() {
-	log.SetFlags(log.Lshortfile | log.LstdFlags)
+	log.SetFlags(log.Llongfile | log.LstdFlags)
 }
 
 func main() {
