@@ -47,6 +47,7 @@ paths:
                   avatar: https://capstone-group3.s3.ap-southeast-1.amazonaws.com/default_avatar.png
                   id: 1
                   name: Bagus Brahmantya
+                  role: Manager
                   token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRob3JpemVkIjp0cnVlLCJleHAiOjE2NDI1ODE0OTAsImlkIjoxLCJuYW1lIjoiIn0.NW5sOrXy_h9R1LovaarufA-anCJ14QAIwrzYLirkQdQ
                   expire: 1645061762
         '400':
@@ -125,9 +126,13 @@ paths:
                 data:
                   avatar: https://capstone-group3.s3.ap-southeast-1.amazonaws.com/default_avatar.png
                   id: 1
+                  division: Store
+                  role: Manager
                   email: bagusbpg@gmail.com
                   name: Bagus Brahmantya
                   phone: "08123456789"
+                  gender: Male
+                  address: Green Office Park 1 (GOP 1), South Tower, Level 3, Zone 5-7 BSD, Jl. BSD Green Office Park, Sampora, Kec. Cisauk, Kabupaten Tangerang, Banten 15345
         '400':
           description: Response for get user information failed (bad request)
           content:
@@ -171,6 +176,8 @@ paths:
             schema:
               type: object
               properties:
+                division:
+                  type: string
                 name:
                   type: string
                 email:
@@ -178,6 +185,10 @@ paths:
                 phone:
                   type: string
                 password:
+                  type: string
+                gender:
+                  type: string
+                address:
                   type: string
                 avatar:
                   type: string
@@ -194,11 +205,15 @@ paths:
               example:
                 code: 200
                 data:
+                  avatar: https://capstone-group3.s3.ap-southeast-1.amazonaws.com/default_avatar.png
                   id: 1
+                  division: Store
+                  role: Manager
+                  email: bagusbpg@gmail.com
                   name: Bagus Brahmantya
-                  email: bagusbrahmantya@mail.com
                   phone: "08123456789"
-                  avatar: https://capstone-group3.s3.ap-southeast-1.amazonaws.com/user-1-1644751235.jpg
+                  gender: Male
+                  address: Green Office Park 1 (GOP 1), South Tower, Level 3, Zone 5-7 BSD, Jl. BSD Green Office Park, Sampora, Kec. Cisauk, Kabupaten Tangerang, Banten 15345 
                 message: success update user
         '400':
           description: Response for update user information failed (bad request)
@@ -332,12 +347,117 @@ paths:
                     code: 500
                     message: internal server error
   /assets:
+    post:
+      tags:
+        - Asset
+      security:
+        - JWTAuth: []
+      summary: How to create new asset
+      requestBody:
+        content:
+          'multipart/form-data':
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                category:
+                  type: string
+                description:
+                  type: string
+                quantity:
+                  type: integer
+                under_maintenance:
+                  type: boolean
+                image:
+                  type: string
+                  format: base64
+              required:
+                - name
+                - category
+                - description
+                - quantity
+                - under_maintenance
+            encoding:
+              image:
+                contentType: image/png, image/jpeg, image/jpg
+            example:
+              name: Dell Latitude 3420 (i7-1165G7, 8GB, 512GB)
+              category: Computer
+              description: "Processor : Intel Core i7-1165G7, RAM : 8GB DDR4, SSD : 512GB, VGA : Intel Iris Xe Graphics, Konektivitas : Wifi + Bluetooth, Ukuran Layar : 14 Inch FHD, Sistem Operasi : Windows 10 Home"
+              quantity: 10
+              under_maintenance: false
+        required: true
+      responses:
+        '200':
+          description: Response for create asset successful
+          content:
+            application/json:
+              example:
+                code: 200
+                message: success create asset
+        '400':
+          description: Response for create asset failed (bad request)
+          content:
+            application/json:
+              examples:
+                failed binding:
+                  value:
+                    code: 400
+                    message: failed to bind data
+                empty string in input:
+                  value:
+                    code: 400
+                    message: input cannot be empty
+                invalid quantity:
+                  value:
+                    code: 400
+                    message: quantity must be greater than zero
+                category not exist:
+                  value:
+                    code: 400
+                    message: category not exist
+                string contains malicious character:
+                  value:
+                    code: 400
+                    message: input cannot contain forbidden character
+                invalid or expired jwt:
+                  value:
+                    code: 400
+                    message: invalid or expired jwt
+        '401':
+          description: Response for create asset failed (unauthorized)
+          content:
+            application/json:
+              examples:
+                missing or malformed jwt:
+                  value:
+                    code: 401
+                    message: missing or malformed jwt
+                role not Administrator:
+                  value:
+                    code: 401
+                    message: unauthorized
+        '500':
+          description: Response for create asset failed (internal server errror)
+          content:
+            application/json:
+              example:
+                code: 500
+                message: internal server error
     get:
       tags:
         - Asset
       security:
         - JWTAuth: []
       summary: How to get all assets
+      parameters:
+        - in: query
+          name: category
+          schema:
+            type: string
+          required: false
+          description: Filter by asset category
       responses:
         '200':
           description: Response for get all assets successful
@@ -346,7 +466,155 @@ paths:
               example:
                 code: 200
                 data:
+                - category: Computer
+                  name: Dell Latitude 3420 (i7-1165G7, 8GB, 512GB)
+                  image: https://capstone-group3.s3.ap-southeast-1.amazonaws.com/asset-6-1645748000.png
+                  short_name: asset-1645748000
+                  description: "Processor : Intel Core i7-1165G7, RAM : 8GB DDR4, SSD : 512GB, VGA : Intel Iris Xe Graphics, Konektivitas : Wifi + Bluetooth, Ukuran Layar : 14 Inch FHD, Sistem Operasi : Windows 10 Home"
+                  user_count: 4
+                  stock_available: 20
+                - category: Computer
+                  name: Lenovo ThinkPad L13 Gen2 (i5-1135G7, 16GB, 512GB)
+                  image: https://capstone-group3.s3.ap-southeast-1.amazonaws.com/asset-6-1645749090.png
+                  short_name: asset-1645749090
+                  description: "Processor : Intel Core i5-1135G7, RAM : 16GB DDR4, SSD : 512GB, VGA : Intel Iris Xe Graphics, Konektivitas : Wifi + Bluetooth, Ukuran Layar : 13.3 Inch FHD, Sistem Operasi : Windows 10 Pro"
+                  user_count: 7
+                  stock_available: 13
                 message: success get all assets
+        '400':
+          description: Response for get all assets failed (bad request)
+          content:
+            application/json:
+              example:
+                code: 400
+                message: invalid or expired jwt
+        '500':
+          description: Response for get all assets failed (internal server errror)
+          content:
+            application/json:
+              example:
+                code: 500
+                message: internal server error
+  /assets/{short_name}:
+    get:
+      tags:
+        - Asset
+      security:
+        - JWTAuth: []
+      summary: How to get asset detail
+      parameters:
+        - in: path
+          name: short_name
+          schema:
+            type: string
+          required: true
+          description: unique code of existing asset
+      responses:
+        '200':
+          description: Response for get asset detail successful
+          content:
+            application/json:
+              example:
+                code: 200
+                data:
+                  category: Computer
+                  name: Computer
+                  image: https://capstone-group3.s3.ap-southeast-1.amazonaws.com/asset-6-1645748000.png
+                  description: "Processor : Intel Core i7-1165G7, RAM : 8GB DDR4, SSD : 512GB, VGA : Intel Iris Xe Graphics, Konektivitas : Wifi + Bluetooth, Ukuran Layar : 14 Inch FHD, Sistem Operasi : Windows 10 Home"
+                  total_asset: 20
+                message: success get asset detail
+        '400':
+          description: Response for get asset detail failed (bad request)
+          content:
+            application/json:
+              examples:
+                asset not found:
+                  value:
+                    code: 200
+                    message: asset not found
+                invalid or expired jwt:
+                  value:
+                    code: 400
+                    message: invalid or expired jwt
+        '401':
+          description: Response for get asset detail failed (unauthorized)
+          content:
+            application/json:
+              example:
+                code: 401
+                message: missing or malformed jwt
+        '500':
+          description: Response for get asset detail failed (internal server errror)
+          content:
+            application/json:
+              example:
+                code: 500
+                message: internal server error
+    put:
+      tags:
+        - Asset
+      security:
+        - JWTAuth: []
+      summary: How to get update asset status
+      parameters:
+        - in: path
+          name: short_name
+          schema:
+            type: string
+          required: true
+          description: unique code of existing asset
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              properties:
+                under_maintenance:
+                  type: boolean
+              required:
+                - under_maintenance
+            examples:
+              set asset available:
+                value:
+                  under_maintenance: false
+              set asset under maintenance:
+                value:
+                  under_maintenance: true
+        required: true
+      responses:
+        '200':
+          description: Response for update asset status successful
+          content:
+            application/json:
+              example:
+                code: 200
+                message: success update asset status
+        '400':
+          description: Response for get asset detail failed (bad request)
+          content:
+            application/json:
+              examples:
+                asset not found:
+                  value:
+                    code: 200
+                    message: asset not found
+                invalid or expired jwt:
+                  value:
+                    code: 400
+                    message: invalid or expired jwt
+        '401':
+          description: Response for get asset detail failed (unauthorized)
+          content:
+            application/json:
+              example:
+                code: 401
+                message: missing or malformed jwt
+        '500':
+          description: Response for get asset detail failed (internal server errror)
+          content:
+            application/json:
+              example:
+                code: 500
+                message: internal server error
   /stats:
     get:
       tags:

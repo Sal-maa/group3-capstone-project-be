@@ -43,15 +43,18 @@ CREATE TABLE `categories` (
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- capstone.assets definition
--- SET FOREIGN_KEY_CHECKS=0
+
 CREATE TABLE `assets` (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+<<<<<<< HEAD
   `code` varchar(100),
+=======
+  `code` varchar(25),
+>>>>>>> main
   `short_name` longtext,
   `name` longtext,
   `category_id` bigint unsigned DEFAULT NULL,
   `description` longtext,
-  `quantity` bigint,
   `status` longtext,
   `image` longtext,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
@@ -63,7 +66,7 @@ CREATE TABLE `assets` (
   KEY `category_id` (`category_id`),
   CONSTRAINT `assets_ibfk_1` FOREIGN KEY (`category_id`) REFERENCES `categories` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
--- SET FOREIGN_KEY_CHECKS=1
+
 -- capstone.borrow/return_requests definition
 
 CREATE TABLE `borrowORreturn_requests` (

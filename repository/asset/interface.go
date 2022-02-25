@@ -5,11 +5,12 @@ import (
 )
 
 type Asset interface {
-	Create(assetData _entity.Asset) (createAsset _entity.AssetSimplified, code int, err error)
-	GetById(id int) (asset _entity.Asset, code int, err error)
-	GetAssetByCategory(category string, page int) (asset _entity.AssetSimplified, code int, err error)
-	GetAssetByKeyword(category string, page int) (asset _entity.AssetSimplified, code int, err error)
-	GetAll(page int) (asset []_entity.AssetSimplified, code int, err error)
-	Update(assetData _entity.Asset) (updateAsset _entity.AssetSimplified, code int, err error)
+	Create(assetData _entity.Asset) (code int, err error)
+	GetAll() (assets []_entity.AssetSimplified, code int, err error)
+	GetAssetsByCategory(category_id int) (assets []_entity.AssetSimplified, code int, err error)
+	GetByShortName(short_name string) (total int, asset _entity.AssetSimplified, code int, err error)
+	SetMaintenance(short_name string) (code int, err error)
+	SetAvailable(short_name string) (code int, err error)
+	GetCategoryId(category string) (id int, code int, err error)
 	GetStats() (statistics _entity.Statistics, code int, err error)
 }
