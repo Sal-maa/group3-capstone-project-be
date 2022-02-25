@@ -44,12 +44,11 @@ func (ar AssetRepository) Create(assetData _entity.Asset) (code int, err error) 
 
 func (ar *AssetRepository) GetAll() (assets []_entity.AssetSimplified, code int, err error) {
 	stmt, err := ar.db.Prepare(`
-		SELECT c.name, a.name, a.short_name, a.image, a.description
+		SELECT DISTINCT c.name, a.name, a.short_name, a.image, a.description
 		FROM assets a
 		JOIN categories c
 		ON a.category_id = c.id
 		WHERE a.deleted_at IS NULL
-		GROUP BY a.short_name
 	`)
 
 	if err != nil {
@@ -99,13 +98,12 @@ func (ar *AssetRepository) GetAll() (assets []_entity.AssetSimplified, code int,
 
 func (ar *AssetRepository) GetAssetsByCategory(category_id int) (assets []_entity.AssetSimplified, code int, err error) {
 	stmt, err := ar.db.Prepare(`
-		SELECT c.name, a.name, a.short_name, a.image, a.description
+		SELECT DISTINCT c.name, a.name, a.short_name, a.image, a.description
 		FROM assets a
 		JOIN categories c
 		ON a.category_id = c.id
 		WHERE a.deleted_at IS NULL
 		  AND a.category_id = ?
-		GROUP BY a.short_name
 	`)
 
 	if err != nil {
