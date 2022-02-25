@@ -46,7 +46,7 @@ CREATE TABLE `categories` (
 -- SET FOREIGN_KEY_CHECKS=0
 CREATE TABLE `assets` (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT,
-  `code` longtext,
+  `code` varchar(100),
   `short_name` longtext,
   `name` longtext,
   `category_id` bigint unsigned DEFAULT NULL,
