@@ -46,7 +46,7 @@ CREATE TABLE `categories` (
 
 CREATE TABLE `assets` (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT,
-  `code` longtext,
+  `code` varchar(25),
   `short_name` longtext,
   `name` longtext,
   `category_id` bigint unsigned DEFAULT NULL,
