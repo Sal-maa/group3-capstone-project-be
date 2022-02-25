@@ -107,7 +107,7 @@ func (rr *RequestRepository) UpdateAssetStatus(assetId int) (assetUpdate string,
 	return assetUpdate, err
 }
 
-func (rr *RequestRepository) GetCategoryId(newReq _entity.CreateProcure) (id int, err error) {
+func (rr *RequestRepository) GetCategoryId(category string) (id int, err error) {
 	stmt, err := rr.db.Prepare(`
 		SELECT id
 		FROM categories
@@ -120,7 +120,67 @@ func (rr *RequestRepository) GetCategoryId(newReq _entity.CreateProcure) (id int
 
 	defer stmt.Close()
 
-	res, err := stmt.Query(newReq.Category)
+	res, err := stmt.Query(category)
+
+	if err != nil {
+		return id, err
+	}
+
+	defer res.Close()
+
+	if res.Next() {
+		if err = res.Scan(&id); err != nil {
+			return id, err
+		}
+	}
+
+	return id, nil
+}
+
+func (rr *RequestRepository) GetCategoryIdAsset(assetId int) (id int, err error) {
+	stmt, err := rr.db.Prepare(`
+		SELECT category_id
+		FROM assets
+		WHERE id = ?
+	`)
+
+	if err != nil {
+		return id, err
+	}
+
+	defer stmt.Close()
+
+	res, err := stmt.Query(assetId)
+
+	if err != nil {
+		return id, err
+	}
+
+	defer res.Close()
+
+	if res.Next() {
+		if err = res.Scan(&id); err != nil {
+			return id, err
+		}
+	}
+
+	return id, nil
+}
+
+func (rr *RequestRepository) GetEmployeeId(name string) (id int, err error) {
+	stmt, err := rr.db.Prepare(`
+		SELECT id
+		FROM users
+		WHERE name = ?
+	`)
+
+	if err != nil {
+		return id, err
+	}
+
+	defer stmt.Close()
+
+	res, err := stmt.Query(name)
 
 	if err != nil {
 		return id, err
