@@ -36,85 +36,204 @@ func (rc RequestController) Borrow() echo.HandlerFunc {
 		role := _midware.ExtractRole(c)
 		switch role {
 		case "Administrator":
-			reqData := _entity.Borrow{}
-			// prepare input string
-			reqData.User.Id = idLogin
+			newReq.Activity = "Peminjaman Aset"
+			switch newReq.Activity {
+			case "Peminjaman Aset":
+				// check category
+				categoryId, err := rc.repository.GetCategoryId(newReq.Category)
+				if categoryId == 0 {
+					return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Category Not Found"))
+				}
+				if err != nil {
+					return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Failed to Get Category Id"))
+				}
 
-			// handle get asset id
-			assetId, err := rc.repository.GetAssetId(newReq)
-			if err != nil {
-				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Failed to Check Asset Id"))
-			}
-			if assetId == 0 {
-				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Asset Not Found"))
-			}
-			reqData.Asset.Id = assetId
+				// handle get asset id
+				assetId, err := rc.repository.GetAssetId(newReq)
+				if err != nil {
+					return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Failed to Check Asset Id"))
+				}
+				if assetId == 0 {
+					return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Asset Not Found"))
+				}
 
-			// handle maintenance status
-			statAsset, err := rc.repository.CheckMaintenance(assetId)
-			if err != nil {
-				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Failed to Check Asset Status"))
-			}
-			if statAsset == "Asset Under Maintenance" {
-				return c.JSON(http.StatusForbidden, _common.NoDataResponse(http.StatusForbidden, "Sorry, Asset is Under Maintenace"))
-			}
-			reqData.Activity = newReq.Activity
-			reqData.RequestTime = time.Now()
-			reqData.ReturnTime = newReq.ReturnTime
-			reqData.Status = "Waiting Approval from Manager"
-			reqData.Description = newReq.Description
-			reqData.UpdatedAt = time.Now()
+				// check is the asset in the category
+				categoryAssetId, err := rc.repository.GetCategoryIdAsset(assetId)
+				if err != nil {
+					return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Failed to Check Category Id Asset"))
+				}
+				if categoryAssetId == 0 {
+					return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Category Not Found"))
+				}
 
-			_, err = rc.repository.Borrow(reqData)
-			if err != nil {
-				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Failed Create Request"))
-			}
-			_, err = rc.repository.UpdateAssetStatus(assetId)
-			if err != nil {
-				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Failed Update Asset Status"))
-			}
-			return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "Success Create Request"))
-		case "Employee":
-			reqData := _entity.Borrow{}
-			// prepare input string
-			reqData.User.Id = idLogin
+				if categoryId != categoryAssetId {
+					return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Asset Isn't in This Category"))
+				}
 
-			// handle get asset id
-			assetId, err := rc.repository.GetAssetId(newReq)
-			if err != nil {
-				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Failed to Check Asset Id"))
-			}
-			if assetId == 0 {
-				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Asset Not Found"))
-			}
-			reqData.Asset.Id = assetId
+				// handle maintenance status
+				statAsset, err := rc.repository.CheckMaintenance(assetId)
+				if err != nil {
+					return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Failed to Check Asset Status"))
+				}
+				if statAsset == "Asset Under Maintenance" {
+					return c.JSON(http.StatusForbidden, _common.NoDataResponse(http.StatusForbidden, "Sorry, Asset is Under Maintenace"))
+				}
+				employeeId, err := rc.repository.GetEmployeeId(newReq.EmployeeName)
+				if err != nil {
+					return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Failed to Employee ID"))
+				}
+				if categoryAssetId == 0 {
+					return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Employee Not Found"))
+				}
 
-			// handle maintenance status
-			statAsset, err := rc.repository.CheckMaintenance(assetId)
-			if err != nil {
-				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Failed to Check Asset Status"))
-			}
-			if statAsset == "Asset Under Maintenance" {
-				return c.JSON(http.StatusForbidden, _common.NoDataResponse(http.StatusForbidden, "Sorry, Asset is Under Maintenace"))
-			}
-			reqData.Activity = newReq.Activity
-			reqData.RequestTime = time.Now()
-			reqData.Status = "Waiting Approval from Admin"
-			reqData.Description = newReq.Description
-			reqData.UpdatedAt = time.Now()
+				reqData := _entity.Borrow{}
+				// prepare input string
+				reqData.User.Id = employeeId
+				reqData.Asset.Id = assetId
+				reqData.Activity = newReq.Activity
+				reqData.RequestTime = time.Now()
+				reqData.ReturnTime = newReq.ReturnTime
+				reqData.Status = "Approved by Admin"
+				reqData.Description = newReq.Description
+				reqData.UpdatedAt = time.Now()
 
-			_, err = rc.repository.Borrow(reqData)
-			if err != nil {
-				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Failed Create Request"))
+				_, err = rc.repository.Borrow(reqData)
+				if err != nil {
+					return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Failed Create Request"))
+				}
+				_, err = rc.repository.UpdateAssetStatus(assetId)
+				if err != nil {
+					return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Failed Update Asset Status"))
+				}
+				return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "Success Create Request"))
+			case "Employee":
+				reqData := _entity.Borrow{}
+				// prepare input string
+				reqData.User.Id = idLogin
+
+				// handle get asset id
+				assetId, err := rc.repository.GetAssetId(newReq)
+				if err != nil {
+					return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Failed to Check Asset Id"))
+				}
+				if assetId == 0 {
+					return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Asset Not Found"))
+				}
+				reqData.Asset.Id = assetId
+
+				// handle maintenance status
+				statAsset, err := rc.repository.CheckMaintenance(assetId)
+				if err != nil {
+					return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Failed to Check Asset Status"))
+				}
+				if statAsset == "Asset Under Maintenance" {
+					return c.JSON(http.StatusForbidden, _common.NoDataResponse(http.StatusForbidden, "Sorry, Asset is Under Maintenace"))
+				}
+				reqData.Activity = newReq.Activity
+				reqData.RequestTime = time.Now()
+				reqData.Status = "Waiting Approval from Admin"
+				reqData.Description = newReq.Description
+				reqData.UpdatedAt = time.Now()
+
+				_, err = rc.repository.Borrow(reqData)
+				if err != nil {
+					return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Failed Create Request"))
+				}
+				_, err = rc.repository.UpdateAssetStatus(assetId)
+				if err != nil {
+					return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Failed Update Asset Status"))
+				}
+				return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "Success Create Request"))
+			default:
+				return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "Invalid Input request"))
 			}
-			_, err = rc.repository.UpdateAssetStatus(assetId)
-			if err != nil {
-				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Failed Update Asset Status"))
+		case "Pengembalian Aset":
+			role := _midware.ExtractRole(c)
+			switch role {
+			case "Administrator":
+				reqData := _entity.Borrow{}
+				// prepare input string
+				reqData.User.Id = idLogin
+
+				// handle get asset id
+				assetId, err := rc.repository.GetAssetId(newReq)
+				if err != nil {
+					return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Failed to Check Asset Id"))
+				}
+				if assetId == 0 {
+					return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Asset Not Found"))
+				}
+				reqData.Asset.Id = assetId
+
+				// handle maintenance status
+				statAsset, err := rc.repository.CheckMaintenance(assetId)
+				if err != nil {
+					return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Failed to Check Asset Status"))
+				}
+				if statAsset == "Asset Under Maintenance" {
+					return c.JSON(http.StatusForbidden, _common.NoDataResponse(http.StatusForbidden, "Sorry, Asset is Under Maintenace"))
+				}
+				reqData.Activity = newReq.Activity
+				reqData.RequestTime = time.Now()
+				reqData.ReturnTime = newReq.ReturnTime
+				reqData.Status = "Waiting Approval from Manager"
+				reqData.Description = newReq.Description
+				reqData.UpdatedAt = time.Now()
+
+				_, err = rc.repository.Borrow(reqData)
+				if err != nil {
+					return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Failed Create Request"))
+				}
+				_, err = rc.repository.UpdateAssetStatus(assetId)
+				if err != nil {
+					return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Failed Update Asset Status"))
+				}
+				return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "Success Create Request"))
+			case "Employee":
+				reqData := _entity.Borrow{}
+				// prepare input string
+				reqData.User.Id = idLogin
+
+				// handle get asset id
+				assetId, err := rc.repository.GetAssetId(newReq)
+				if err != nil {
+					return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Failed to Check Asset Id"))
+				}
+				if assetId == 0 {
+					return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Asset Not Found"))
+				}
+				reqData.Asset.Id = assetId
+
+				// handle maintenance status
+				statAsset, err := rc.repository.CheckMaintenance(assetId)
+				if err != nil {
+					return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Failed to Check Asset Status"))
+				}
+				if statAsset == "Asset Under Maintenance" {
+					return c.JSON(http.StatusForbidden, _common.NoDataResponse(http.StatusForbidden, "Sorry, Asset is Under Maintenace"))
+				}
+				reqData.Activity = newReq.Activity
+				reqData.RequestTime = time.Now()
+				reqData.Status = "Waiting Approval from Admin"
+				reqData.Description = newReq.Description
+				reqData.UpdatedAt = time.Now()
+
+				_, err = rc.repository.Borrow(reqData)
+				if err != nil {
+					return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Failed Create Request"))
+				}
+				_, err = rc.repository.UpdateAssetStatus(assetId)
+				if err != nil {
+					return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Failed Update Asset Status"))
+				}
+				return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "Success Create Request"))
+			default:
+				return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "Invalid Input request"))
 			}
-			return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "Success Create Request"))
 		default:
 			return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "Invalid Input request"))
 		}
+
 	}
 }
 
@@ -135,7 +254,7 @@ func (rc RequestController) Procure() echo.HandlerFunc {
 		reqData.User.Id = idLogin
 
 		// check category id
-		categoryId, err := rc.repository.GetCategoryId(newReq)
+		categoryId, err := rc.repository.GetCategoryId(newReq.Category)
 		if categoryId == 0 {
 			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Category Not Found"))
 			// add new category if category isn't exist
