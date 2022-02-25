@@ -3,11 +3,13 @@ package entity
 import "time"
 
 type CreateBorrow struct {
-	AssetName   int       `json:"asset_name" form:"asset_name"`
-	Activity    string    `json:"activity" form:"activity"`
-	RequestTime time.Time `json:"request_time" form:"request_time"`
-	ReturnTime  time.Time `json:"return_time" form:"return_time"`
-	Description string    `json:"description" form:"description"`
+	EmployeeName string    `json:"employee_name" form:"employee_name"`
+	Category     string    `json:"category" form:"category"`
+	AssetName    int       `json:"asset_name" form:"asset_name"`
+	Activity     string    `json:"activity" form:"activity"`
+	RequestTime  time.Time `json:"request_time" form:"request_time"`
+	ReturnTime   time.Time `json:"return_time" form:"return_time"`
+	Description  string    `json:"description" form:"description"`
 }
 
 type UpdateBorrow struct {
