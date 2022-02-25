@@ -867,6 +867,133 @@ paths:
                       activity: Borrow
                       status: Cancelled
                     message: success cancel request
+  /request/borrow:
+    post:
+      tags:
+        - Request
+      summary: Create New Request for Borrow/Return
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              properties:
+                category:
+                  type: string
+                asset_name:
+                  type: string
+                employee_name:
+                  type: string
+                activity:
+                  type: string
+                description:
+                  type: string
+                return_time:
+                  type: string
+              required:
+                - category
+                - asset_name
+                - employee_name
+                - input
+                - password
+            examples:
+              login as employee:
+                value:
+                  asset_name: "Dell Latitude 3420 (i7-1165G7, 8GB, 512GB)"
+                  activity: "Peminjaman Aset"
+                  description: "Pinjam laptop karena laptop pribadi rusak"
+              Login as Admin:
+                value:
+                  category: "Computer"
+                  asset_name: "Dell Latitude 3420 (i7-1165G7, 8GB, 512GB)"
+                  employee_name: "Tahir"
+                  description: "Laptop Tahir butuh spek yang lebih tinggi"
+                  return_time: "2022-12-12"
+        required: true
+      responses:
+        '200':
+          description: Response creating request successful
+          content:
+            application/json:
+              examples:
+                Success Create Request:
+                  value:
+                    code: 200
+                    message: Success Create Request
+                Invalid User Login:
+                  value:
+                    code: 200
+                    message: Success Create Request
+        '400':
+          description: Response Failed Create Request (bad request)
+          content:
+            application/json:
+              examples:
+                failed binding:
+                  value:
+                    code: 400
+                    message: failed to bind data
+                asset isn't in database:
+                  value:
+                    code: 400
+                    message: Asset Not Found
+                failed create request:
+                  value:
+                    code: 400
+                    message: failed create request
+                failed update asset status:
+                  value:
+                    code: 400
+                    message: failed update asset status
+                category not found:
+                  value:
+                    code: 400
+                    message: category not found
+                employee not found:
+                  value:
+                    code: 400
+                    message: employee not found
+        '403':
+          description: Response for forbidden request (forbidden)
+          content:
+            application/json:
+              examples:
+                asset and category not match:
+                  value:
+                    code: 403
+                    message: asset isn't in this category
+                asset under maintenace:
+                  value:
+                    code: 403
+                    message: sorry, asset is under maintenance
+        '500':
+          description: Response for create request failed (internal server error)
+          content:
+            application/json:
+              examples:
+                failed to create token:
+                  value:
+                    code: 500
+                    message: failed to create token
+                failed to get category id:
+                  value:
+                    code: 500
+                    message: failed to get cetegory id
+                failed to check asset id:
+                  value:
+                    code: 500
+                    message: failed to check asset id
+                failed to check category id asset:
+                  value:
+                    code: 500
+                    message: failed to check category id asset
+                failed to check asset status:
+                  value:
+                    code: 500
+                    message: failed to check asset status
+                failed to get employee id:
+                  value:
+                    code: 500
+                    message: failed to get employee id
   /histories/users/{user_id}:
     get:
       tags:

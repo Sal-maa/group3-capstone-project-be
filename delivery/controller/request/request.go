@@ -47,7 +47,7 @@ func (rc RequestController) Borrow() echo.HandlerFunc {
 			// handle get asset id
 			assetId, err := rc.repository.GetAssetId(newReq)
 			if err != nil {
-				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Failed to Check Asset Id"))
+				return c.JSON(http.StatusInternalServerError, _common.NoDataResponse(http.StatusInternalServerError, "Failed to Check Asset Id"))
 			}
 			if assetId == 0 {
 				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Asset Not Found"))
@@ -56,27 +56,27 @@ func (rc RequestController) Borrow() echo.HandlerFunc {
 			// check is the asset in the category
 			categoryAssetId, err := rc.repository.GetCategoryIdAsset(assetId)
 			if err != nil {
-				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Failed to Check Category Id Asset"))
+				return c.JSON(http.StatusInternalServerError, _common.NoDataResponse(http.StatusInternalServerError, "Failed to Check Category Id Asset"))
 			}
 			if categoryAssetId == 0 {
 				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Category Not Found"))
 			}
 
 			if categoryId != categoryAssetId {
-				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Asset Isn't in This Category"))
+				return c.JSON(http.StatusForbidden, _common.NoDataResponse(http.StatusForbidden, "Asset Isn't in This Category"))
 			}
 
 			// handle maintenance status
 			statAsset, err := rc.repository.CheckMaintenance(assetId)
 			if err != nil {
-				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Failed to Check Asset Status"))
+				return c.JSON(http.StatusInternalServerError, _common.NoDataResponse(http.StatusInternalServerError, "Failed to Check Asset Status"))
 			}
 			if statAsset == "Asset Under Maintenance" {
 				return c.JSON(http.StatusForbidden, _common.NoDataResponse(http.StatusForbidden, "Sorry, Asset is Under Maintenace"))
 			}
 			employeeId, err := rc.repository.GetEmployeeId(newReq.EmployeeName)
 			if err != nil {
-				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Failed to Employee ID"))
+				return c.JSON(http.StatusInternalServerError, _common.NoDataResponse(http.StatusInternalServerError, "Failed to Get Employee ID"))
 			}
 			if categoryAssetId == 0 {
 				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Employee Not Found"))
