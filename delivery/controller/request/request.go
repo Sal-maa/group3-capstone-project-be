@@ -168,15 +168,6 @@ func (rc RequestController) Procure() echo.HandlerFunc {
 		categoryId, err := rc.repository.GetCategoryId(newReq.Category)
 		if categoryId == 0 {
 			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Category Not Found"))
-			// add new category if category isn't exist
-			// _, err := rc.repository.AddCategory(newReq.Category)
-			// if err != nil {
-			// 	return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed to add new category"))
-			// }
-			// categoryId, err = rc.repository.GetCategoryId(newReq)
-			// if err != nil {
-			// 	return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed to get category_id"))
-			// }
 		}
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Failed to Get Category Id"))
@@ -213,7 +204,7 @@ func (rc RequestController) Procure() echo.HandlerFunc {
 
 		reqData.Activity = newReq.Activity
 		reqData.RequestTime = time.Now()
-		reqData.Status = "Waiting Approval from Admin"
+		reqData.Status = "Waiting Approval from Manager"
 		reqData.Description = newReq.Description
 		reqData.UpdatedAt = time.Now()
 
@@ -337,58 +328,31 @@ func (rc RequestController) UpdateProcure() echo.HandlerFunc {
 
 		// check manager division and employee division
 		idLogin := _midware.ExtractId(c)
-		switch role {
-		case "Manager":
-			divLogin, err := rc.repository.GetUserDivision(idLogin)
-			if err != nil {
-				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed get division id user"))
-			}
-
-			divEmpl, err := rc.repository.GetUserDivision(request.Id)
-			if err != nil {
-				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed get division id user"))
-			}
-
-			if divEmpl != divLogin {
-				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "You're Not in The Same Division"))
-			}
-			if request.Status != "Waiting Approval from Manager" {
-				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Update by Manager Only"))
-			}
-			request.Status = newReq.Status
-
-			_, err = rc.repository.UpdateProcure(request)
-			if err != nil {
-				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Failed Update Request"))
-			}
-			return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "Success Update Request"))
-		case "Administrator":
-			switch request.Status {
-			case "Waiting Approval From Admin":
-				if newReq.Status != "Waiting Approval from Manager" {
-					return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Status must be WAITING APPROVAL FROM MANAGER"))
-				}
-				request.Status = newReq.Status
-				_, err = rc.repository.UpdateProcureByAdmin(request)
-				if err != nil {
-					return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Failed Update Request"))
-				}
-				return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "Success Update Request"))
-			case "Approve by Manager":
-				request.Status = newReq.Status
-				_, err = rc.repository.UpdateProcureByAdmin(request)
-				if err != nil {
-					return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Failed Update Request"))
-				}
-				return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "Success Update Request"))
-			case "Rejected by Manager":
-				return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "Admin No Need Any Update"))
-			default:
-				return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "Invalid Input request"))
-			}
-
-		default:
-			return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "Invalid Input request"))
+		if role != "Manager" {
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Only Manager Can Do Approval"))
 		}
+		divLogin, err := rc.repository.GetUserDivision(idLogin)
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed get division id user"))
+		}
+
+		divEmpl, err := rc.repository.GetUserDivision(request.Id)
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed get division id user"))
+		}
+
+		if divEmpl != divLogin {
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "You're Not in The Same Division"))
+		}
+		if request.Status != "Waiting Approval from Manager" {
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Update by Manager Only"))
+		}
+		request.Status = newReq.Status
+
+		_, err = rc.repository.UpdateProcure(request)
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Failed Update Request"))
+		}
+		return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "Success Update Request"))
 	}
 }
