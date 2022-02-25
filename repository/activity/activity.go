@@ -42,7 +42,7 @@ func (ar ActivityRepository) GetAllActivityOfUser(user_id int) (activities []_en
 
 	defer stmt.Close()
 
-	res, err := stmt.Query()
+	res, err := stmt.Query(user_id)
 
 	if err != nil {
 		log.Println(err)
