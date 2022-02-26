@@ -3,7 +3,9 @@ package request
 import (
 	_entity "capstone/be/entity"
 	"database/sql"
+	"errors"
 	"log"
+	"net/http"
 )
 
 type RequestRepository struct {
@@ -14,38 +16,160 @@ func New(db *sql.DB) *RequestRepository {
 	return &RequestRepository{db: db}
 }
 
-func (rr *RequestRepository) GetAssetId(newReq _entity.CreateBorrow) (id int, err error) {
+func (rr *RequestRepository) Borrow(reqData _entity.Borrow) (code int, err error) {
+	if code, err = rr.checkUserExistence(reqData.User.Id); err != nil {
+		return code, err
+	}
+
+	if code, err = rr.checkAssetExistence(reqData.Asset.ShortName); err != nil {
+		return code, err
+	}
+
+	reqData.Asset.Id, code, err = rr.getAvailableAssetId(reqData.Asset.ShortName)
+
+	if err != nil {
+		return code, err
+	}
+
 	stmt, err := rr.db.Prepare(`
-		SELECT 
-			id 
-		FROM 
-			assets 
-		WHERE status = "Available" AND deleted_at IS NULL AND name = ? 
-		ORDER BY id ASC LIMIT 1
+		INSERT INTO borrowORreturn_requests (updated_at, user_id, asset_id, activity, request_time, return_time, status, description) 
+		VALUES (CURRENT_TIMESTAMP, ?, ?, "Borrow", CURRENT_TIMESTAMP, ?, ?, ?)
 	`)
 
 	if err != nil {
-		return id, err
+		log.Println(err)
+		code, err = http.StatusInternalServerError, errors.New("internal server error")
+		return code, err
 	}
 
 	defer stmt.Close()
 
-	res, err := stmt.Query(newReq.AssetName)
+	_, err = stmt.Exec(reqData.User.Id, reqData.Asset.Id, reqData.ReturnTime, reqData.Status, reqData.Description)
 
 	if err != nil {
-		return id, err
+		log.Println(err)
+		code, err = http.StatusInternalServerError, errors.New("internal server error")
+		return code, err
+	}
+
+	return http.StatusOK, nil
+}
+
+func (rr *RequestRepository) checkUserExistence(user_id int) (code int, err error) {
+	stmt, err := rr.db.Prepare(`
+		SELECT id
+		FROM users
+		WHERE deleted_at IS NULL
+		  AND id = ?
+	`)
+
+	if err != nil {
+		log.Println(err)
+		code, err = http.StatusInternalServerError, errors.New("internal server error")
+		return code, err
+	}
+
+	defer stmt.Close()
+
+	res, err := stmt.Query(user_id)
+
+	if err != nil {
+		log.Println(err)
+		code, err = http.StatusInternalServerError, errors.New("internal server error")
+		return code, err
+	}
+
+	defer res.Close()
+
+	if !res.Next() {
+		code, err = http.StatusBadRequest, errors.New("user not found")
+		return code, err
+	}
+
+	return http.StatusOK, nil
+}
+
+func (rr *RequestRepository) checkAssetExistence(short_name string) (code int, err error) {
+	stmt, err := rr.db.Prepare(`
+		SELECT id 
+		FROM assets 
+		WHERE deleted_at IS NULL
+		  AND short_name = ?
+		ORDER BY id ASC LIMIT 1
+	`)
+
+	if err != nil {
+		log.Println(err)
+		code, err = http.StatusInternalServerError, errors.New("internal server error")
+		return code, err
+	}
+
+	defer stmt.Close()
+
+	res, err := stmt.Query(short_name)
+
+	if err != nil {
+		log.Println(err)
+		code, err = http.StatusInternalServerError, errors.New("internal server error")
+		return code, err
+	}
+
+	defer res.Close()
+
+	if !res.Next() {
+		code, err = http.StatusBadRequest, errors.New("asset not found")
+		return code, err
+	}
+
+	return http.StatusOK, nil
+}
+
+func (rr *RequestRepository) getAvailableAssetId(short_name string) (id int, code int, err error) {
+	stmt, err := rr.db.Prepare(`
+		SELECT id 
+		FROM assets 
+		WHERE status = "Available"
+		  AND deleted_at IS NULL
+		  AND short_name = ?
+		ORDER BY id ASC LIMIT 1
+	`)
+
+	if err != nil {
+		log.Println(err)
+		code, err = http.StatusInternalServerError, errors.New("internal server error")
+		return id, code, err
+	}
+
+	defer stmt.Close()
+
+	res, err := stmt.Query(short_name)
+
+	if err != nil {
+		log.Println(err)
+		code, err = http.StatusInternalServerError, errors.New("internal server error")
+		return id, code, err
 	}
 
 	defer res.Close()
 
 	if res.Next() {
-		if err := res.Scan(&id); err != nil {
-			return id, err
+		if err = res.Scan(&id); err != nil {
+			log.Println(err)
+			code, err = http.StatusInternalServerError, errors.New("internal server error")
+			return id, code, err
 		}
 	}
-	return id, nil
+
+	if id == 0 {
+		log.Println(err)
+		code, err = http.StatusBadRequest, errors.New("asset not available")
+		return id, code, err
+	}
+
+	return id, http.StatusOK, nil
 }
 
+// ===========================
 func (rr *RequestRepository) CheckMaintenance(assetId int) (statAsset string, err error) {
 	stmt, err := rr.db.Prepare(`
 		SELECT status FROM assets WHERE deleted_at IS NULL AND id = ?
@@ -71,23 +195,6 @@ func (rr *RequestRepository) CheckMaintenance(assetId int) (statAsset string, er
 		}
 	}
 	return statAsset, nil
-}
-
-func (rr *RequestRepository) Borrow(reqData _entity.Borrow) (_entity.Borrow, error) {
-	statement, err := rr.db.Prepare(`
-	INSERT INTO 
-		borrowORreturn_requests (updated_at, user_id, asset_id, activity, request_time, return_time, status, description) 
-	VALUES(?,?,?,?,?,?,?,?)`)
-	if err != nil {
-		log.Println(err)
-		return reqData, err
-	}
-
-	defer statement.Close()
-
-	_, err = statement.Exec(reqData.UpdatedAt, reqData.User.Id, reqData.Asset.Id, reqData.Activity, reqData.RequestTime, reqData.ReturnTime, reqData.Status, reqData.Description)
-
-	return reqData, err
 }
 
 func (rr *RequestRepository) UpdateAssetStatus(assetId int) (assetUpdate string, err error) {
