@@ -29,9 +29,8 @@ type UpdateBorrow struct {
 type Procure struct {
 	Id          int `json:"id" form:"id"`
 	User        User
-	Category    int       `json:"category" form:"category"`
+	Category    string    `json:"category" form:"category"`
 	Image       string    `json:"image" form:"image"`
-	Activity    string    `json:"activity" form:"activity"`
 	RequestTime time.Time `json:"request_time" form:"request_time"`
 	Status      string    `json:"status" form:"status"`
 	Description string    `json:"description" form:"description"`
@@ -41,8 +40,6 @@ type Procure struct {
 
 type CreateProcure struct {
 	Category    string    `json:"category" form:"category"`
-	Image       string    `json:"image" form:"image"`
-	Activity    string    `json:"activity" form:"activity"`
 	RequestTime time.Time `json:"request_time" form:"request_time"`
 	Description string    `json:"description" form:"description"`
 }

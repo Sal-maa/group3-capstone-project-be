@@ -55,6 +55,41 @@ func (rr *RequestRepository) Borrow(reqData _entity.Borrow) (code int, err error
 	return http.StatusOK, nil
 }
 
+func (rr *RequestRepository) Procure(reqData _entity.Procure) (code int, err error) {
+	if code, err = rr.checkAdminExistence(reqData.User.Id); err != nil {
+		return code, err
+	}
+
+	categoryId, code, err := rr.getCategoryId(reqData.Category)
+
+	if err != nil {
+		return code, err
+	}
+
+	stmt, err := rr.db.Prepare(`
+		INSERT INTO procurement_requests (updated_at, user_id, category_id, image, request_time, status, description)
+		VALUES (CURRENT_TIMESTAMP, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?)
+	`)
+
+	if err != nil {
+		log.Println(err)
+		code, err = http.StatusInternalServerError, errors.New("internal server error")
+		return code, err
+	}
+
+	defer stmt.Close()
+
+	_, err = stmt.Exec(reqData.User.Id, categoryId, reqData.Image, reqData.Status, reqData.Description)
+
+	if err != nil {
+		log.Println(err)
+		code, err = http.StatusInternalServerError, errors.New("internal server error")
+		return code, err
+	}
+
+	return http.StatusOK, nil
+}
+
 func (rr *RequestRepository) checkUserExistence(user_id int) (code int, err error) {
 	stmt, err := rr.db.Prepare(`
 		SELECT id
@@ -124,7 +159,7 @@ func (rr *RequestRepository) checkAssetExistence(short_name string) (code int, e
 	return http.StatusOK, nil
 }
 
-func (rr *RequestRepository) getAvailableAssetId(short_name string) (id int, code int, err error) {
+func (rr *RequestRepository) getAvailableAssetId(short_name string) (assetId int, code int, err error) {
 	stmt, err := rr.db.Prepare(`
 		SELECT id 
 		FROM assets 
@@ -137,7 +172,7 @@ func (rr *RequestRepository) getAvailableAssetId(short_name string) (id int, cod
 	if err != nil {
 		log.Println(err)
 		code, err = http.StatusInternalServerError, errors.New("internal server error")
-		return id, code, err
+		return assetId, code, err
 	}
 
 	defer stmt.Close()
@@ -147,55 +182,106 @@ func (rr *RequestRepository) getAvailableAssetId(short_name string) (id int, cod
 	if err != nil {
 		log.Println(err)
 		code, err = http.StatusInternalServerError, errors.New("internal server error")
-		return id, code, err
+		return assetId, code, err
 	}
 
 	defer res.Close()
 
 	if res.Next() {
-		if err = res.Scan(&id); err != nil {
+		if err = res.Scan(&assetId); err != nil {
 			log.Println(err)
 			code, err = http.StatusInternalServerError, errors.New("internal server error")
-			return id, code, err
+			return assetId, code, err
 		}
 	}
 
-	if id == 0 {
+	if assetId == 0 {
 		log.Println(err)
 		code, err = http.StatusBadRequest, errors.New("asset not available")
-		return id, code, err
+		return assetId, code, err
 	}
 
-	return id, http.StatusOK, nil
+	return assetId, http.StatusOK, nil
 }
 
-// ===========================
-func (rr *RequestRepository) CheckMaintenance(assetId int) (statAsset string, err error) {
+func (rr *RequestRepository) checkAdminExistence(admin_id int) (code int, err error) {
 	stmt, err := rr.db.Prepare(`
-		SELECT status FROM assets WHERE deleted_at IS NULL AND id = ?
+		SELECT id
+		FROM users
+		WHERE deleted_at IS NULL
+		  AND role = 'Administrator'
+		  AND id = ?
 	`)
 
 	if err != nil {
-		return statAsset, err
+		log.Println(err)
+		code, err = http.StatusInternalServerError, errors.New("internal server error")
+		return code, err
 	}
 
 	defer stmt.Close()
 
-	res, err := stmt.Query(assetId)
+	res, err := stmt.Query(admin_id)
 
 	if err != nil {
-		return statAsset, err
+		log.Println(err)
+		code, err = http.StatusInternalServerError, errors.New("internal server error")
+		return code, err
+	}
+
+	defer res.Close()
+
+	if !res.Next() {
+		code, err = http.StatusBadRequest, errors.New("admin not found")
+		return code, err
+	}
+
+	return http.StatusOK, nil
+}
+
+func (rr *RequestRepository) getCategoryId(category string) (categoryId int, code int, err error) {
+	stmt, err := rr.db.Prepare(`
+		SELECT id 
+		FROM category 
+		WHERE name = ?
+	`)
+
+	if err != nil {
+		log.Println(err)
+		code, err = http.StatusInternalServerError, errors.New("internal server error")
+		return categoryId, code, err
+	}
+
+	defer stmt.Close()
+
+	res, err := stmt.Query(category)
+
+	if err != nil {
+		log.Println(err)
+		code, err = http.StatusInternalServerError, errors.New("internal server error")
+		return categoryId, code, err
 	}
 
 	defer res.Close()
 
 	if res.Next() {
-		if err := res.Scan(&statAsset); err != nil {
-			return statAsset, err
+		if err = res.Scan(&categoryId); err != nil {
+			log.Println(err)
+			code, err = http.StatusInternalServerError, errors.New("internal server error")
+			return categoryId, code, err
 		}
 	}
-	return statAsset, nil
+
+	if categoryId == 0 {
+		log.Println(err)
+		code, err = http.StatusBadRequest, errors.New("category not found")
+		return categoryId, code, err
+	}
+
+	return categoryId, http.StatusOK, nil
 }
+
+// ===========================
 
 func (rr *RequestRepository) UpdateAssetStatus(assetId int) (assetUpdate string, err error) {
 	statement, err := rr.db.Prepare(`
@@ -212,125 +298,6 @@ func (rr *RequestRepository) UpdateAssetStatus(assetId int) (assetUpdate string,
 	_, err = statement.Exec()
 
 	return assetUpdate, err
-}
-
-func (rr *RequestRepository) GetCategoryId(category string) (id int, err error) {
-	stmt, err := rr.db.Prepare(`
-		SELECT id
-		FROM categories
-		WHERE name = ?
-	`)
-
-	if err != nil {
-		return id, err
-	}
-
-	defer stmt.Close()
-
-	res, err := stmt.Query(category)
-
-	if err != nil {
-		return id, err
-	}
-
-	defer res.Close()
-
-	if res.Next() {
-		if err = res.Scan(&id); err != nil {
-			return id, err
-		}
-	}
-
-	return id, nil
-}
-
-func (rr *RequestRepository) GetCategoryIdAsset(assetId int) (id int, err error) {
-	stmt, err := rr.db.Prepare(`
-		SELECT category_id
-		FROM assets
-		WHERE id = ?
-	`)
-
-	if err != nil {
-		return id, err
-	}
-
-	defer stmt.Close()
-
-	res, err := stmt.Query(assetId)
-
-	if err != nil {
-		return id, err
-	}
-
-	defer res.Close()
-
-	if res.Next() {
-		if err = res.Scan(&id); err != nil {
-			return id, err
-		}
-	}
-
-	return id, nil
-}
-
-func (rr *RequestRepository) GetEmployeeId(name string) (id int, err error) {
-	stmt, err := rr.db.Prepare(`
-		SELECT id
-		FROM users
-		WHERE name = ?
-	`)
-
-	if err != nil {
-		return id, err
-	}
-
-	defer stmt.Close()
-
-	res, err := stmt.Query(name)
-
-	if err != nil {
-		return id, err
-	}
-
-	defer res.Close()
-
-	if res.Next() {
-		if err = res.Scan(&id); err != nil {
-			return id, err
-		}
-	}
-
-	return id, nil
-}
-
-func (rr *RequestRepository) AddCategory(category string) (string, error) {
-	statement, err := rr.db.Prepare(`
-	INSERT INTO 
-		categories (name) 
-	VALUES(?)`)
-	if err != nil {
-		log.Println(err)
-		return category, err
-	}
-
-	defer statement.Close()
-
-	_, err = statement.Exec(category)
-
-	return category, err
-}
-
-func (rr *RequestRepository) Procure(reqData _entity.Procure) (_entity.Procure, error) {
-	statement, err := rr.db.Prepare("INSERT INTO `procurement_requests` (updated_at, user_id, category_id, image, activity, request_time, status, description) VALUES(?,?,?,?,?,?,?,?)")
-	if err != nil {
-		return reqData, err
-	}
-
-	defer statement.Close()
-
-	_, err = statement.Exec(reqData.UpdatedAt, reqData.Category, reqData.Image, reqData.Activity, reqData.RequestTime, reqData.Status, reqData.Description)
-	return reqData, err
 }
 
 func (rr *RequestRepository) GetUserDivision(id int) (divId int, err error) {
@@ -400,7 +367,7 @@ func (rr *RequestRepository) GetBorrowById(id int) (req _entity.Borrow, err erro
 func (rr *RequestRepository) GetProcureById(id int) (req _entity.Procure, err error) {
 	stmt, err := rr.db.Prepare(`
 		SELECT 
-			id, user_id, category_id, image, activity, request_time, status, description 
+			id, user_id, category_id, image, request_time, status, description 
 		FROM 
 			procurement_requests 
 		WHERE status = "Waiting Approval" AND deleted_at IS NULL AND id = ? 
@@ -422,7 +389,7 @@ func (rr *RequestRepository) GetProcureById(id int) (req _entity.Procure, err er
 	defer res.Close()
 
 	if res.Next() {
-		if err := res.Scan(&req.Id, &req.User.Id, &req.Category, &req.Image, &req.Activity, &req.RequestTime, &req.Status, &req.Description); err != nil {
+		if err := res.Scan(&req.Id, &req.User.Id, &req.Category, &req.Image, &req.RequestTime, &req.Status, &req.Description); err != nil {
 			return req, err
 		}
 	}

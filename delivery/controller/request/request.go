@@ -6,7 +6,6 @@ import (
 	_midware "capstone/be/delivery/middleware"
 	_entity "capstone/be/entity"
 	_requestRepo "capstone/be/repository/request"
-	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -34,13 +33,31 @@ func (rc RequestController) Borrow() echo.HandlerFunc {
 		}
 
 		// prepare input string
-		newReq.ShortName = strings.TrimSpace(newReq.ShortName)
-		newReq.Description = strings.TrimSpace(newReq.Description)
+		shortName := strings.TrimSpace(newReq.ShortName)
+		description := strings.TrimSpace(newReq.Description)
 
-		// handle borrow request based on role
-		role := _midware.ExtractRole(c)
+		// check input string
+		check := []string{shortName, description}
 
+		for _, s := range check {
+			// check empty string in required input
+			if s == "" {
+				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "input cannot be empty"))
+			}
+
+			// check malicious character in input
+			if err := _helper.CheckStringInput(s); err != nil {
+				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, s+": "+err.Error()))
+			}
+		}
+
+		// prepare input to repository
 		reqData := _entity.Borrow{}
+		reqData.Asset.ShortName = shortName
+		reqData.Description = description
+
+		// check role
+		role := _midware.ExtractRole(c)
 
 		switch role {
 		case "Administrator":
@@ -49,10 +66,7 @@ func (rc RequestController) Borrow() echo.HandlerFunc {
 				newReq.ReturnTime = time.Unix(1<<63-62135596801, 999999999)
 			}
 
-			// prepare input to repository
 			reqData.User.Id = newReq.EmployeeId
-			reqData.Asset.ShortName = newReq.ShortName
-			reqData.Description = newReq.Description
 			reqData.ReturnTime = newReq.ReturnTime
 			reqData.Status = "Approved by Admin"
 
@@ -65,10 +79,7 @@ func (rc RequestController) Borrow() echo.HandlerFunc {
 			// set return time to maximum value
 			newReq.ReturnTime = time.Unix(1<<63-62135596801, 999999999)
 
-			// prepare input to repository
 			reqData.User.Id = _midware.ExtractId(c)
-			reqData.Asset.ShortName = newReq.ShortName
-			reqData.Description = newReq.Description
 			reqData.ReturnTime = newReq.ReturnTime
 			reqData.Status = "Waiting for approval"
 
@@ -85,26 +96,42 @@ func (rc RequestController) Borrow() echo.HandlerFunc {
 
 func (rc RequestController) Procure() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		role := _midware.ExtractRole(c)
-		if role != "Administrator" {
-			return c.JSON(http.StatusForbidden, _common.NoDataResponse(http.StatusForbidden, "Only Admin Can Create Request"))
-		}
-		idLogin := _midware.ExtractId(c)
-		newReq := _entity.CreateProcure{}
-		// handle failure in binding
-		if err := c.Bind(&newReq); err != nil {
-			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Failed to Bind Data"))
+		// check authorization
+		if role := _midware.ExtractRole(c); role != "Administrator" {
+			return c.JSON(http.StatusForbidden, _common.NoDataResponse(http.StatusForbidden, "Only Admin can create request"))
 		}
 
+		newReq := _entity.CreateProcure{}
+
+		// handle failure in binding
+		if err := c.Bind(&newReq); err != nil {
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Failed to bind data"))
+		}
+
+		// prepare input string
+		category := strings.TrimSpace(newReq.Category)
+		description := strings.TrimSpace(newReq.Description)
+
+		// check input string
+		check := []string{category, description}
+
+		for _, s := range check {
+			// check empty string in required input
+			if s == "" {
+				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "input cannot be empty"))
+			}
+
+			// check malicious character in input
+			if err := _helper.CheckStringInput(s); err != nil {
+				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, s+": "+err.Error()))
+			}
+		}
+
+		// prepare input to repository
 		reqData := _entity.Procure{}
-		// check category id
-		categoryId, err := rc.repository.GetCategoryId(newReq.Category)
-		if categoryId == 0 {
-			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Category Not Found"))
-		}
-		if err != nil {
-			return c.JSON(http.StatusInternalServerError, _common.NoDataResponse(http.StatusInternalServerError, "Failed to Get Category Id"))
-		}
+		reqData.User.Id = _midware.ExtractId(c)
+		reqData.Category = category
+		reqData.Description = description
 
 		// detect image upload
 		src, file, err := c.Request().FormFile("image")
@@ -115,49 +142,45 @@ func (rc RequestController) Procure() echo.HandlerFunc {
 			defer src.Close()
 
 			// upload avatar to amazon s3
-			image, code, err := _helper.UploadImage("procure", idLogin, file, src)
+			image, code, err := _helper.UploadImage("procure", reqData.User.Id, file, src)
 
 			// detect failure while uploading avatar
 			if err != nil {
 				return c.JSON(code, _common.NoDataResponse(code, err.Error()))
 			}
 
-			newReq.Image = image
+			reqData.Image = image
 		case http.ErrMissingFile:
-			image := newReq.Image[strings.LastIndex(newReq.Image, "/")+1:]
-			newReq.Image = image
+			reqData.Image = "default_image.png"
 		case http.ErrNotMultipart:
-			image := newReq.Image[strings.LastIndex(newReq.Image, "/")+1:]
-			newReq.Image = image
+			reqData.Image = "default_image.png"
 		default:
 			log.Println(err)
 			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Failed to Upload Image"))
 		}
-		reqData.User.Id = idLogin
-		reqData.Category = categoryId
-		reqData.Image = fmt.Sprintf("https://capstone-group3.s3.ap-southeast-1.amazonaws.com/%s", newReq.Image)
-		reqData.Activity = newReq.Activity
-		reqData.RequestTime = time.Now()
-		reqData.Status = "Waiting Approval from Manager"
+
+		reqData.User.Id = _midware.ExtractId(c)
 		reqData.Description = newReq.Description
 		reqData.UpdatedAt = time.Now()
 
-		_, err = rc.repository.Procure(reqData)
+		code, err := rc.repository.Procure(reqData)
+
 		if err != nil {
 			log.Println(err)
-			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Failed Create Request"))
+			return c.JSON(code, _common.NoDataResponse(code, err.Error()))
 		}
 
-		return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "Success Create Request"))
+		return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "Success create request"))
 	}
 }
 
 func (rc RequestController) UpdateBorrow() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		idReq, err := strconv.Atoi(c.Param("id"))
+
 		// detect invalid parameter
 		if err != nil {
-			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Invalid Request Id"))
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "invalid request id"))
 		}
 
 		request, err := rc.repository.GetBorrowById(idReq)
