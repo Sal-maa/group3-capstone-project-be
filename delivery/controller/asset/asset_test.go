@@ -5,6 +5,7 @@ import (
 	_midware "capstone/be/delivery/middleware"
 	_entity "capstone/be/entity"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -280,6 +281,86 @@ func TestGetStatsSuccess(t *testing.T) {
 	})
 }
 
+// authorization failure
+
+func TestCreateFailUnauthorized(t *testing.T) {
+	t.Run("TestCreateFailUnauthorized", func(t *testing.T) {
+		token, _, _ := _midware.CreateToken(1, "Employee")
+
+		requestBody, _ := json.Marshal(map[string]interface{}{
+			"name":              "Dell Latitude 3420 (i7-1165G7, 8GB, 512GB)",
+			"category":          "Computer",
+			"description":       "Processor : Intel Core i7-1165G7, RAM : 8GB DDR4, SSD : 512GB, VGA : Intel Iris Xe Graphics, Konektivitas : Wifi + Bluetooth, Ukuran Layar : 14 Inch FHD, Sistem Operasi : Windows 10 Home",
+			"quantity":          10,
+			"under_maintenance": false,
+		})
+
+		request := httptest.NewRequest(http.MethodPost, "/", bytes.NewBuffer(requestBody))
+		request.Header.Set("Content-Type", "application/json")
+		request.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", token))
+		request.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+
+		response := httptest.NewRecorder()
+
+		e := echo.New()
+
+		context := e.NewContext(request, response)
+		context.SetPath("/assets")
+
+		assetController := New(mockRepoSuccess{})
+		_midware.JWTMiddleWare()(assetController.Create())(context)
+
+		actual := map[string]interface{}{}
+		body := response.Body.String()
+		json.Unmarshal([]byte(body), &actual)
+
+		expected := map[string]interface{}{
+			"code":    float64(http.StatusUnauthorized),
+			"message": "unauthorized",
+		}
+
+		assert.Equal(t, expected, actual)
+	})
+}
+
+func TestUpdateFailUnauthorized(t *testing.T) {
+	t.Run("TestUpdateFailUnauthorized", func(t *testing.T) {
+		token, _, _ := _midware.CreateToken(1, "Employee")
+
+		requestBody, _ := json.Marshal(map[string]interface{}{
+			"under_maintenance": true,
+		})
+
+		request := httptest.NewRequest(http.MethodPut, "/", bytes.NewBuffer(requestBody))
+		request.Header.Set("Content-Type", "application/json")
+		request.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", token))
+		request.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+
+		response := httptest.NewRecorder()
+
+		e := echo.New()
+
+		context := e.NewContext(request, response)
+		context.SetPath("/assets/:short_name")
+		context.SetParamNames("short_name")
+		context.SetParamValues("asset-1645748000")
+
+		assetController := New(mockRepoSuccess{})
+		_midware.JWTMiddleWare()(assetController.Update())(context)
+
+		actual := map[string]interface{}{}
+		body := response.Body.String()
+		json.Unmarshal([]byte(body), &actual)
+
+		expected := map[string]interface{}{
+			"code":    float64(http.StatusUnauthorized),
+			"message": "unauthorized",
+		}
+
+		assert.Equal(t, expected, actual)
+	})
+}
+
 // binding failure
 
 func TestCreateFailBinding(t *testing.T) {
@@ -402,6 +483,48 @@ func TestCreateFailEmptyInput(t *testing.T) {
 	})
 }
 
+// wrong quantity
+
+func TestCreateFailInvalidQuantity(t *testing.T) {
+	t.Run("TestCreateFailInvalidQuantity", func(t *testing.T) {
+		token, _, _ := _midware.CreateToken(1, "Administrator")
+
+		requestBody, _ := json.Marshal(map[string]interface{}{
+			"name":              "Dell Latitude 3420 (i7-1165G7, 8GB, 512GB)",
+			"category":          "Computer",
+			"description":       "Processor : Intel Core i7-1165G7, RAM : 8GB DDR4, SSD : 512GB, VGA : Intel Iris Xe Graphics, Konektivitas : Wifi + Bluetooth, Ukuran Layar : 14 Inch FHD, Sistem Operasi : Windows 10 Home",
+			"quantity":          0,
+			"under_maintenance": false,
+		})
+
+		request := httptest.NewRequest(http.MethodPost, "/", bytes.NewBuffer(requestBody))
+		request.Header.Set("Content-Type", "application/json")
+		request.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", token))
+		request.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+
+		response := httptest.NewRecorder()
+
+		e := echo.New()
+
+		context := e.NewContext(request, response)
+		context.SetPath("/assets")
+
+		assetController := New(mockRepoSuccess{})
+		_midware.JWTMiddleWare()(assetController.Create())(context)
+
+		actual := map[string]interface{}{}
+		body := response.Body.String()
+		json.Unmarshal([]byte(body), &actual)
+
+		expected := map[string]interface{}{
+			"code":    float64(http.StatusBadRequest),
+			"message": "quantity must be greater than zero",
+		}
+
+		assert.Equal(t, expected, actual)
+	})
+}
+
 // string pattern
 
 func TestCreateFailMaliciousCharacter(t *testing.T) {
@@ -438,6 +561,213 @@ func TestCreateFailMaliciousCharacter(t *testing.T) {
 		expected := map[string]interface{}{
 			"code":    float64(http.StatusBadRequest),
 			"message": "; --: input cannot contain forbidden character",
+		}
+
+		assert.Equal(t, expected, actual)
+	})
+}
+
+type mockRepoFail struct{}
+
+func (m mockRepoFail) Create(_entity.Asset) (int, error) {
+	return http.StatusInternalServerError, errors.New("internal server error")
+}
+
+func (m mockRepoFail) GetAll() ([]_entity.AssetSimplified, int, error) {
+	return []_entity.AssetSimplified{}, http.StatusInternalServerError, errors.New("internal server error")
+}
+
+func (m mockRepoFail) GetAssetsByCategory(int) ([]_entity.AssetSimplified, int, error) {
+	return []_entity.AssetSimplified{}, http.StatusInternalServerError, errors.New("internal server error")
+}
+
+func (m mockRepoFail) GetByShortName(string) (int, _entity.AssetSimplified, int, error) {
+	return 0, _entity.AssetSimplified{}, http.StatusInternalServerError, errors.New("internal server error")
+}
+
+func (m mockRepoFail) SetMaintenance(string) (int, error) {
+	return http.StatusInternalServerError, errors.New("internal server error")
+}
+
+func (m mockRepoFail) SetAvailable(string) (int, error) {
+	return http.StatusInternalServerError, errors.New("internal server error")
+}
+
+func (m mockRepoFail) GetCategoryId(string) (int, int, error) {
+	return 0, http.StatusInternalServerError, errors.New("internal server error")
+}
+
+func (m mockRepoFail) GetStats() (_entity.Statistics, int, error) {
+	return _entity.Statistics{}, http.StatusInternalServerError, errors.New("internal server error")
+}
+
+func TestCreateFailRepo(t *testing.T) {
+	t.Run("TestCreateFailRepo", func(t *testing.T) {
+		token, _, _ := _midware.CreateToken(1, "Administrator")
+
+		requestBody, _ := json.Marshal(map[string]interface{}{
+			"name":              "Dell Latitude 3420 (i7-1165G7, 8GB, 512GB)",
+			"category":          "Computer",
+			"description":       "Processor : Intel Core i7-1165G7, RAM : 8GB DDR4, SSD : 512GB, VGA : Intel Iris Xe Graphics, Konektivitas : Wifi + Bluetooth, Ukuran Layar : 14 Inch FHD, Sistem Operasi : Windows 10 Home",
+			"quantity":          10,
+			"under_maintenance": false,
+		})
+
+		request := httptest.NewRequest(http.MethodPost, "/", bytes.NewBuffer(requestBody))
+		request.Header.Set("Content-Type", "application/json")
+		request.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", token))
+		request.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+
+		response := httptest.NewRecorder()
+
+		e := echo.New()
+
+		context := e.NewContext(request, response)
+		context.SetPath("/assets")
+
+		assetController := New(mockRepoFail{})
+		_midware.JWTMiddleWare()(assetController.Create())(context)
+
+		actual := map[string]interface{}{}
+		body := response.Body.String()
+		json.Unmarshal([]byte(body), &actual)
+
+		expected := map[string]interface{}{
+			"code":    float64(http.StatusInternalServerError),
+			"message": "internal server error",
+		}
+
+		assert.Equal(t, expected, actual)
+	})
+}
+
+func TestGetAllFailRepo(t *testing.T) {
+	t.Run("TestGetAllFailRepo", func(t *testing.T) {
+		token, _, _ := _midware.CreateToken(1, "Administrator")
+
+		request := httptest.NewRequest(http.MethodGet, "/", nil)
+		request.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", token))
+		request.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+
+		response := httptest.NewRecorder()
+
+		e := echo.New()
+
+		context := e.NewContext(request, response)
+		context.SetPath("/assets")
+
+		assetController := New(mockRepoFail{})
+		_midware.JWTMiddleWare()(assetController.GetAll())(context)
+
+		actual := map[string]interface{}{}
+		body := response.Body.String()
+		json.Unmarshal([]byte(body), &actual)
+
+		expected := map[string]interface{}{
+			"code":    float64(http.StatusInternalServerError),
+			"message": "internal server error",
+		}
+
+		assert.Equal(t, expected, actual)
+	})
+}
+
+func TestGetByShortNameFailRepo(t *testing.T) {
+	t.Run("TestGetByShortNameFailRepo", func(t *testing.T) {
+		token, _, _ := _midware.CreateToken(1, "Administrator")
+
+		request := httptest.NewRequest(http.MethodGet, "/", nil)
+		request.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", token))
+		request.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+
+		response := httptest.NewRecorder()
+
+		e := echo.New()
+
+		context := e.NewContext(request, response)
+		context.SetPath("/assets/:short_name")
+		context.SetParamNames("short_name")
+		context.SetParamValues("asset-1645748000")
+
+		assetController := New(mockRepoFail{})
+		_midware.JWTMiddleWare()(assetController.GetByShortName())(context)
+
+		actual := map[string]interface{}{}
+		body := response.Body.String()
+		json.Unmarshal([]byte(body), &actual)
+
+		expected := map[string]interface{}{
+			"code":    float64(http.StatusInternalServerError),
+			"message": "internal server error",
+		}
+
+		assert.Equal(t, expected, actual)
+	})
+}
+
+func TestUpdateFailRepo(t *testing.T) {
+	t.Run("TestUpdateFailRepo", func(t *testing.T) {
+		token, _, _ := _midware.CreateToken(1, "Administrator")
+
+		requestBody, _ := json.Marshal(map[string]interface{}{
+			"under_maintenance": true,
+		})
+
+		request := httptest.NewRequest(http.MethodPut, "/", bytes.NewBuffer(requestBody))
+		request.Header.Set("Content-Type", "application/json")
+		request.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", token))
+		request.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+
+		response := httptest.NewRecorder()
+
+		e := echo.New()
+
+		context := e.NewContext(request, response)
+		context.SetPath("/assets/:short_name")
+		context.SetParamNames("short_name")
+		context.SetParamValues("asset-1645748000")
+
+		assetController := New(mockRepoFail{})
+		_midware.JWTMiddleWare()(assetController.Update())(context)
+
+		actual := map[string]interface{}{}
+		body := response.Body.String()
+		json.Unmarshal([]byte(body), &actual)
+
+		expected := map[string]interface{}{
+			"code":    float64(http.StatusInternalServerError),
+			"message": "internal server error",
+		}
+
+		assert.Equal(t, expected, actual)
+	})
+}
+
+func TestGetStatsFailRepo(t *testing.T) {
+	t.Run("TestGetStatsFailRepo", func(t *testing.T) {
+		token, _, _ := _midware.CreateToken(1, "Administrator")
+
+		request := httptest.NewRequest(http.MethodGet, "/", nil)
+		request.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", token))
+		request.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+
+		response := httptest.NewRecorder()
+
+		e := echo.New()
+
+		context := e.NewContext(request, response)
+		context.SetPath("/stats")
+
+		assetController := New(mockRepoFail{})
+		_midware.JWTMiddleWare()(assetController.GetStats())(context)
+
+		actual := map[string]interface{}{}
+		body := response.Body.String()
+		json.Unmarshal([]byte(body), &actual)
+
+		expected := map[string]interface{}{
+			"code":    float64(http.StatusInternalServerError),
+			"message": "internal server error",
 		}
 
 		assert.Equal(t, expected, actual)
