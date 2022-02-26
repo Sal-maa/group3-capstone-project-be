@@ -52,22 +52,6 @@ func (m mockRepoSuccess) GetById(int) (_entity.User, int, error) {
 	}, http.StatusOK, nil
 }
 
-func (m mockRepoSuccess) GetAll() ([]_entity.UserSimplified, int, error) {
-	return []_entity.UserSimplified{
-		{
-			Id:       1,
-			Division: "Human Capital",
-			Role:     "Manager",
-			Name:     "Salmaa",
-			Email:    "salma@sirclo.com",
-			Phone:    "08123456789",
-			Gender:   "Female",
-			Address:  "Jl. Sudirman No. 1, Tebet, Jakarta Selatan",
-			Avatar:   "https://capstone-group3.s3.ap-southeast-1.amazonaws.com/default_avatar.png",
-		},
-	}, http.StatusOK, nil
-}
-
 func (m mockRepoSuccess) Update(_entity.User) (_entity.UserSimplified, int, error) {
 	return _entity.UserSimplified{
 		Id:       1,
@@ -1066,10 +1050,6 @@ func (m mockRepoFail) LoginByPhone(string) (_entity.User, int, error) {
 
 func (m mockRepoFail) GetById(int) (_entity.User, int, error) {
 	return _entity.User{}, http.StatusInternalServerError, errors.New("internal server error")
-}
-
-func (m mockRepoFail) GetAll() ([]_entity.UserSimplified, int, error) {
-	return nil, http.StatusInternalServerError, errors.New("internal server error")
 }
 
 func (m mockRepoFail) Update(_entity.User) (_entity.UserSimplified, int, error) {
