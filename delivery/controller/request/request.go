@@ -6,7 +6,6 @@ import (
 	_midware "capstone/be/delivery/middleware"
 	_entity "capstone/be/entity"
 	_requestRepo "capstone/be/repository/request"
-	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -281,9 +280,9 @@ func (rc RequestController) UpdateBorrow() echo.HandlerFunc {
 			}
 
 			return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "success update request"))
+
 		default:
 			// this is the case where the logged in user is ordinary employee
-			fmt.Println(role)
 			return c.JSON(http.StatusForbidden, _common.NoDataResponse(http.StatusForbidden, "not allowed to update request status"))
 		}
 	}
