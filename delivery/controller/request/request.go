@@ -173,7 +173,6 @@ func (rc RequestController) Procure() echo.HandlerFunc {
 
 		// detect failure in repository
 		if err != nil {
-			log.Println(err)
 			return c.JSON(code, _common.NoDataResponse(code, err.Error()))
 		}
 
