@@ -23,7 +23,7 @@ type CreateBorrow struct {
 }
 
 type UpdateBorrow struct {
-	Status string `json:"status" form:"status"`
+	Approved bool `json:"approved" form:"approved"`
 }
 
 type Procure struct {
@@ -45,7 +45,7 @@ type CreateProcure struct {
 }
 
 type UpdateProcure struct {
-	Status string `json:"status" form:"status"`
+	Approved bool `json:"approved" form:"approved"`
 }
 
 type RequestResponse struct {

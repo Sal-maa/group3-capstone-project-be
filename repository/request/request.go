@@ -52,6 +52,11 @@ func (rr *RequestRepository) Borrow(reqData _entity.Borrow) (code int, err error
 		return code, err
 	}
 
+	if code, err = rr.setAssetBorrowed(reqData.Asset.Id); err != nil {
+		log.Println(err)
+		return code, err
+	}
+
 	return http.StatusOK, nil
 }
 
@@ -281,37 +286,47 @@ func (rr *RequestRepository) getCategoryId(category string) (categoryId int, cod
 	return categoryId, http.StatusOK, nil
 }
 
-// ===========================
+func (rr *RequestRepository) setAssetBorrowed(assetId int) (code int, err error) {
+	stmt, err := rr.db.Prepare(`
+		UPDATE assets 
+		SET updated_at = CURRENT_TIMESTAMP, status = "Borrowed" 
+		WHERE status = "Available"
+		  AND deleted_at IS NULL
+		  AND id = ?
+	`)
 
-func (rr *RequestRepository) UpdateAssetStatus(assetId int) (assetUpdate string, err error) {
-	statement, err := rr.db.Prepare(`
-	UPDATE assets 
-	SET updated_at = CURRENT_TIMESTAMP, status = "Borrowed" 
-	WHERE status = "Available", deleted_at IS NULL AND id = ?`)
 	if err != nil {
 		log.Println(err)
-		return assetUpdate, err
+		code, err = http.StatusInternalServerError, errors.New("internal server error")
+		return code, err
 	}
 
-	defer statement.Close()
+	defer stmt.Close()
 
-	_, err = statement.Exec()
+	_, err = stmt.Exec(assetId)
 
-	return assetUpdate, err
+	if err != nil {
+		log.Println(err)
+		code, err = http.StatusInternalServerError, errors.New("internal server error")
+		return code, err
+	}
+
+	return http.StatusOK, err
 }
 
-func (rr *RequestRepository) GetUserDivision(id int) (divId int, err error) {
+func (rr *RequestRepository) GetBorrowById(id int) (req _entity.Borrow, code int, err error) {
 	stmt, err := rr.db.Prepare(`
-		SELECT 
-			division_id
-		FROM 
-			users 
-		WHERE deleted_at IS NULL AND id = ? 
-		ORDER BY id ASC LIMIT 1
+		SELECT id, user_id, asset_id, activity, request_time, return_time, status, description 
+		FROM borrowORreturn_requests
+		WHERE status = "Waiting approval"
+		  AND deleted_at IS NULL
+		  AND id = ? 
 	`)
 
 	if err != nil {
-		return divId, err
+		log.Println(err)
+		code, err = http.StatusInternalServerError, errors.New("internal server error")
+		return req, code, err
 	}
 
 	defer stmt.Close()
@@ -319,63 +334,42 @@ func (rr *RequestRepository) GetUserDivision(id int) (divId int, err error) {
 	res, err := stmt.Query(id)
 
 	if err != nil {
-		return divId, err
-	}
-
-	defer res.Close()
-
-	if res.Next() {
-		if err := res.Scan(&divId); err != nil {
-			return divId, err
-		}
-	}
-	return divId, nil
-}
-
-func (rr *RequestRepository) GetBorrowById(id int) (req _entity.Borrow, err error) {
-	stmt, err := rr.db.Prepare(`
-		SELECT 
-			id, user_id, asset_id, activity, request_time, return_time, status, description 
-		FROM 
-			borrowORreturn_requests 
-		WHERE status = "Waiting Approval" AND deleted_at IS NULL AND id = ? 
-		ORDER BY id ASC LIMIT 1
-	`)
-
-	if err != nil {
-		return req, err
-	}
-
-	defer stmt.Close()
-
-	res, err := stmt.Query(id)
-
-	if err != nil {
-		return req, err
+		log.Println(err)
+		code, err = http.StatusInternalServerError, errors.New("internal server error")
+		return req, code, err
 	}
 
 	defer res.Close()
 
 	if res.Next() {
 		if err := res.Scan(&req.Id, &req.User.Id, &req.Asset.Id, &req.Activity, &req.RequestTime, &req.ReturnTime, &req.Status, &req.Description); err != nil {
-			return req, err
+			log.Println(err)
+			code, err = http.StatusInternalServerError, errors.New("internal server error")
+			return req, code, err
 		}
 	}
-	return req, nil
+
+	if req == (_entity.Borrow{}) {
+		log.Println("borrow request not found")
+		code, err = http.StatusBadRequest, errors.New("request not found")
+		return req, code, err
+	}
+
+	return req, http.StatusOK, nil
 }
 
-func (rr *RequestRepository) GetProcureById(id int) (req _entity.Procure, err error) {
+func (rr *RequestRepository) GetUserDivision(id int) (divId int, code int, err error) {
 	stmt, err := rr.db.Prepare(`
-		SELECT 
-			id, user_id, category_id, image, request_time, status, description 
-		FROM 
-			procurement_requests 
-		WHERE status = "Waiting Approval" AND deleted_at IS NULL AND id = ? 
-		ORDER BY id ASC LIMIT 1
+		SELECT division_id
+		FROM users 
+		WHERE deleted_at IS NULL
+		  AND id = ? 
 	`)
 
 	if err != nil {
-		return req, err
+		log.Println(err)
+		code, err = http.StatusInternalServerError, errors.New("internal server error")
+		return divId, code, err
 	}
 
 	defer stmt.Close()
@@ -383,52 +377,131 @@ func (rr *RequestRepository) GetProcureById(id int) (req _entity.Procure, err er
 	res, err := stmt.Query(id)
 
 	if err != nil {
-		return req, err
+		log.Println(err)
+		code, err = http.StatusInternalServerError, errors.New("internal server error")
+		return divId, code, err
+	}
+
+	defer res.Close()
+
+	if res.Next() {
+		if err := res.Scan(&divId); err != nil {
+			log.Println(err)
+			code, err = http.StatusInternalServerError, errors.New("internal server error")
+			return divId, code, err
+		}
+	}
+
+	if divId == 0 {
+		log.Println("user id not found")
+		code, err = http.StatusBadRequest, errors.New("user not found")
+		return divId, code, err
+	}
+
+	return divId, http.StatusBadRequest, nil
+}
+
+func (rr *RequestRepository) UpdateBorrow(reqData _entity.Borrow) (updatedReq _entity.Borrow, code int, err error) {
+	stmt, err := rr.db.Prepare(`
+		UPDATE borrowOrreturn_requests
+		SET status = ?, updated_at = CURRENT_TIMESTAMP
+		WHERE deleted_at IS NULL
+		  AND id = ?
+	`)
+
+	if err != nil {
+		log.Println(err)
+		code, err = http.StatusInternalServerError, errors.New("internal server error")
+		return updatedReq, code, err
+	}
+
+	defer stmt.Close()
+
+	_, err = stmt.Exec(reqData.Status, reqData.Id)
+
+	if err != nil {
+		log.Println(err)
+		code, err = http.StatusInternalServerError, errors.New("internal server error")
+		return updatedReq, code, err
+	}
+
+	return reqData, http.StatusOK, nil
+}
+
+func (rr *RequestRepository) GetProcureById(id int) (req _entity.Procure, code int, err error) {
+	stmt, err := rr.db.Prepare(`
+		SELECT p.id, p.user_id, c.name, p.image, p.request_time, p.status, p.description 
+		FROM procurement_requests p
+		JOIN category c
+		ON p.category_id = c.id
+		WHERE p.status = "Waiting approval"
+		  AND p.deleted_at IS NULL
+		  AND p.id = ?
+	`)
+
+	if err != nil {
+		log.Println(err)
+		code, err = http.StatusInternalServerError, errors.New("internal server error")
+		return req, code, err
+	}
+
+	defer stmt.Close()
+
+	res, err := stmt.Query(id)
+
+	if err != nil {
+		log.Println(err)
+		code, err = http.StatusInternalServerError, errors.New("internal server error")
+		return req, code, err
 	}
 
 	defer res.Close()
 
 	if res.Next() {
 		if err := res.Scan(&req.Id, &req.User.Id, &req.Category, &req.Image, &req.RequestTime, &req.Status, &req.Description); err != nil {
-			return req, err
+			log.Println(err)
+			code, err = http.StatusInternalServerError, errors.New("internal server error")
+			return req, code, err
 		}
 	}
-	return req, nil
-}
 
-func (rr *RequestRepository) UpdateBorrow(reqData _entity.Borrow) (_entity.Borrow, error) {
-	statement, err := rr.db.Prepare(`
-	UPDATE borrowOrreturn_requests
-		SET status = ?, updated_at = CURRENT_TIMESTAMP
-		WHERE deleted_at IS NULL AND id = ?`)
-	if err != nil {
-		log.Println(err)
-		return reqData, err
+	if req == (_entity.Procure{}) {
+		log.Println("procure request not found")
+		code, err = http.StatusBadRequest, errors.New("request not found")
+		return req, code, err
 	}
 
-	defer statement.Close()
-
-	_, err = statement.Exec(reqData.Status, reqData.Id)
-
-	return reqData, err
+	return req, http.StatusOK, nil
 }
 
-func (rr *RequestRepository) UpdateProcure(reqData _entity.Procure) (_entity.Procure, error) {
-	statement, err := rr.db.Prepare(`
-	UPDATE procurement_requests
+func (rr *RequestRepository) UpdateProcure(reqData _entity.Procure) (updatedReq _entity.Procure, code int, err error) {
+	stmt, err := rr.db.Prepare(`
+		UPDATE procurement_requests
 		SET status = ?, updated_at = CURRENT_TIMESTAMP
-		WHERE deleted_at IS NULL AND id = ?`)
+		WHERE deleted_at IS NULL
+		  AND id = ?
+	`)
+
 	if err != nil {
 		log.Println(err)
-		return reqData, err
+		code, err = http.StatusInternalServerError, errors.New("internal server error")
+		return updatedReq, code, err
 	}
 
-	defer statement.Close()
+	defer stmt.Close()
 
-	_, err = statement.Exec(reqData.Status, reqData.Id)
+	_, err = stmt.Exec(reqData.Status, reqData.Id)
 
-	return reqData, err
+	if err != nil {
+		log.Println(err)
+		code, err = http.StatusInternalServerError, errors.New("internal server error")
+		return updatedReq, code, err
+	}
+
+	return reqData, http.StatusOK, nil
 }
+
+// ===========================
 
 func (rr *RequestRepository) UpdateBorrowByAdmin(reqData _entity.Borrow) (_entity.Borrow, error) {
 	statement, err := rr.db.Prepare(`

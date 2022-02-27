@@ -114,7 +114,7 @@ func (ac AdminController) ManagerGetAll() echo.HandlerFunc {
 		}
 
 		idLogin := _midware.ExtractId(c)
-		divLogin, err := ac.reqRepository.GetUserDivision(idLogin)
+		divLogin, _, err := ac.reqRepository.GetUserDivision(idLogin)
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed get division id user"))
 		}
