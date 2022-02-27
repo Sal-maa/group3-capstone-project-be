@@ -70,3 +70,7 @@ type AssetReq struct {
 	Image        string `json:"image" form:"image"`
 	ShortName    string `json:"short_name" form:"short_name"`
 }
+
+type ActivityReturn struct {
+	AskingReturn bool `json:"askingreturn" form:"askingreturn"`
+}
