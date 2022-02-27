@@ -431,7 +431,7 @@ func (rr *RequestRepository) GetProcureById(id int) (req _entity.Procure, code i
 	stmt, err := rr.db.Prepare(`
 		SELECT p.id, p.user_id, c.name, p.image, p.request_time, p.status, p.description 
 		FROM procurement_requests p
-		JOIN category c
+		JOIN categories c
 		ON p.category_id = c.id
 		WHERE p.deleted_at IS NULL
 		  AND p.id = ?
@@ -533,4 +533,31 @@ func (rr *RequestRepository) UpdateProcureByAdmin(reqData _entity.Procure) (_ent
 	_, err = statement.Exec(reqData.Status, reqData.Id)
 
 	return reqData, err
+}
+
+func (rr *RequestRepository) ReturnAdmin(reqData _entity.Borrow) (updatedReq _entity.Borrow, code int, err error) {
+	stmt, err := rr.db.Prepare(`
+		UPDATE borrowORreturn_requests
+		SET activity = ?, status = ?, updated_at = CURRENT_TIMESTAMP
+		WHERE deleted_at IS NULL
+		  AND id = ?
+	`)
+
+	if err != nil {
+		log.Println(err)
+		code, err = http.StatusInternalServerError, errors.New("internal server error")
+		return updatedReq, code, err
+	}
+
+	defer stmt.Close()
+
+	_, err = stmt.Exec(reqData.Activity, reqData.Status, reqData.Id)
+
+	if err != nil {
+		log.Println(err)
+		code, err = http.StatusInternalServerError, errors.New("internal server error")
+		return updatedReq, code, err
+	}
+
+	return reqData, http.StatusOK, nil
 }
