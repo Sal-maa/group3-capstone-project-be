@@ -287,6 +287,7 @@ func (rc RequestController) UpdateBorrow() echo.HandlerFunc {
 			}
 
 			return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "success update request"))
+
 		default:
 			// this is the case where the logged in user is ordinary employee
 			return c.JSON(http.StatusForbidden, _common.NoDataResponse(http.StatusForbidden, "not allowed to update request status"))

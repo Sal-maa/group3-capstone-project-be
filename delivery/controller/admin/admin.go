@@ -74,6 +74,7 @@ func (ac AdminController) AdminGetAll() echo.HandlerFunc {
 		if _, exist := allstatus[status]; !exist {
 			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request"))
 		}
+
 		// filter by date
 		date := c.QueryParam("d")
 
