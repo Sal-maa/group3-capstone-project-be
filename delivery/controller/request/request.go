@@ -6,6 +6,7 @@ import (
 	_midware "capstone/be/delivery/middleware"
 	_entity "capstone/be/entity"
 	_requestRepo "capstone/be/repository/request"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -64,7 +65,7 @@ func (rc RequestController) Borrow() echo.HandlerFunc {
 		case "Administrator":
 			// if return time not set, then set to max time
 			if newReq.ReturnTime == (time.Time{}) {
-				newReq.ReturnTime = time.Unix(1<<63-62135596801, 999999999)
+				newReq.ReturnTime = time.Date(9999, 12, 31, 23, 59, 59, 0, time.UTC)
 			}
 
 			reqData.User.Id = newReq.EmployeeId
@@ -82,7 +83,7 @@ func (rc RequestController) Borrow() echo.HandlerFunc {
 			return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "success create request"))
 		case "Employee":
 			// set return time to maximum value
-			newReq.ReturnTime = time.Unix(1<<63-62135596801, 999999999)
+			newReq.ReturnTime = time.Date(9999, 12, 31, 23, 59, 59, 0, time.UTC)
 
 			reqData.User.Id = _midware.ExtractId(c)
 			reqData.ReturnTime = newReq.ReturnTime
@@ -282,6 +283,7 @@ func (rc RequestController) UpdateBorrow() echo.HandlerFunc {
 			return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "success update request"))
 		default:
 			// this is the case where the logged in user is ordinary employee
+			fmt.Println(role)
 			return c.JSON(http.StatusForbidden, _common.NoDataResponse(http.StatusForbidden, "not allowed to update request status"))
 		}
 	}

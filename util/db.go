@@ -16,7 +16,7 @@ func GetDBInstance(config *_config.AppConfig) (*sql.DB, error) {
 		driverName := config.Database.Driver
 
 		dataSourceName := fmt.Sprintf(
-			"%s:%s@tcp(%s:%d)/%s",
+			"%s:%s@tcp(%s:%d)/%s?parseTime=true",
 			config.Database.Username,
 			config.Database.Password,
 			config.Database.Host,

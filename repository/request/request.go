@@ -201,7 +201,7 @@ func (rr *RequestRepository) getAvailableAssetId(short_name string) (assetId int
 	}
 
 	if assetId == 0 {
-		log.Println(err)
+		log.Println("asset not available")
 		code, err = http.StatusBadRequest, errors.New("asset not available")
 		return assetId, code, err
 	}
@@ -318,8 +318,7 @@ func (rr *RequestRepository) GetBorrowById(id int) (req _entity.Borrow, code int
 	stmt, err := rr.db.Prepare(`
 		SELECT id, user_id, asset_id, activity, request_time, return_time, status, description 
 		FROM borrowORreturn_requests
-		WHERE status = "Waiting approval"
-		  AND deleted_at IS NULL
+		WHERE deleted_at IS NULL
 		  AND id = ? 
 	`)
 
@@ -403,7 +402,7 @@ func (rr *RequestRepository) GetUserDivision(id int) (divId int, code int, err e
 
 func (rr *RequestRepository) UpdateBorrow(reqData _entity.Borrow) (updatedReq _entity.Borrow, code int, err error) {
 	stmt, err := rr.db.Prepare(`
-		UPDATE borrowOrreturn_requests
+		UPDATE borrowORreturn_requests
 		SET status = ?, updated_at = CURRENT_TIMESTAMP
 		WHERE deleted_at IS NULL
 		  AND id = ?
@@ -434,8 +433,7 @@ func (rr *RequestRepository) GetProcureById(id int) (req _entity.Procure, code i
 		FROM procurement_requests p
 		JOIN category c
 		ON p.category_id = c.id
-		WHERE p.status = "Waiting approval"
-		  AND p.deleted_at IS NULL
+		WHERE p.deleted_at IS NULL
 		  AND p.id = ?
 	`)
 

@@ -63,7 +63,7 @@ CREATE TABLE `assets` (
   CONSTRAINT `assets_ibfk_1` FOREIGN KEY (`category_id`) REFERENCES `categories` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- capstone.borrow/return_requests definition
+-- capstone.borrowORreturn_requests definition
 
 CREATE TABLE `borrowORreturn_requests` (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT,
@@ -80,8 +80,8 @@ CREATE TABLE `borrowORreturn_requests` (
   UNIQUE KEY `id` (`id`),
   KEY `user_id` (`user_id`),
   KEY `asset_id` (`asset_id`),
-  CONSTRAINT `borrow/return_requests_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
-  CONSTRAINT `borrow/return_requests_ibfk_2` FOREIGN KEY (`asset_id`) REFERENCES `assets` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
+  CONSTRAINT `borrowORreturn_requests_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT `borrowORreturn_requests_ibfk_2` FOREIGN KEY (`asset_id`) REFERENCES `assets` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- capstone.procurement_requests definition
