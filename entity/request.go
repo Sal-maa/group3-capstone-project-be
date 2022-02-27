@@ -51,7 +51,7 @@ type UpdateProcure struct {
 type RequestResponse struct {
 	Id          int `json:"id" form:"id"`
 	User        User
-	Asset       Asset
+	Asset       AssetReq
 	Activity    string    `json:"activity" form:"activity"`
 	RequestTime time.Time `json:"request_time" form:"request_time"`
 	ReturnTime  time.Time `json:"return_time" form:"return_time"`
@@ -59,4 +59,14 @@ type RequestResponse struct {
 	Description string    `json:"description" form:"description"`
 	UpdatedAt   time.Time `json:"updated_at" form:"updated_at"`
 	DeletedAt   time.Time `json:"deleted_at" form:"deleted_at"`
+}
+
+type AssetReq struct {
+	Id           int    `json:"id" form:"id"`
+	Code         string `json:"code" form:"code"`
+	Name         string `json:"name" form:"name"`
+	CategoryId   int    `json:"category_id" form:"category_id"`
+	CategoryName string `json:"category" form:"category"`
+	Image        string `json:"image" form:"image"`
+	ShortName    string `json:"short_name" form:"short_name"`
 }
