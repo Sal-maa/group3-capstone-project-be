@@ -69,7 +69,7 @@ func (rc RequestController) Borrow() echo.HandlerFunc {
 
 			reqData.User.Id = newReq.EmployeeId
 			reqData.ReturnTime = newReq.ReturnTime
-			reqData.Status = "Approved by Admin"
+			reqData.Status = "Waiting approval from Manager"
 
 			// calling repository
 			code, err := rc.repository.Borrow(reqData)
@@ -86,7 +86,7 @@ func (rc RequestController) Borrow() echo.HandlerFunc {
 
 			reqData.User.Id = _midware.ExtractId(c)
 			reqData.ReturnTime = newReq.ReturnTime
-			reqData.Status = "Waiting approval"
+			reqData.Status = "Waiting approval from Admin"
 
 			if code, err := rc.repository.Borrow(reqData); err != nil {
 				return c.JSON(code, _common.NoDataResponse(code, err.Error()))
@@ -166,7 +166,7 @@ func (rc RequestController) Procure() echo.HandlerFunc {
 
 		reqData.User.Id = _midware.ExtractId(c)
 		reqData.Description = newReq.Description
-		reqData.Status = "Waiting approval"
+		reqData.Status = "Waiting approval from manager"
 
 		// calling repository
 		code, err := rc.repository.Procure(reqData)
@@ -233,7 +233,7 @@ func (rc RequestController) UpdateBorrow() echo.HandlerFunc {
 			}
 
 			// check request status
-			if request.Status != "Waiting approval" {
+			if request.Status != "Waiting approval from Manager" {
 				return c.JSON(http.StatusForbidden, _common.NoDataResponse(http.StatusForbidden, "cannot approve/reject this request"))
 			}
 
@@ -259,15 +259,23 @@ func (rc RequestController) UpdateBorrow() echo.HandlerFunc {
 			// has been approved by manager
 
 			// check request status
-			if request.Status != "Approved by Manager" {
+			if request.Status != "Approved by Manager" && request.Status != "Waiting approval from Admin" {
 				return c.JSON(http.StatusForbidden, _common.NoDataResponse(http.StatusForbidden, "cannot approve/reject this request"))
 			}
 
 			// set request status
-			if newStatus.Approved {
-				request.Status = "Approved by Admin"
-			} else {
-				request.Status = "Rejected by Admin"
+			if request.Status == "Approved by Manager" {
+				if newStatus.Approved {
+					request.Status = "Approved by Admin"
+				} else {
+					request.Status = "Rejected by Admin"
+				}
+			} else if request.Status == "Waiting approval from Admin" {
+				if newStatus.Approved {
+					request.Status = "Waiting approval from Manager"
+				} else {
+					return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "cannot reject request before forwarding to manager"))
+				}
 			}
 
 			// calling repository

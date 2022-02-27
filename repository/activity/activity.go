@@ -63,6 +63,10 @@ func (ar ActivityRepository) GetAllActivityOfUser(user_id int) (activities []_en
 
 		activity.AssetImage = fmt.Sprintf("https://capstone-group3.s3.ap-southeast-1.amazonaws.com/%s", activity.AssetImage)
 
+		if activity.Status == "Waiting approval from Admin" || activity.Status == "Waiting approval from Manager" {
+			activity.Status = "Waiting approval"
+		}
+
 		activities = append(activities, activity)
 	}
 
@@ -129,6 +133,10 @@ func (ar ActivityRepository) GetDetailActivityByRequestId(request_id int) (activ
 	}
 
 	activity.StockLeft = stock
+
+	if activity.Status == "Waiting approval from Admin" || activity.Status == "Waiting approval from Manager" {
+		activity.Status = "Waiting approval"
+	}
 
 	return activity, http.StatusOK, nil
 }

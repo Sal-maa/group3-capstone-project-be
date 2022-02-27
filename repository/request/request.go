@@ -424,6 +424,10 @@ func (rr *RequestRepository) UpdateBorrow(reqData _entity.Borrow) (updatedReq _e
 		return updatedReq, code, err
 	}
 
+	if code, err = rr.setAvailable(reqData.Asset.Id); err != nil {
+		return updatedReq, code, err
+	}
+
 	return reqData, http.StatusOK, nil
 }
 
@@ -497,6 +501,33 @@ func (rr *RequestRepository) UpdateProcure(reqData _entity.Procure) (updatedReq 
 	}
 
 	return reqData, http.StatusOK, nil
+}
+
+func (rr *RequestRepository) setAvailable(assetId int) (code int, err error) {
+	stmt, err := rr.db.Prepare(`
+		UPDATE assets
+		SET status = 'Available', updated_at = CURRENT_TIMESTAMP
+		WHERE deleted_at IS NULL
+		  AND id = ?
+	`)
+
+	if err != nil {
+		log.Println(err)
+		code, err = http.StatusInternalServerError, errors.New("internal server error")
+		return code, err
+	}
+
+	defer stmt.Close()
+
+	_, err = stmt.Exec(assetId)
+
+	if err != nil {
+		log.Println(err)
+		code, err = http.StatusInternalServerError, errors.New("internal server error")
+		return code, err
+	}
+
+	return http.StatusOK, nil
 }
 
 // ===========================
