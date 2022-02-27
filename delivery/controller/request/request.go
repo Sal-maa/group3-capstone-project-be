@@ -258,16 +258,16 @@ func (rc RequestController) UpdateBorrow() echo.HandlerFunc {
 			// and he/she wants to approve or reject request ONLY AFTER the request
 			// has been approved by manager
 
-			// check request status
-			if request.Status != "Approved by Manager" {
-				return c.JSON(http.StatusForbidden, _common.NoDataResponse(http.StatusForbidden, "cannot approve/reject this request"))
-			}
-
 			// set request status
 			if newStatus.Approved {
 				request.Status = "Approved by Admin"
 			} else {
 				request.Status = "Rejected by Admin"
+			}
+
+			// check request status
+			if request.Status == "Approved by Manager" {
+				return c.JSON(http.StatusForbidden, _common.NoDataResponse(http.StatusForbidden, "cannot approve/reject this request"))
 			}
 
 			// calling repository
@@ -336,5 +336,58 @@ func (rc RequestController) UpdateProcure() echo.HandlerFunc {
 		}
 
 		return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "success update request"))
+	}
+}
+
+func (rc RequestController) AdminReturn() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// get request id to be updated
+		idReq, err := strconv.Atoi(c.Param("id"))
+
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "invalid request id"))
+		}
+
+		// check role of currently logged in user
+		if role := _midware.ExtractRole(c); role != "Administrator" {
+			return c.JSON(http.StatusForbidden, _common.NoDataResponse(http.StatusForbidden, "not allowed to update request status"))
+		}
+
+		act := _entity.ActivityReturn{}
+
+		// handle failure in binding
+		if err := c.Bind(&act); err != nil {
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed to bind data"))
+		}
+
+		// get existing procure request by id
+		request, code, err := rc.repository.GetBorrowById(idReq)
+
+		if err != nil {
+			return c.JSON(code, _common.NoDataResponse(code, err.Error()))
+		}
+
+		// check request status
+		if request.Status == "Approved by Admin" && request.Activity == "Borrow" {
+			// set request status
+			if act.AskingReturn {
+				request.Activity = "Request to Return"
+				request.Status = "Waiting Approval from Admin"
+			} else {
+				return c.JSON(http.StatusForbidden, _common.NoDataResponse(http.StatusForbidden, "you are not asking for a return"))
+			}
+
+			// calling repository
+			_, code, err = rc.repository.ReturnAdmin(request)
+
+			// detect failure in repository
+			if err != nil {
+				return c.JSON(code, _common.NoDataResponse(code, err.Error()))
+			}
+		} else {
+			return c.JSON(http.StatusForbidden, _common.NoDataResponse(http.StatusForbidden, "no need to apply for a return"))
+		}
+
+		return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "success asking return"))
 	}
 }
