@@ -6,7 +6,6 @@ import (
 	_midware "capstone/be/delivery/middleware"
 	_entity "capstone/be/entity"
 	_requestRepo "capstone/be/repository/request"
-	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -27,149 +26,118 @@ func New(request _requestRepo.Request) *RequestController {
 func (rc RequestController) Borrow() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		newReq := _entity.CreateBorrow{}
+
 		// handle failure in binding
 		if err := c.Bind(&newReq); err != nil {
-			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Failed to Bind Data"))
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed to bind data"))
 		}
 
+		// prepare input string
+		shortName := strings.TrimSpace(newReq.ShortName)
+		description := strings.TrimSpace(newReq.Description)
+
+		// check empty string in required input
+		// description is not required, such as when admin assigns asset to employee
+		if shortName == "" {
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "input cannot be empty"))
+		}
+
+		// check input string
+		check := []string{shortName, description}
+
+		for _, s := range check {
+			// check malicious character in input
+			if err := _helper.CheckStringInput(s); err != nil {
+				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, s+": "+err.Error()))
+			}
+		}
+
+		// prepare input to repository
+		reqData := _entity.Borrow{}
+		reqData.Asset.ShortName = shortName
+		reqData.Description = description
+
+		// check role
 		role := _midware.ExtractRole(c)
+
 		switch role {
 		case "Administrator":
-			// check category
-			categoryId, err := rc.repository.GetCategoryId(newReq.Category)
-			if categoryId == 0 {
-				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Category Not Found"))
-			}
-			if err != nil {
-				return c.JSON(http.StatusInternalServerError, _common.NoDataResponse(http.StatusInternalServerError, "Failed to Get Category Id"))
+			// if return time not set, then set to max time
+			if newReq.ReturnTime == (time.Time{}) {
+				newReq.ReturnTime = time.Date(9999, 12, 31, 23, 59, 59, 0, time.UTC)
 			}
 
-			// handle get asset id
-			assetId, err := rc.repository.GetAssetId(newReq)
-			if err != nil {
-				return c.JSON(http.StatusInternalServerError, _common.NoDataResponse(http.StatusInternalServerError, "Failed to Check Asset Id"))
-			}
-			if assetId == 0 {
-				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Asset Not Found"))
-			}
-
-			// check is the asset in the category
-			categoryAssetId, err := rc.repository.GetCategoryIdAsset(assetId)
-			if err != nil {
-				return c.JSON(http.StatusInternalServerError, _common.NoDataResponse(http.StatusInternalServerError, "Failed to Check Category Id Asset"))
-			}
-			if categoryAssetId == 0 {
-				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Category Not Found"))
-			}
-
-			if categoryId != categoryAssetId {
-				return c.JSON(http.StatusForbidden, _common.NoDataResponse(http.StatusForbidden, "Asset Isn't in This Category"))
-			}
-
-			// handle maintenance status
-			statAsset, err := rc.repository.CheckMaintenance(assetId)
-			if err != nil {
-				return c.JSON(http.StatusInternalServerError, _common.NoDataResponse(http.StatusInternalServerError, "Failed to Check Asset Status"))
-			}
-			if statAsset == "Asset Under Maintenance" {
-				return c.JSON(http.StatusForbidden, _common.NoDataResponse(http.StatusForbidden, "Sorry, Asset is Under Maintenace"))
-			}
-			employeeId, err := rc.repository.GetEmployeeId(newReq.EmployeeName)
-			if err != nil {
-				return c.JSON(http.StatusInternalServerError, _common.NoDataResponse(http.StatusInternalServerError, "Failed to Get Employee ID"))
-			}
-			if categoryAssetId == 0 {
-				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Employee Not Found"))
-			}
-
-			reqData := _entity.Borrow{}
-			// prepare input string
-			reqData.User.Id = employeeId
-			reqData.Asset.Id = assetId
-			reqData.Activity = "Peminjaman Aset"
-			reqData.RequestTime = time.Now()
+			reqData.User.Id = newReq.EmployeeId
 			reqData.ReturnTime = newReq.ReturnTime
 			reqData.Status = "Approved by Admin"
-			reqData.Description = newReq.Description
-			reqData.UpdatedAt = time.Now()
 
-			_, err = rc.repository.Borrow(reqData)
+			// calling repository
+			code, err := rc.repository.Borrow(reqData)
+
+			// detect failure in repository
 			if err != nil {
-				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Failed Create Request"))
+				return c.JSON(code, _common.NoDataResponse(code, err.Error()))
 			}
-			_, err = rc.repository.UpdateAssetStatus(assetId)
-			if err != nil {
-				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Failed Update Asset Status"))
-			}
-			return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "Success Create Request"))
+
+			return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "success create request"))
 		case "Employee":
-			idLogin := _midware.ExtractId(c)
-			reqData := _entity.Borrow{}
+			// set return time to maximum value
+			newReq.ReturnTime = time.Date(9999, 12, 31, 23, 59, 59, 0, time.UTC)
 
-			// handle get asset id
-			assetId, err := rc.repository.GetAssetId(newReq)
-			if err != nil {
-				return c.JSON(http.StatusInternalServerError, _common.NoDataResponse(http.StatusInternalServerError, "Failed to Check Asset Id"))
-			}
-			if assetId == 0 {
-				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Asset Not Found"))
-			}
+			reqData.User.Id = _midware.ExtractId(c)
+			reqData.ReturnTime = newReq.ReturnTime
+			reqData.Status = "Waiting approval from Admin"
 
-			// handle maintenance status
-			statAsset, err := rc.repository.CheckMaintenance(assetId)
-			if err != nil {
-				return c.JSON(http.StatusInternalServerError, _common.NoDataResponse(http.StatusInternalServerError, "Failed to Check Asset Status"))
-			}
-			if statAsset == "Asset Under Maintenance" {
-				return c.JSON(http.StatusForbidden, _common.NoDataResponse(http.StatusForbidden, "Sorry, Asset is Under Maintenace"))
+			if code, err := rc.repository.Borrow(reqData); err != nil {
+				return c.JSON(code, _common.NoDataResponse(code, err.Error()))
 			}
 
-			// prepare input
-			reqData.User.Id = idLogin
-			reqData.Asset.Id = assetId
-			reqData.Activity = newReq.Activity
-			reqData.RequestTime = time.Now()
-			reqData.Status = "Waiting Approval from Admin"
-			reqData.Description = newReq.Description
-			reqData.UpdatedAt = time.Now()
-
-			_, err = rc.repository.Borrow(reqData)
-			if err != nil {
-				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Failed Create Request"))
-			}
-			_, err = rc.repository.UpdateAssetStatus(assetId)
-			if err != nil {
-				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Failed Update Asset Status"))
-			}
-			return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "Success Create Request"))
+			return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "success create request"))
 		default:
-			return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "Invalid Input request"))
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusOK, "only admin/employee can make request"))
 		}
 	}
 }
 
 func (rc RequestController) Procure() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		role := _midware.ExtractRole(c)
-		if role != "Administrator" {
-			return c.JSON(http.StatusForbidden, _common.NoDataResponse(http.StatusForbidden, "Only Admin Can Create Request"))
-		}
-		idLogin := _midware.ExtractId(c)
-		newReq := _entity.CreateProcure{}
-		// handle failure in binding
-		if err := c.Bind(&newReq); err != nil {
-			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Failed to Bind Data"))
+		// check authorization
+		if role := _midware.ExtractRole(c); role != "Administrator" {
+			return c.JSON(http.StatusForbidden, _common.NoDataResponse(http.StatusForbidden, "only admin can create request"))
 		}
 
+		newReq := _entity.CreateProcure{}
+
+		// handle failure in binding
+		if err := c.Bind(&newReq); err != nil {
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed to bind data"))
+		}
+
+		// prepare input string
+		category := strings.TrimSpace(newReq.Category)
+		description := strings.TrimSpace(newReq.Description)
+
+		// check input string
+		check := []string{category, description}
+
+		for _, s := range check {
+			// check empty string in required input
+			if s == "" {
+				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "input cannot be empty"))
+			}
+
+			// check malicious character in input
+			if err := _helper.CheckStringInput(s); err != nil {
+				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, s+": "+err.Error()))
+			}
+		}
+
+		// prepare input to repository
 		reqData := _entity.Procure{}
-		// check category id
-		categoryId, err := rc.repository.GetCategoryId(newReq.Category)
-		if categoryId == 0 {
-			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Category Not Found"))
-		}
-		if err != nil {
-			return c.JSON(http.StatusInternalServerError, _common.NoDataResponse(http.StatusInternalServerError, "Failed to Get Category Id"))
-		}
+		reqData.User.Id = _midware.ExtractId(c)
+		reqData.Category = category
+		reqData.Description = description
+		reqData.Activity = "Procure"
 
 		// detect image upload
 		src, file, err := c.Request().FormFile("image")
@@ -180,178 +148,260 @@ func (rc RequestController) Procure() echo.HandlerFunc {
 			defer src.Close()
 
 			// upload avatar to amazon s3
-			image, code, err := _helper.UploadImage("procure", idLogin, file, src)
+			image, code, err := _helper.UploadImage("procure", reqData.User.Id, file, src)
 
 			// detect failure while uploading avatar
 			if err != nil {
 				return c.JSON(code, _common.NoDataResponse(code, err.Error()))
 			}
 
-			newReq.Image = image
+			reqData.Image = image
 		case http.ErrMissingFile:
-			image := newReq.Image[strings.LastIndex(newReq.Image, "/")+1:]
-			newReq.Image = image
+			reqData.Image = "default_image.png"
 		case http.ErrNotMultipart:
-			image := newReq.Image[strings.LastIndex(newReq.Image, "/")+1:]
-			newReq.Image = image
+			reqData.Image = "default_image.png"
 		default:
 			log.Println(err)
-			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Failed to Upload Image"))
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed to upload image"))
 		}
-		reqData.User.Id = idLogin
-		reqData.Category = categoryId
-		reqData.Image = fmt.Sprintf("https://capstone-group3.s3.ap-southeast-1.amazonaws.com/%s", newReq.Image)
-		reqData.Activity = newReq.Activity
-		reqData.RequestTime = time.Now()
-		reqData.Status = "Waiting Approval from Manager"
+
+		reqData.User.Id = _midware.ExtractId(c)
 		reqData.Description = newReq.Description
-		reqData.UpdatedAt = time.Now()
+		reqData.Status = "Waiting approval from manager"
 
-		_, err = rc.repository.Procure(reqData)
+		// calling repository
+		code, err := rc.repository.Procure(reqData)
+
+		// detect failure in repository
 		if err != nil {
-			log.Println(err)
-			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Failed Create Request"))
+			return c.JSON(code, _common.NoDataResponse(code, err.Error()))
 		}
 
-		return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "Success Create Request"))
+		return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "success create request"))
 	}
 }
 
 func (rc RequestController) UpdateBorrow() echo.HandlerFunc {
 	return func(c echo.Context) error {
+		// get request id to be updated
 		idReq, err := strconv.Atoi(c.Param("id"))
-		// detect invalid parameter
+
 		if err != nil {
-			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Invalid Request Id"))
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "invalid request id"))
 		}
 
-		request, err := rc.repository.GetBorrowById(idReq)
+		// get existing borrow request by id
+		request, code, err := rc.repository.GetBorrowById(idReq)
+
 		if err != nil {
-			return c.JSON(http.StatusInternalServerError, _common.NoDataResponse(http.StatusInternalServerError, "Failed Get Request by Id"))
+			return c.JSON(code, _common.NoDataResponse(code, err.Error()))
 		}
 
-		newReq := _entity.UpdateBorrow{}
+		newStatus := _entity.UpdateBorrow{}
+
 		// handle failure in binding
-		if err := c.Bind(&newReq); err != nil {
-			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Failed to Bind Data"))
+		if err := c.Bind(&newStatus); err != nil {
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed to bind data"))
 		}
 
+		// check role and division of currently logged in user
 		role := _midware.ExtractRole(c)
-
-		// check manager division and employee division
 		idLogin := _midware.ExtractId(c)
+
 		switch role {
 		case "Manager":
-			divLogin, err := rc.repository.GetUserDivision(idLogin)
+			// this is the case where the logged in user is a manager
+			// and he/she wants to approve or reject request ONLY IF
+			// request status is waiting approval
+
+			// check manager division
+			divLogin, code, err := rc.repository.GetUserDivision(idLogin)
+
 			if err != nil {
-				return c.JSON(http.StatusInternalServerError, _common.NoDataResponse(http.StatusInternalServerError, "Failed Get Division Id User Login"))
+				return c.JSON(code, _common.NoDataResponse(code, err.Error()))
 			}
 
-			divEmpl, err := rc.repository.GetUserDivision(request.User.Id)
+			// check user division
+			divEmpl, code, err := rc.repository.GetUserDivision(request.User.Id)
+
 			if err != nil {
-				return c.JSON(http.StatusInternalServerError, _common.NoDataResponse(http.StatusInternalServerError, "Failed Get Division Id User Request"))
+				return c.JSON(code, _common.NoDataResponse(code, err.Error()))
 			}
 
+			// check authorization
 			if divEmpl != divLogin {
-				return c.JSON(http.StatusForbidden, _common.NoDataResponse(http.StatusForbidden, "You're Not in The Same Division"))
+				return c.JSON(http.StatusForbidden, _common.NoDataResponse(http.StatusForbidden, "you are not in the same division"))
 			}
 
-			if request.Status != "Waiting Approval from Manager" {
-				return c.JSON(http.StatusForbidden, _common.NoDataResponse(http.StatusForbidden, "Update by Manager Only"))
+			// check request status
+			if request.Status != "Waiting approval from Manager" {
+				return c.JSON(http.StatusForbidden, _common.NoDataResponse(http.StatusForbidden, "cannot approve/reject this request"))
 			}
-			request.Status = newReq.Status
-			_, err = rc.repository.UpdateBorrow(request)
+
+			// set request status
+			if newStatus.Approved {
+				request.Status = "Approved by Manager"
+			} else {
+				request.Status = "Rejected by Manager"
+			}
+
+			// calling repository
+			_, code, err = rc.repository.UpdateBorrow(request)
+
+			// detect failure in repository
 			if err != nil {
-				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Failed Update Request"))
+				return c.JSON(code, _common.NoDataResponse(code, err.Error()))
 			}
-			return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "Success Update Request"))
-		case "Administrator":
-			switch request.Status {
-			case "Waiting Approval From Admin":
-				if request.Activity == "Peminjaman Aset" {
-					if newReq.Status != "Waiting Approval from Manager" {
-						return c.JSON(http.StatusForbidden, _common.NoDataResponse(http.StatusForbidden, "Status must be WAITING APPROVAL FROM MANAGER"))
-					}
-					request.Status = newReq.Status
-					_, err = rc.repository.UpdateBorrowByAdmin(request)
-					if err != nil {
-						return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Failed Update Request"))
-					}
-				} else if request.Activity == "Pengembalian Aset" {
-					request.Status = newReq.Status
-					_, err = rc.repository.UpdateBorrowByAdmin(request)
-					if err != nil {
-						return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Failed Update Request"))
-					}
-				}
-				return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "Success Update Request"))
-			case "Approved by Manager":
-				request.Status = newReq.Status
 
-				_, err = rc.repository.UpdateBorrowByAdmin(request)
-				if err != nil {
-					return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Failed Update Request"))
-				}
-				return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "Success Update Request"))
-			case "Rejected by Manager":
-				return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "Admin No Need Any Update"))
-			default:
-				return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "Invalid Input request"))
+			return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "success update request"))
+		case "Administrator":
+			// this is the case where the logged in user is an administrator
+			// and he/she wants to approve or reject request ONLY AFTER the request
+			// has been approved by manager
+
+			// check request status
+			if request.Status != "Approved by Manager" && request.Status != "Waiting approval from Admin" {
+				return c.JSON(http.StatusForbidden, _common.NoDataResponse(http.StatusForbidden, "cannot approve/reject this request"))
 			}
+
+			// set request status
+			if request.Status == "Approved by Manager" {
+				if newStatus.Approved {
+					request.Status = "Approved by Admin"
+				} else {
+					request.Status = "Rejected by Admin"
+				}
+			} else if request.Status == "Waiting approval from Admin" {
+				if newStatus.Approved {
+					request.Status = "Waiting approval from Manager"
+				} else {
+					return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "cannot reject request before forwarding to manager"))
+				}
+			}
+
+			// check request status
+			if request.Status == "Approved by Manager" {
+				return c.JSON(http.StatusForbidden, _common.NoDataResponse(http.StatusForbidden, "cannot approve/reject this request"))
+			}
+
+			// calling repository
+			_, code, err = rc.repository.UpdateBorrow(request)
+
+			// detect failure in repository
+			if err != nil {
+				return c.JSON(code, _common.NoDataResponse(code, err.Error()))
+			}
+
+			return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "success update request"))
+
 		default:
-			return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "Invalid Input request"))
+			// this is the case where the logged in user is ordinary employee
+			return c.JSON(http.StatusForbidden, _common.NoDataResponse(http.StatusForbidden, "not allowed to update request status"))
 		}
 	}
 }
 
 func (rc RequestController) UpdateProcure() echo.HandlerFunc {
 	return func(c echo.Context) error {
+		// get request id to be updated
 		idReq, err := strconv.Atoi(c.Param("id"))
 
-		// detect invalid parameter
 		if err != nil {
-			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Invalid Request Id"))
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "invalid request id"))
 		}
 
-		request, err := rc.repository.GetProcureById(idReq)
-		if err != nil {
-			return c.JSON(http.StatusInternalServerError, _common.NoDataResponse(http.StatusInternalServerError, "Failed Get Request by Id"))
+		// check role of currently logged in user
+		if role := _midware.ExtractRole(c); role != "Manager" {
+			return c.JSON(http.StatusForbidden, _common.NoDataResponse(http.StatusForbidden, "not allowed to update request status"))
 		}
 
-		newReq := _entity.UpdateProcure{}
+		newStatus := _entity.UpdateProcure{}
+
 		// handle failure in binding
-		if err := c.Bind(&newReq); err != nil {
-			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Failed to Bind Data"))
+		if err := c.Bind(&newStatus); err != nil {
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed to bind data"))
 		}
-		role := _midware.ExtractRole(c)
 
-		// check manager division and employee division
-		idLogin := _midware.ExtractId(c)
-		if role != "Manager" {
-			return c.JSON(http.StatusForbidden, _common.NoDataResponse(http.StatusForbidden, "Only Manager Can Do Approval"))
-		}
-		divLogin, err := rc.repository.GetUserDivision(idLogin)
+		// get existing procure request by id
+		request, code, err := rc.repository.GetProcureById(idReq)
+
 		if err != nil {
-			return c.JSON(http.StatusInternalServerError, _common.NoDataResponse(http.StatusInternalServerError, "failed get division id user"))
+			return c.JSON(code, _common.NoDataResponse(code, err.Error()))
 		}
 
-		divEmpl, err := rc.repository.GetUserDivision(request.Id)
+		// check request status
+		if request.Status != "Waiting approval from manager" {
+			return c.JSON(http.StatusForbidden, _common.NoDataResponse(http.StatusForbidden, "cannot approve/reject this request"))
+		}
+
+		// set request status
+		if newStatus.Approved {
+			request.Status = "Approved by Manager"
+		} else {
+			request.Status = "Rejected by Manager"
+		}
+
+		// calling repository
+		_, code, err = rc.repository.UpdateProcure(request)
+
+		// detect failure in repository
 		if err != nil {
-			return c.JSON(http.StatusInternalServerError, _common.NoDataResponse(http.StatusInternalServerError, "failed get division id user"))
+			return c.JSON(code, _common.NoDataResponse(code, err.Error()))
 		}
 
-		if divEmpl != divLogin {
-			return c.JSON(http.StatusForbidden, _common.NoDataResponse(http.StatusForbidden, "You're Not in The Same Division"))
-		}
-		if request.Status != "Waiting Approval from Manager" {
-			return c.JSON(http.StatusForbidden, _common.NoDataResponse(http.StatusForbidden, "Update by Manager Only"))
-		}
-		request.Status = newReq.Status
+		return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "success update request"))
+	}
+}
 
-		_, err = rc.repository.UpdateProcure(request)
+func (rc RequestController) AdminReturn() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// get request id to be updated
+		idReq, err := strconv.Atoi(c.Param("id"))
+
 		if err != nil {
-			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Failed Update Request"))
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "invalid request id"))
 		}
-		return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "Success Update Request"))
+
+		// check role of currently logged in user
+		if role := _midware.ExtractRole(c); role != "Administrator" {
+			return c.JSON(http.StatusForbidden, _common.NoDataResponse(http.StatusForbidden, "not allowed to update request status"))
+		}
+
+		act := _entity.ActivityReturn{}
+
+		// handle failure in binding
+		if err := c.Bind(&act); err != nil {
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed to bind data"))
+		}
+
+		// get existing procure request by id
+		request, code, err := rc.repository.GetBorrowById(idReq)
+
+		if err != nil {
+			return c.JSON(code, _common.NoDataResponse(code, err.Error()))
+		}
+
+		// check request status
+		if request.Status == "Approved by Admin" && request.Activity == "Borrow" {
+			// set request status
+			if act.AskingReturn {
+				request.Activity = "Request to Return"
+				request.Status = "Waiting Approval from Admin"
+			} else {
+				return c.JSON(http.StatusForbidden, _common.NoDataResponse(http.StatusForbidden, "you are not asking for a return"))
+			}
+
+			// calling repository
+			_, code, err = rc.repository.ReturnAdmin(request)
+
+			// detect failure in repository
+			if err != nil {
+				return c.JSON(code, _common.NoDataResponse(code, err.Error()))
+			}
+		} else {
+			return c.JSON(http.StatusForbidden, _common.NoDataResponse(http.StatusForbidden, "no need to apply for a return"))
+		}
+
+		return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "success asking return"))
 	}
 }

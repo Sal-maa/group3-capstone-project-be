@@ -12,3 +12,11 @@ func GetAllRequestResponse(requests []_entity.RequestResponse) map[string]interf
 		"data":    requests,
 	}
 }
+
+func GetAllProcureRequestResponse(requests []_entity.Procure) map[string]interface{} {
+	return map[string]interface{}{
+		"code":    http.StatusOK,
+		"message": "success get all requests",
+		"data":    requests,
+	}
+}

@@ -74,6 +74,7 @@ func (ac AdminController) AdminGetAll() echo.HandlerFunc {
 		if _, exist := allstatus[status]; !exist {
 			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request"))
 		}
+
 		// filter by date
 		date := c.QueryParam("d")
 
@@ -106,7 +107,7 @@ func (ac AdminController) AdminGetAll() echo.HandlerFunc {
 	}
 }
 
-func (ac AdminController) ManagerGetAll() echo.HandlerFunc {
+func (ac AdminController) ManagerGetAllBorrow() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		role := _midware.ExtractRole(c)
 		if role != "Manager" {
@@ -114,7 +115,7 @@ func (ac AdminController) ManagerGetAll() echo.HandlerFunc {
 		}
 
 		idLogin := _midware.ExtractId(c)
-		divLogin, err := ac.reqRepository.GetUserDivision(idLogin)
+		divLogin, _, err := ac.reqRepository.GetUserDivision(idLogin)
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed get division id user"))
 		}
@@ -188,5 +189,90 @@ func (ac AdminController) ManagerGetAll() echo.HandlerFunc {
 		}
 
 		return c.JSON(http.StatusOK, _common.GetAllRequestResponse(requests))
+	}
+}
+
+func (ac AdminController) ManagerGetAllProcure() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		role := _midware.ExtractRole(c)
+		if role != "Manager" {
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "You don't have permission"))
+		}
+
+		// idLogin := _midware.ExtractId(c)
+		// divLogin, _, err := ac.reqRepository.GetUserDivision(idLogin)
+		// if err != nil {
+		// 	return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed get division id user"))
+		// }
+
+		// filter by page number
+		p := c.QueryParam("p")
+		// default value for page
+		if p == "" {
+			p = "1"
+		}
+
+		limit, err := strconv.Atoi(p)
+
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Error parsing page"))
+		}
+
+		// filter by records per page
+		rp := c.QueryParam("rp")
+
+		offset, err := strconv.Atoi(rp)
+
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Error parsing record of page"))
+		}
+
+		// filter by status
+		status := c.QueryParam("s")
+
+		// default value for status
+		if status == "" {
+			status = "all"
+		}
+
+		// to prevent sql injection
+		if strings.ContainsAny(status, ";") {
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request"))
+		}
+
+		allstatus := map[string]int{"all": 1, "Waiting Approval": 1, "Approved": 1, "Rejected": 1}
+
+		if _, exist := allstatus[status]; !exist {
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request"))
+		}
+		// filter by date
+		date := c.QueryParam("d")
+
+		// filter by category
+		category := c.QueryParam("c")
+
+		// to prevent sql injection
+		if strings.ContainsAny(category, ";") {
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request"))
+		}
+
+		// default value for category
+		if category == "" {
+			category = "all"
+		}
+
+		categories := map[string]int{"all": 1, "Computer": 1, "Computer Accessories": 1, "Networking": 1, "UPS": 1, "Printer and Scanner": 1, "Electronics": 1, "Others": 1}
+
+		if _, exist := categories[category]; !exist {
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request"))
+		}
+
+		requests, err := ac.adminRepository.GetAllProcureManager(limit, offset, status, category, date)
+		if err != nil {
+			log.Println(err)
+			return c.JSON(http.StatusInternalServerError, _common.NoDataResponse(http.StatusInternalServerError, "Failed to read data"))
+		}
+
+		return c.JSON(http.StatusOK, _common.GetAllProcureRequestResponse(requests))
 	}
 }
