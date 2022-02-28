@@ -32,6 +32,7 @@ func (ar ActivityRepository) GetAllActivityOfUser(user_id int) (activities []_en
 		  AND b.activity <> "Return"
 		  AND b.status <> "Approved by Admin"
 		  AND b.user_id = ?
+		ORDER BY b.updated_at DESC
 	`)
 
 	if err != nil {

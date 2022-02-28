@@ -55,7 +55,7 @@ func RegisterPath(
 	// Update by Manager and Admin
 	e.PUT("/requests/borrow/:id", requestController.UpdateBorrow(), _midware.JWTMiddleWare())
 	e.PUT("/requests/procure/:id", requestController.UpdateProcure(), _midware.JWTMiddleWare())
-	e.PUT("/requests/admin/:id", requestController.AdminReturn(), _midware.JWTMiddleWare())
+	e.PUT("/requests/return/:id", requestController.AdminReturn(), _midware.JWTMiddleWare())
 
 	// Admin & Manager Page
 	e.GET("/requests/admin", adminController.AdminGetAll(), _midware.JWTMiddleWare())
