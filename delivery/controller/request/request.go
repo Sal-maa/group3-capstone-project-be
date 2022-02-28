@@ -69,7 +69,7 @@ func (rc RequestController) Borrow() echo.HandlerFunc {
 
 			reqData.User.Id = newReq.EmployeeId
 			reqData.ReturnTime = newReq.ReturnTime
-			reqData.Status = "Waiting approval from Manager"
+			reqData.Status = "Approved by Admin"
 
 			// calling repository
 			code, err := rc.repository.Borrow(reqData)
