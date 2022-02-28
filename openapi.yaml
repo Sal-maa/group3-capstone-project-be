@@ -55,11 +55,11 @@ paths:
           content:
             application/json:
               examples:
-                failed binding:
+                error parsing record of page:
                   value:
                     code: 400
-                    message: failed to bind data
-                empty string in input:
+                    message: error parsing record of page
+                bad request:
                   value:
                     code: 400
                     message: input cannot be empty
@@ -879,35 +879,28 @@ paths:
           'application/json':
             schema:
               properties:
-                category:
+                short_name:
                   type: string
-                asset_name:
-                  type: string
-                employee_name:
-                  type: string
-                activity:
-                  type: string
+                employee_id:
+                  type: integer
                 description:
                   type: string
                 return_time:
                   type: string
               required:
-                - category
-                - asset_name
-                - employee_name
-                - activity
+                - short_name
+                - employee_id
                 - description
+                - return_time
             examples:
-              login as employee:
+              borrow/return by employee:
                 value:
-                  asset_name: "Dell Latitude 3420 (i7-1165G7, 8GB, 512GB)"
-                  activity: "Peminjaman Aset"
+                  short_name: "asset-1645748000"
                   description: "Pinjam laptop karena laptop pribadi rusak"
-              Login as Admin:
+              borrow by admin:
                 value:
-                  category: "Computer"
-                  asset_name: "Dell Latitude 3420 (i7-1165G7, 8GB, 512GB)"
-                  employee_name: "Tahir"
+                  short_name: "asset-1645748000"
+                  employee_id: 1
                   description: "Laptop Tahir butuh spek yang lebih tinggi"
                   return_time: "2022-12-12"
         required: true
@@ -1010,19 +1003,15 @@ paths:
                   type: string
                 description:
                   type: string
-                activity:
-                  type: string
               required:
                 - image
                 - category
                 - description
-                - activity
             examples:
               Login as Admin:
                 value:
                   image: "gambar.jpg"
                   category: "Computer"
-                  activity: "Peminjaman Aset"
                   description: "Perlu macbook air untuk kebutuhan BE"
         required: true
       responses:
@@ -1094,17 +1083,17 @@ paths:
           'application/json':
             schema:
               properties:
-                status:
-                  type: string
+                approved:
+                  type: boolean
               required:
-                - status
+                - approved
             examples:
               login as admin:
                 value:
-                  status: "Waiting Aprroval from Manager"
+                  approved: true
               login as manager:
                 value:
-                  status: "Approved by Manager"
+                  approved: true
         required: true
       responses:
         '200':
@@ -1190,14 +1179,14 @@ paths:
           'application/json':
             schema:
               properties:
-                status:
-                  type: string
+                approved:
+                  type: boolean
               required:
-                - status
+                - approved
             examples:
               login as manager:
                 value:
-                  status: "Approved by Manager"
+                  approved: true
         required: true
       responses:
         '200':
@@ -1260,6 +1249,281 @@ paths:
                   value:
                     code: 500
                     message: failed get division id user request
+  /request/admin:
+    get:
+      tags:
+        - Request
+      security:
+        - JWTAuth: []
+      summary: Get all request in admin page
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: string
+          required: false
+          description: Filter by request page
+        - in: query
+          name: record of page
+          schema:
+            type: string
+          required: false
+          description: Filter by request record of page
+        - in: query
+          name: date
+          schema:
+            type: string
+          required: false
+          description: Filter by request date
+        - in: query
+          name: category
+          schema:
+            type: string
+          required: false
+          description: Filter by request category
+      responses:
+        '200':
+          description: Response get all request successful
+          content:
+            application/json:
+              example:
+                code: 200
+                data:
+                - id: 1
+                  User:
+                    id: 1
+                    name: Chairul Tanjung
+                  asset:
+                    id: 1
+                    name: Dell Latitude 3420 (i7-1165G7, 8GB, 512GB)
+                    category: Computer
+                    image: https://capstone-group3.s3.ap-southeast-1.amazonaws.com/asset-6-1645748000.png
+                  activity: Borrow
+                  request_time: 2022-02-26T14:35:05Z
+                  return_time: 9999-12-31T23:59:59Z
+                  status: Waiting approval from Admin
+                  description: ini deskripsi/alasan peminjaman
+                - id: 2
+                  User:
+                    id: 1,
+                    name: Siska Kohl
+                  asset:
+                    id: 1,
+                    name: Dell Latitude 3420 (i7-1165G7, 8GB, 512GB)
+                    category: Computer
+                    image: https://capstone-group3.s3.ap-southeast-1.amazonaws.com/asset-6-1645748000.png
+                  activity: Return
+                  request_time: 2022-02-26T14:35:05Z
+                  return_time: 9999-12-31T23:59:59Z
+                  status: Waiting approval from Admin
+                  description: ini deskripsi/alasan peminjaman
+                message: success get all requests
+        '400':
+          description: Response Failed Get All Request (bad request)
+          content:
+            application/json:
+              examples:
+                error parsing page:
+                  value:
+                    code: 400
+                    message: error parsing page
+                error parsing record of page:
+                  value:
+                    code: 400
+                    message: error parsing record of page 
+                bad request:
+                  value:
+                    code: 400
+                    message: bad request
+        '500':
+          description: Response get all request failed (internal server error)
+          content:
+            application/json:
+              examples:
+                failed read data:
+                  value:
+                    code: 500
+                    message: failed to read data
+  /request/borrow/manager:
+    get:
+      tags:
+        - Request
+      security:
+        - JWTAuth: []
+      summary: Get all borrow/return request in manager page
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: string
+          required: false
+          description: Filter by request page
+        - in: query
+          name: record of page
+          schema:
+            type: string
+          required: false
+          description: Filter by request record of page
+        - in: query
+          name: date
+          schema:
+            type: string
+          required: false
+          description: Filter by request date
+        - in: query
+          name: category
+          schema:
+            type: string
+          required: false
+          description: Filter by request category
+      responses:
+        '200':
+          description: Response get all borrow/return request successful
+          content:
+            application/json:
+              example:
+                code: 200
+                data:
+                - id: 1
+                  User:
+                    id: 1,
+                    name: Chairul Tanjung
+                  asset:
+                    id: 1,
+                    name: Dell Latitude 3420 (i7-1165G7, 8GB, 512GB)
+                    category: Computer
+                    image: https://capstone-group3.s3.ap-southeast-1.amazonaws.com/asset-6-1645748000.png
+                  activity: Borrow
+                  request_time: 2022-02-26T14:35:05Z
+                  return_time: 9999-12-31T23:59:59Z
+                  status: Waiting approval from Admin
+                  description: ini deskripsi/alasan peminjaman
+                - id: 2
+                  User:
+                    id: 1,
+                    name: Siska Kohl
+                  asset:
+                    id: 1,
+                    name: Dell Latitude 3420 (i7-1165G7, 8GB, 512GB)
+                    category: Computer
+                    image: https://capstone-group3.s3.ap-southeast-1.amazonaws.com/asset-6-1645748000.png
+                  activity: Return
+                  request_time: 2022-02-26T14:35:05Z
+                  return_time: 9999-12-31T23:59:59Z
+                  status: Waiting approval from Admin
+                  description: ini deskripsi/alasan peminjaman
+                message: success get all requests
+        '400':
+          description: Response Failed Get All Borrow/Return Request (bad request)
+          content:
+            application/json:
+              examples:
+                error parsing page:
+                  value:
+                    code: 400
+                    message: error parsing page
+                error parsing record of page:
+                  value:
+                    code: 400
+                    message: error parsing record of page 
+                bad request:
+                  value:
+                    code: 400
+                    message: bad request
+        '500':
+          description: Response get all borrow/return request failed (internal server error)
+          content:
+            application/json:
+              examples:
+                failed read data:
+                  value:
+                    code: 500
+                    message: failed to read data
+  /request/procure/manager:
+    get:
+      tags:
+        - Request
+      security:
+        - JWTAuth: []
+      summary: Get all procure request in manager page
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: string
+          required: false
+          description: Filter by request page
+        - in: query
+          name: record of page
+          schema:
+            type: string
+          required: false
+          description: Filter by request record of page
+        - in: query
+          name: date
+          schema:
+            type: string
+          required: false
+          description: Filter by request date
+        - in: query
+          name: category
+          schema:
+            type: string
+          required: false
+          description: Filter by request category
+      responses:
+        '200':
+          description: Response get all procure request successful
+          content:
+            application/json:
+              example:
+                code: 200
+                data:
+                - id: 1
+                  User:
+                    id: 1
+                  category: Computer
+                  activity: Procure
+                  status: Waiting approval from Manager
+                  request_time: 2022-02-26T14:35:05Z
+                  image: https://capstone-group3.s3.ap-southeast-1.amazonaws.com/procure-6-1645748000.png
+                  description: ini deskripsi/alasan pengajuan
+                - id: 2
+                  User:
+                    id: 2
+                  category: Computer
+                  activity: Procure
+                  status: Waiting approval from Manager
+                  request_time: 2022-02-26T14:35:05Z
+                  image: https://capstone-group3.s3.ap-southeast-1.amazonaws.com/procure-6-1645748000.png
+                  description: ini deskripsi/alasan pengajuan
+                message: success get all requests
+        '400':
+          description: Response Failed Get All procure Request (bad request)
+          content:
+            application/json:
+              examples:
+                error parsing page:
+                  value:
+                    code: 400
+                    message: error parsing page
+                error parsing record of page:
+                  value:
+                    code: 400
+                    message: error parsing record of page 
+                bad request:
+                  value:
+                    code: 400
+                    message: bad request
+        '500':
+          description: Response get all procure request failed (internal server error)
+          content:
+            application/json:
+              examples:
+                failed read data:
+                  value:
+                    code: 500
+                    message: failed to read data
   /histories/users/{user_id}:
     get:
       tags:
