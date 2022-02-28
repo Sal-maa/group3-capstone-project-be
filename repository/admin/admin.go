@@ -119,3 +119,54 @@ func (ar *AdminRepository) GetAllManager(divLogin, limit, offset int, status, ca
 
 	return requests, nil
 }
+
+func (ar *AdminRepository) GetAllProcureManager(limit, offset int, status, category, date string) (requests []_entity.Procure, err error) {
+	query := ""
+	if status == "all" {
+		status = ""
+	}
+	if category == "all" {
+		category = ""
+	}
+	query = `
+			SELECT 
+				p.id, p.user_id, c.name, p.image, p.activity, p.request_time, p.status, p.description
+			FROM procurement_requests p
+			JOIN users u 
+				ON p.user_id = u.id 
+			JOIN categories c
+				ON p.category_id = c.id
+			WHERE p.status LIKE ? AND c.name LIKE ? AND p.request_time LIKE ?
+			ORDER BY p.request_time DESC
+			LIMIT ? OFFSET ?`
+
+	stmt, err := ar.db.Prepare(query)
+
+	if err != nil {
+		log.Println(err)
+		return requests, err
+	}
+
+	defer stmt.Close()
+
+	res, err := stmt.Query("%"+status+"%", "%"+category+"%", "%"+date+"%", limit, offset-1)
+
+	if err != nil {
+		log.Println(err)
+		return requests, err
+	}
+
+	defer res.Close()
+
+	for res.Next() {
+		request := _entity.Procure{}
+		if err := res.Scan(&request.Id, &request.User.Id, &request.Image, &request.Activity, &request.RequestTime, &request.Status, &request.Description); err != nil {
+			log.Println(err)
+			return requests, err
+		}
+
+		requests = append(requests, request)
+	}
+
+	return requests, nil
+}
