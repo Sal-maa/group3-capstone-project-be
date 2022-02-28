@@ -20,16 +20,17 @@ func GetAllAssetsResponse(assets []_entity.AssetSimplified) map[string]interface
 	}
 }
 
-func GetByShortNameResponse(total int, asset _entity.AssetSimplified) map[string]interface{} {
+func GetByShortNameResponse(total int, maintenance int, asset _entity.AssetSimplified) map[string]interface{} {
 	return map[string]interface{}{
 		"code":    http.StatusOK,
 		"message": "success get asset detail",
 		"data": map[string]interface{}{
-			"category":    asset.Category,
-			"name":        asset.Name,
-			"image":       asset.Image,
-			"description": asset.Description,
-			"total_asset": total,
+			"category":          asset.Category,
+			"name":              asset.Name,
+			"image":             asset.Image,
+			"description":       asset.Description,
+			"total_asset":       total,
+			"under_maintenance": maintenance,
 		},
 	}
 }
