@@ -72,8 +72,8 @@ func (rr *RequestRepository) Procure(reqData _entity.Procure) (code int, err err
 	}
 
 	stmt, err := rr.db.Prepare(`
-		INSERT INTO procurement_requests (updated_at, user_id, category_id, image, request_time, status, description)
-		VALUES (CURRENT_TIMESTAMP, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?)
+		INSERT INTO procurement_requests (updated_at, user_id, category_id, activity, image, request_time, status, description)
+		VALUES (CURRENT_TIMESTAMP, ?, ?,?, ?, CURRENT_TIMESTAMP, ?, ?)
 	`)
 
 	if err != nil {
@@ -569,7 +569,7 @@ func (rr *RequestRepository) UpdateProcureByAdmin(reqData _entity.Procure) (_ent
 func (rr *RequestRepository) ReturnAdmin(reqData _entity.Borrow) (updatedReq _entity.Borrow, code int, err error) {
 	stmt, err := rr.db.Prepare(`
 		UPDATE borrowORreturn_requests
-		SET activity = ?, status = ?, updated_at = CURRENT_TIMESTAMP
+		SET activity = ?, updated_at = CURRENT_TIMESTAMP
 		WHERE deleted_at IS NULL
 		  AND id = ?
 	`)
@@ -582,7 +582,7 @@ func (rr *RequestRepository) ReturnAdmin(reqData _entity.Borrow) (updatedReq _en
 
 	defer stmt.Close()
 
-	_, err = stmt.Exec(reqData.Activity, reqData.Status, reqData.Id)
+	_, err = stmt.Exec(reqData.Activity, reqData.Id)
 
 	if err != nil {
 		log.Println(err)
