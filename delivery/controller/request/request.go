@@ -279,10 +279,10 @@ func (rc RequestController) UpdateBorrow() echo.HandlerFunc {
 				}
 			}
 
-			// check request status
-			if request.Status == "Approved by Manager" {
-				return c.JSON(http.StatusForbidden, _common.NoDataResponse(http.StatusForbidden, "cannot approve/reject this request"))
-			}
+			// // check request status
+			// if request.Status == "Approved by Manager" {
+			// 	return c.JSON(http.StatusForbidden, _common.NoDataResponse(http.StatusForbidden, "cannot approve/reject this request"))
+			// }
 
 			// calling repository
 			_, code, err = rc.repository.UpdateBorrow(request)
@@ -386,7 +386,6 @@ func (rc RequestController) AdminReturn() echo.HandlerFunc {
 			// set request status
 			if act.AskingReturn {
 				request.Activity = "Request to Return"
-				request.Status = "Waiting Approval from Admin"
 			} else {
 				return c.JSON(http.StatusForbidden, _common.NoDataResponse(http.StatusForbidden, "you are not asking for a return"))
 			}
