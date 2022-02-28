@@ -6,7 +6,6 @@ import (
 	_midware "capstone/be/delivery/middleware"
 	_entity "capstone/be/entity"
 	_userRepo "capstone/be/repository/user"
-	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -22,79 +21,6 @@ type UserController struct {
 
 func New(user _userRepo.User) *UserController {
 	return &UserController{repository: user}
-}
-
-func (uc UserController) Create() echo.HandlerFunc {
-	return func(c echo.Context) error {
-		userData := _entity.CreateUser{}
-
-		// detect failure in binding
-		if err := c.Bind(&userData); err != nil {
-			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed to bind data"))
-		}
-
-		// prepare input string
-		name := strings.Title(strings.ToLower(strings.TrimSpace(userData.Name)))
-		email := strings.TrimSpace(userData.Email)
-		phone := strings.TrimSpace(userData.Phone)
-		password := strings.TrimSpace(userData.Password)
-
-		// check input string
-		check := []string{name, email, phone, password}
-
-		for _, s := range check {
-			// check empty string in required input
-			if s == "" {
-				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "input cannot be empty"))
-			}
-
-			// check malicious character in input
-			if err := _helper.CheckStringInput(s); err != nil {
-				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, s+": "+err.Error()))
-			}
-		}
-
-		// check email pattern
-		if err := _helper.CheckEmailPattern(email); err != nil {
-			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, email+": "+err.Error()))
-		}
-
-		// check phone pattern
-		if err := _helper.CheckPhonePattern(phone); err != nil {
-			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, phone+": "+err.Error()))
-		}
-
-		// check password pattern
-		if err := _helper.CheckPasswordPattern(password); err != nil {
-			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, password+": "+err.Error()))
-		}
-
-		// hashing password
-		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.MinCost)
-
-		// detect failure in hashing password
-		if err != nil {
-			return c.JSON(http.StatusInternalServerError, _common.NoDataResponse(http.StatusInternalServerError, "failed to hash password"))
-		}
-
-		// prepare input to repository
-		createUserData := _entity.User{
-			Name:     name,
-			Email:    email,
-			Phone:    phone,
-			Password: string(hashedPassword),
-		}
-
-		// calling repository
-		createdUser, code, err := uc.repository.Create(createUserData)
-
-		// detect failure in repository
-		if err != nil {
-			return c.JSON(code, _common.NoDataResponse(code, err.Error()))
-		}
-
-		return c.JSON(http.StatusOK, _common.CreateUserResponse(createdUser))
-	}
 }
 
 func (uc UserController) Login() echo.HandlerFunc {
@@ -158,14 +84,14 @@ func (uc UserController) Login() echo.HandlerFunc {
 		}
 
 		// create token based on user id
-		token, err := _midware.CreateToken(loginUser.Id)
+		token, expire, err := _midware.CreateToken(loginUser.Id, loginUser.Role)
 
 		// detect failure in creating token
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, _common.NoDataResponse(http.StatusInternalServerError, "failed to create token"))
 		}
 
-		return c.JSON(http.StatusOK, _common.LoginResponse(loginUser, token))
+		return c.JSON(http.StatusOK, _common.LoginResponse(loginUser, token, expire))
 	}
 }
 
@@ -190,27 +116,8 @@ func (uc UserController) GetById() echo.HandlerFunc {
 	}
 }
 
-func (uc UserController) GetAll() echo.HandlerFunc {
-	return func(c echo.Context) error {
-		// calling repository
-		users, code, err := uc.repository.GetAll()
-
-		// detect failure in repository
-		if err != nil {
-			return c.JSON(code, _common.NoDataResponse(code, err.Error()))
-		}
-
-		return c.JSON(http.StatusOK, _common.GetAllUsersResponse(users))
-	}
-}
-
 func (uc UserController) Update() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// check authentication
-		if valid := _midware.ValidateToken(c); !valid {
-			return c.JSON(http.StatusUnauthorized, _common.NoDataResponse(http.StatusUnauthorized, "unauthorized"))
-		}
-
 		id, err := strconv.Atoi(c.Param("id"))
 
 		// detect invalid parameter
@@ -231,10 +138,13 @@ func (uc UserController) Update() echo.HandlerFunc {
 		}
 
 		// prepare input string
+		division := strings.Title(strings.ToLower(strings.TrimSpace(userData.Division)))
 		name := strings.Title(strings.ToLower(strings.TrimSpace(userData.Name)))
 		email := strings.TrimSpace(userData.Email)
 		phone := strings.TrimSpace(userData.Phone)
 		password := strings.TrimSpace(userData.Password)
+		gender := strings.Title(strings.ToLower(strings.TrimSpace(userData.Gender)))
+		address := strings.Title(strings.ToLower(strings.TrimSpace(userData.Address)))
 
 		// calling repository to get existing user data
 		updateUserData, code, err := uc.repository.GetById(id)
@@ -242,6 +152,16 @@ func (uc UserController) Update() echo.HandlerFunc {
 		// detect failure in repository
 		if err != nil {
 			return c.JSON(code, _common.NoDataResponse(code, err.Error()))
+		}
+
+		// detect change in user division
+		if division != "" {
+			// check malicious character in input
+			if err := _helper.CheckStringInput(division); err != nil {
+				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, division+": "+err.Error()))
+			}
+
+			updateUserData.Division = division
 		}
 
 		// detect change in user name
@@ -307,6 +227,26 @@ func (uc UserController) Update() echo.HandlerFunc {
 			updateUserData.Password = string(hashedPassword)
 		}
 
+		// detect change in user gender
+		if gender != "" {
+			// check malicious character in input
+			if err := _helper.CheckStringInput(gender); err != nil {
+				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, gender+": "+err.Error()))
+			}
+
+			updateUserData.Gender = gender
+		}
+
+		// detect change in user address
+		if address != "" {
+			// check malicious character in input
+			if err := _helper.CheckStringInput(address); err != nil {
+				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, address+": "+err.Error()))
+			}
+
+			updateUserData.Address = address
+		}
+
 		// detect avatar image upload
 		src, file, err := c.Request().FormFile("avatar")
 
@@ -328,8 +268,6 @@ func (uc UserController) Update() echo.HandlerFunc {
 
 			if filename != "default_avatar.png" {
 
-				fmt.Println(filename)
-
 				if err = _helper.DeleteImage(filename); err != nil {
 					log.Println(err)
 				}
@@ -337,9 +275,11 @@ func (uc UserController) Update() echo.HandlerFunc {
 
 			updateUserData.Avatar = avatar
 		case http.ErrMissingFile:
-			log.Println(err)
+			avatar := updateUserData.Avatar[strings.LastIndex(updateUserData.Avatar, "/")+1:]
+			updateUserData.Avatar = avatar
 		case http.ErrNotMultipart:
-			log.Println(err)
+			avatar := updateUserData.Avatar[strings.LastIndex(updateUserData.Avatar, "/")+1:]
+			updateUserData.Avatar = avatar
 		default:
 			log.Println(err)
 			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed to upload avatar"))
@@ -356,32 +296,5 @@ func (uc UserController) Update() echo.HandlerFunc {
 		}
 
 		return c.JSON(http.StatusOK, _common.UpdateUserResponse(updatedUser))
-	}
-}
-
-func (uc UserController) Delete() echo.HandlerFunc {
-	return func(c echo.Context) error {
-		// check authentication
-		if valid := _midware.ValidateToken(c); !valid {
-			return c.JSON(http.StatusUnauthorized, _common.NoDataResponse(http.StatusUnauthorized, "unauthorized"))
-		}
-
-		id, err := strconv.Atoi(c.Param("id"))
-
-		// detect invalid parameter
-		if err != nil {
-			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "invalid user id"))
-		}
-
-		// check authorization
-		if id != _midware.ExtractId(c) {
-			return c.JSON(http.StatusUnauthorized, _common.NoDataResponse(http.StatusUnauthorized, "unauthorized"))
-		}
-
-		if code, err := uc.repository.Delete(id); err != nil {
-			return c.JSON(code, _common.NoDataResponse(code, err.Error()))
-		}
-
-		return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "success delete user"))
 	}
 }

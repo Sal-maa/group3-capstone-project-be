@@ -1,7 +1,11 @@
 package router
 
 import (
-	_payment "capstone/be/delivery/controller/payment"
+	_activity "capstone/be/delivery/controller/activity"
+	_admin "capstone/be/delivery/controller/admin"
+	_asset "capstone/be/delivery/controller/asset"
+	_history "capstone/be/delivery/controller/history"
+	_request "capstone/be/delivery/controller/request"
 	_user "capstone/be/delivery/controller/user"
 	_midware "capstone/be/delivery/middleware"
 	"net/http"
@@ -14,7 +18,11 @@ const swagger string = "<a href=\"https://app.swaggerhub.com/apis-docs/bagusbpg6
 func RegisterPath(
 	e *echo.Echo,
 	userController *_user.UserController,
-	paymentController *_payment.PaymentController,
+	assetController *_asset.AssetController,
+	historyController *_history.HistoryController,
+	requestController *_request.RequestController,
+	activityController *_activity.ActivityController,
+	adminController *_admin.AdminController,
 ) {
 	// Root
 	e.GET("/", func(c echo.Context) error {
@@ -25,11 +33,37 @@ func RegisterPath(
 	e.POST("/login", userController.Login())
 
 	// User
-	e.POST("/users", userController.Create())
-	e.GET("/users", userController.GetAll())
-	e.GET("/users/:id", userController.GetById())
+	e.GET("/users/:id", userController.GetById(), _midware.JWTMiddleWare())
 	e.PUT("/users/:id", userController.Update(), _midware.JWTMiddleWare())
-	e.DELETE("/users/:id", userController.Delete(), _midware.JWTMiddleWare())
 
-	e.POST("/payments", paymentController.Charge())
+	// Asset
+	e.POST("/assets", assetController.Create(), _midware.JWTMiddleWare())
+	e.GET("/assets", assetController.GetAll(), _midware.JWTMiddleWare())
+	e.GET("/assets/:short_name", assetController.GetByShortName(), _midware.JWTMiddleWare())
+	e.PUT("/assets/:short_name", assetController.Update(), _midware.JWTMiddleWare())
+	e.GET("/stats", assetController.GetStats(), _midware.JWTMiddleWare())
+
+	// History
+	e.GET("/histories/users/:user_id", historyController.GetAllRequestHistoryOfUser(), _midware.JWTMiddleWare())
+	e.GET("/histories/users/:user_id/:request_id", historyController.GetDetailRequestHistoryByRequestId(), _midware.JWTMiddleWare())
+	e.GET("/histories/assets/:short_name", historyController.GetAllUsageHistoryOfAsset(), _midware.JWTMiddleWare())
+
+	// Request by Employee
+	e.POST("/requests/borrow", requestController.Borrow(), _midware.JWTMiddleWare())
+	e.POST("/requests/procure", requestController.Procure(), _midware.JWTMiddleWare())
+
+	// Update by Manager and Admin
+	e.PUT("/requests/borrow/:id", requestController.UpdateBorrow(), _midware.JWTMiddleWare())
+	e.PUT("/requests/procure/:id", requestController.UpdateProcure(), _midware.JWTMiddleWare())
+	e.PUT("/requests/admin/:id", requestController.AdminReturn(), _midware.JWTMiddleWare())
+
+	// Admin & Manager Page
+	e.GET("/requests/admin", adminController.AdminGetAll(), _midware.JWTMiddleWare())
+	e.GET("/requests/borrow/manager", adminController.ManagerGetAllBorrow(), _midware.JWTMiddleWare())
+	e.GET("/requests/procure/manager", adminController.ManagerGetAllProcure(), _midware.JWTMiddleWare())
+
+	// Activity
+	e.GET("/activities/:user_id", activityController.GetAllActivityOfUser(), _midware.JWTMiddleWare())
+	e.GET("/activities/:user_id/:request_id", activityController.GetDetailActivityByRequestId(), _midware.JWTMiddleWare())
+	e.PUT("/activities/:user_id/:request_id", activityController.UpdateRequestStatus(), _midware.JWTMiddleWare())
 }

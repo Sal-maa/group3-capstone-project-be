@@ -17,73 +17,6 @@ func New(db *sql.DB) *UserRepository {
 	return &UserRepository{db: db}
 }
 
-func (ur *UserRepository) Create(userData _entity.User) (createdUser _entity.UserSimplified, code int, err error) {
-	id, err := ur.checkEmailExistence(userData.Email)
-
-	if err != nil {
-		log.Println(err)
-		code, err = http.StatusInternalServerError, errors.New("internal server error")
-		return createdUser, code, err
-	}
-
-	if id != 0 {
-		log.Println("email already exist while create user")
-		code, err = http.StatusBadRequest, errors.New("email already exist")
-		return createdUser, code, err
-	}
-
-	id, err = ur.checkPhoneExistence(userData.Phone)
-
-	if err != nil {
-		log.Println(err)
-		code, err = http.StatusInternalServerError, errors.New("internal server error")
-		return createdUser, code, err
-	}
-
-	if id != 0 {
-		log.Println("phone already exist while create user")
-		code, err = http.StatusBadRequest, errors.New("phone already exist")
-		return createdUser, code, err
-	}
-
-	stmt, err := ur.db.Prepare(`
-		INSERT INTO users (name, email, phone, password, avatar, created_at)
-		VALUES (?, ?, ?, ?, 'default_avatar.png', CURRENT_TIMESTAMP)
-	`)
-
-	if err != nil {
-		log.Println(err)
-		code, err = http.StatusInternalServerError, errors.New("internal server error")
-		return createdUser, code, err
-	}
-
-	defer stmt.Close()
-
-	res, err := stmt.Exec(userData.Name, userData.Email, userData.Phone, userData.Password)
-
-	if err != nil {
-		log.Println(err)
-		code, err = http.StatusInternalServerError, errors.New("internal server error")
-		return createdUser, code, err
-	}
-
-	id, err = res.LastInsertId()
-
-	if err != nil {
-		log.Println(err)
-		code, err = http.StatusInternalServerError, errors.New("internal server error")
-		return createdUser, code, err
-	}
-
-	createdUser.Id = int(id)
-	createdUser.Name = userData.Name
-	createdUser.Email = userData.Email
-	createdUser.Phone = userData.Phone
-	createdUser.Avatar = "http://cdn.onlinewebfonts.com/svg/img_569204.png"
-
-	return createdUser, http.StatusOK, nil
-}
-
 func (ur *UserRepository) LoginByEmail(email string) (loginUser _entity.User, code int, err error) {
 	id, err := ur.checkEmailExistence(email)
 
@@ -100,7 +33,7 @@ func (ur *UserRepository) LoginByEmail(email string) (loginUser _entity.User, co
 	}
 
 	stmt, err := ur.db.Prepare(`
-		SELECT name, password, avatar
+		SELECT role, name, password, avatar
 		FROM users
 		WHERE deleted_at IS NULL AND id = ?
 	`)
@@ -124,7 +57,7 @@ func (ur *UserRepository) LoginByEmail(email string) (loginUser _entity.User, co
 	defer res.Close()
 
 	if res.Next() {
-		if err = res.Scan(&loginUser.Name, &loginUser.Password, &loginUser.Avatar); err != nil {
+		if err = res.Scan(&loginUser.Role, &loginUser.Name, &loginUser.Password, &loginUser.Avatar); err != nil {
 			log.Println(err)
 			code, err = http.StatusInternalServerError, errors.New("internal server error")
 			return loginUser, code, err
@@ -153,7 +86,7 @@ func (ur *UserRepository) LoginByPhone(phone string) (loginUser _entity.User, co
 	}
 
 	stmt, err := ur.db.Prepare(`
-		SELECT name, password, avatar
+		SELECT role, name, password, avatar
 		FROM users
 		WHERE deleted_at IS NULL AND id = ?
 	`)
@@ -177,7 +110,7 @@ func (ur *UserRepository) LoginByPhone(phone string) (loginUser _entity.User, co
 	defer res.Close()
 
 	if res.Next() {
-		if err = res.Scan(&loginUser.Name, &loginUser.Password, &loginUser.Avatar); err != nil {
+		if err = res.Scan(&loginUser.Role, &loginUser.Name, &loginUser.Password, &loginUser.Avatar); err != nil {
 			log.Println(err)
 			code, err = http.StatusInternalServerError, errors.New("internal server error")
 			return loginUser, code, err
@@ -192,9 +125,11 @@ func (ur *UserRepository) LoginByPhone(phone string) (loginUser _entity.User, co
 
 func (ur *UserRepository) GetById(id int) (user _entity.User, code int, err error) {
 	stmt, err := ur.db.Prepare(`
-		SELECT name, email, phone, password, avatar
-		FROM users
-		WHERE deleted_at IS NULL AND id = ?
+		SELECT d.name, u.role, u.name, u.email, u.phone, u.password, u.gender, u.address, u.avatar
+		FROM users u
+		JOIN divisions d
+		ON u.division_id = d.id
+		WHERE u.deleted_at IS NULL AND u.id = ?
 	`)
 
 	if err != nil {
@@ -216,7 +151,7 @@ func (ur *UserRepository) GetById(id int) (user _entity.User, code int, err erro
 	defer res.Close()
 
 	if res.Next() {
-		if err := res.Scan(&user.Name, &user.Email, &user.Phone, &user.Password, &user.Avatar); err != nil {
+		if err := res.Scan(&user.Division, &user.Role, &user.Name, &user.Email, &user.Phone, &user.Password, &user.Gender, &user.Address, &user.Avatar); err != nil {
 			log.Println(err)
 			code, err = http.StatusInternalServerError, errors.New("internal server error")
 			return user, code, err
@@ -233,48 +168,6 @@ func (ur *UserRepository) GetById(id int) (user _entity.User, code int, err erro
 	user.Avatar = fmt.Sprintf("https://capstone-group3.s3.ap-southeast-1.amazonaws.com/%s", user.Avatar)
 
 	return user, http.StatusOK, nil
-}
-
-func (ur *UserRepository) GetAll() (users []_entity.UserSimplified, code int, err error) {
-	stmt, err := ur.db.Prepare(`
-		SELECT id, name, email, phone, avatar
-		FROM users
-		WHERE deleted_at IS NULL
-	`)
-
-	if err != nil {
-		log.Println(err)
-		code, err = http.StatusInternalServerError, errors.New("internal server error")
-		return users, code, err
-	}
-
-	defer stmt.Close()
-
-	res, err := stmt.Query()
-
-	if err != nil {
-		log.Println(err)
-		code, err = http.StatusInternalServerError, errors.New("internal server error")
-		return users, code, err
-	}
-
-	defer res.Close()
-
-	for res.Next() {
-		user := _entity.UserSimplified{}
-
-		if err := res.Scan(&user.Id, &user.Name, &user.Email, &user.Phone, &user.Avatar); err != nil {
-			log.Println(err)
-			code, err = http.StatusInternalServerError, errors.New("internal server error")
-			return users, code, err
-		}
-
-		user.Avatar = fmt.Sprintf("https://capstone-group3.s3.ap-southeast-1.amazonaws.com/%s", user.Avatar)
-
-		users = append(users, user)
-	}
-
-	return users, http.StatusOK, nil
 }
 
 func (ur *UserRepository) Update(userData _entity.User) (updatedUser _entity.UserSimplified, code int, err error) {
@@ -301,14 +194,28 @@ func (ur *UserRepository) Update(userData _entity.User) (updatedUser _entity.Use
 	}
 
 	if id != 0 && id != int64(userData.Id) {
-		log.Println("phone already userd by other user while update user")
+		log.Println("phone already used by other user while update user")
 		code, err = http.StatusBadRequest, errors.New("phone already exist")
+		return updatedUser, code, err
+	}
+
+	id, err = ur.getDivisionId(userData.Division)
+
+	if err != nil {
+		log.Println(err)
+		code, err = http.StatusInternalServerError, errors.New("internal server error")
+		return updatedUser, code, err
+	}
+
+	if id == 0 {
+		log.Println("division id not found while update user")
+		code, err = http.StatusBadRequest, errors.New("division not found")
 		return updatedUser, code, err
 	}
 
 	stmt, err := ur.db.Prepare(`
 		UPDATE users
-		SET name = ?, email = ?, phone = ?, password = ?, avatar = ?
+		SET division_id = ?, name = ?, email = ?, phone = ?, password = ?, gender = ?, address = ?, avatar = ?
 		WHERE deleted_at IS NULL AND id = ?
 	`)
 
@@ -320,7 +227,7 @@ func (ur *UserRepository) Update(userData _entity.User) (updatedUser _entity.Use
 
 	defer stmt.Close()
 
-	res, err := stmt.Exec(userData.Name, userData.Email, userData.Phone, userData.Password, userData.Avatar, userData.Id)
+	res, err := stmt.Exec(id, userData.Name, userData.Email, userData.Phone, userData.Password, userData.Gender, userData.Address, userData.Avatar, userData.Id)
 
 	if err != nil {
 		log.Println(err)
@@ -365,52 +272,16 @@ func (ur *UserRepository) Update(userData _entity.User) (updatedUser _entity.Use
 	}
 
 	updatedUser.Id = userData.Id
+	updatedUser.Division = userData.Division
+	updatedUser.Role = userData.Role
 	updatedUser.Name = userData.Name
 	updatedUser.Email = userData.Email
 	updatedUser.Phone = userData.Phone
+	updatedUser.Gender = userData.Gender
+	updatedUser.Address = userData.Address
 	updatedUser.Avatar = fmt.Sprintf("https://capstone-group3.s3.ap-southeast-1.amazonaws.com/%s", userData.Avatar)
 
 	return updatedUser, http.StatusOK, nil
-}
-
-func (ur *UserRepository) Delete(id int) (code int, err error) {
-	stmt, err := ur.db.Prepare(`
-		UPDATE users
-		SET deleted_at = CURRENT_TIMESTAMP
-		WHERE deleted_at IS NULL AND id = ?
-	`)
-
-	if err != nil {
-		log.Println(err)
-		code, err = http.StatusInternalServerError, errors.New("internal server error")
-		return code, err
-	}
-
-	defer stmt.Close()
-
-	res, err := stmt.Exec(id)
-
-	if err != nil {
-		log.Println(err)
-		code, err = http.StatusInternalServerError, errors.New("internal server error")
-		return code, err
-	}
-
-	rowsAffected, err := res.RowsAffected()
-
-	if err != nil {
-		log.Println(err)
-		code, err = http.StatusInternalServerError, errors.New("internal server error")
-		return code, err
-	}
-
-	if rowsAffected == 0 {
-		log.Println("rows affected is 0 while delete user")
-		code, err = http.StatusBadRequest, errors.New("user not deleted")
-		return code, err
-	}
-
-	return http.StatusOK, nil
 }
 
 func (ur *UserRepository) checkEmailExistence(email string) (id int64, err error) {
@@ -421,7 +292,7 @@ func (ur *UserRepository) checkEmailExistence(email string) (id int64, err error
 	`)
 
 	if err != nil {
-		return 0, err
+		return id, err
 	}
 
 	defer stmt.Close()
@@ -429,14 +300,14 @@ func (ur *UserRepository) checkEmailExistence(email string) (id int64, err error
 	res, err := stmt.Query(email)
 
 	if err != nil {
-		return 0, err
+		return id, err
 	}
 
 	defer res.Close()
 
 	if res.Next() {
 		if err = res.Scan(&id); err != nil {
-			return 0, err
+			return id, err
 		}
 	}
 
@@ -451,7 +322,7 @@ func (ur *UserRepository) checkPhoneExistence(phone string) (id int64, err error
 	`)
 
 	if err != nil {
-		return 0, err
+		return id, err
 	}
 
 	defer stmt.Close()
@@ -459,14 +330,44 @@ func (ur *UserRepository) checkPhoneExistence(phone string) (id int64, err error
 	res, err := stmt.Query(phone)
 
 	if err != nil {
-		return 0, err
+		return id, err
 	}
 
 	defer res.Close()
 
 	if res.Next() {
 		if err = res.Scan(&id); err != nil {
-			return 0, err
+			return id, err
+		}
+	}
+
+	return id, nil
+}
+
+func (ur *UserRepository) getDivisionId(division string) (id int64, err error) {
+	stmt, err := ur.db.Prepare(`
+		SELECT id
+		FROM divisions
+		WHERE name = ?
+	`)
+
+	if err != nil {
+		return id, err
+	}
+
+	defer stmt.Close()
+
+	res, err := stmt.Query(division)
+
+	if err != nil {
+		return id, err
+	}
+
+	defer res.Close()
+
+	if res.Next() {
+		if err = res.Scan(&id); err != nil {
+			return id, err
 		}
 	}
 

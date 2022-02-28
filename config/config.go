@@ -11,21 +11,21 @@ import (
 )
 
 type AppConfig struct {
-	Port       int    `json:"port" yaml:"port"`
-	JWT_secret string `json:"secret" yaml:"secret"`
+	Port       int    `mapstructure:"app_port"`
+	JWT_secret string `mapstructure:"jwt_secret"`
 	Database   struct {
-		Driver   string `json:"driver" yaml:"driver"`
-		Host     string `json:"host" yaml:"host"`
-		Port     int    `json:"port" yaml:"port"`
-		Username string `json:"username" yaml:"username"`
-		Password string `json:"password" yaml:"password"`
-		Name     string `json:"name" yaml:"name"`
+		Driver   string `mapstructure:"db_driver"`
+		Host     string `mapstructure:"db_host"`
+		Port     int    `mapstructure:"db_port"`
+		Username string `mapstructure:"db_username"`
+		Password string `mapstructure:"db_password"`
+		Name     string `mapstructure:"db_name"`
 	}
 	AWS struct {
-		AccessKeyID string `json:"accesskeyid" yaml:"accesskeyid"`
-		SecretKey   string `json:"secretkey" yaml:"secretkey"`
-		Region      string `json:"region" yaml:"region"`
-		Bucket      string `json:"bucket" yaml:"bucket"`
+		AccessKeyID string `mapstructure:"aws_accesskeyid"`
+		SecretKey   string `mapstructure:"aws_secretkey"`
+		Region      string `mapstructure:"aws_region"`
+		Bucket      string `mapstructure:"aws_bucket"`
 	}
 }
 
@@ -53,6 +53,7 @@ func initConfig() *AppConfig {
 
 	// set app default configuration in aws ec2
 	defaultConfig.Port, _ = strconv.Atoi(os.Getenv("PORT"))
+
 	defaultConfig.JWT_secret = os.Getenv("JWT_SECRET")
 	defaultConfig.Database.Driver = os.Getenv("DB_DRIVER")
 	defaultConfig.Database.Host = os.Getenv("DB_HOST")
@@ -67,7 +68,7 @@ func initConfig() *AppConfig {
 
 	viper.SetConfigType("json")
 	viper.SetConfigName("config")
-	viper.AddConfigPath("./config")
+	viper.AddConfigPath("./config/")
 
 	// read app custom configuration for running in local machine
 	if err := viper.ReadInConfig(); err != nil {

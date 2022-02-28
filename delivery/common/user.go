@@ -7,32 +7,16 @@ import (
 	"github.com/xendit/xendit-go"
 )
 
-func NoDataResponse(code int, message string) map[string]interface{} {
-	return map[string]interface{}{
-		"code":    code,
-		"message": message,
-	}
-}
-
-func CreateUserResponse(user _entity.UserSimplified) map[string]interface{} {
-	return map[string]interface{}{
-		"code":    http.StatusOK,
-		"message": "success create user",
-		"data": map[string]interface{}{
-			"id":   user.Id,
-			"name": user.Name,
-		},
-	}
-}
-
-func LoginResponse(user _entity.User, token string) map[string]interface{} {
+func LoginResponse(user _entity.User, token string, expire int64) map[string]interface{} {
 	return map[string]interface{}{
 		"code":    http.StatusOK,
 		"message": "success login",
 		"data": map[string]interface{}{
 			"id":     user.Id,
+			"role":   user.Role,
 			"name":   user.Name,
 			"token":  token,
+			"expire": expire,
 			"avatar": user.Avatar,
 		},
 	}
@@ -43,11 +27,15 @@ func GetUserByIdResponse(user _entity.User) map[string]interface{} {
 		"code":    http.StatusOK,
 		"message": "success get user by id",
 		"data": map[string]interface{}{
-			"id":     user.Id,
-			"name":   user.Name,
-			"email":  user.Email,
-			"phone":  user.Phone,
-			"avatar": user.Avatar,
+			"id":       user.Id,
+			"division": user.Division,
+			"role":     user.Role,
+			"name":     user.Name,
+			"email":    user.Email,
+			"phone":    user.Phone,
+			"gender":   user.Gender,
+			"address":  user.Address,
+			"avatar":   user.Avatar,
 		},
 	}
 }
