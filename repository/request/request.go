@@ -247,7 +247,7 @@ func (rr *RequestRepository) checkAdminExistence(admin_id int) (code int, err er
 func (rr *RequestRepository) getCategoryId(category string) (categoryId int, code int, err error) {
 	stmt, err := rr.db.Prepare(`
 		SELECT id 
-		FROM category 
+		FROM categories 
 		WHERE name = ?
 	`)
 

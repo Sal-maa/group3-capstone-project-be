@@ -137,6 +137,7 @@ func (rc RequestController) Procure() echo.HandlerFunc {
 		reqData.User.Id = _midware.ExtractId(c)
 		reqData.Category = category
 		reqData.Description = description
+		reqData.Activity = "Procure"
 
 		// detect image upload
 		src, file, err := c.Request().FormFile("image")
@@ -329,7 +330,7 @@ func (rc RequestController) UpdateProcure() echo.HandlerFunc {
 		}
 
 		// check request status
-		if request.Status != "Waiting approval" {
+		if request.Status != "Waiting approval from manager" {
 			return c.JSON(http.StatusForbidden, _common.NoDataResponse(http.StatusForbidden, "cannot approve/reject this request"))
 		}
 
