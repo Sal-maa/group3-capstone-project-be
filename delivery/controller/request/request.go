@@ -184,7 +184,7 @@ func (rc RequestController) Procure() echo.HandlerFunc {
 func (rc RequestController) GetBorrowById() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		role := _midware.ExtractRole(c)
-		if role != "Administrator" || role != "Manager" {
+		if role == "Employee" {
 			return c.JSON(http.StatusUnauthorized, _common.NoDataResponse(http.StatusUnauthorized, "You don't have permission"))
 		}
 
@@ -207,7 +207,7 @@ func (rc RequestController) GetBorrowById() echo.HandlerFunc {
 func (rc RequestController) GetProcureById() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		role := _midware.ExtractRole(c)
-		if role != "Administrator" || role != "Manager" {
+		if role == "Employee" {
 			return c.JSON(http.StatusUnauthorized, _common.NoDataResponse(http.StatusUnauthorized, "You don't have permission"))
 		}
 
