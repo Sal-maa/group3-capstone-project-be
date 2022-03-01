@@ -11,21 +11,21 @@ import (
 )
 
 type AppConfig struct {
-	Port       int    `json:"app_port"`
-	JWT_secret string `json:"jwt_secret"`
+	Port       int    `mapstructure:"app_port"`
+	JWT_secret string `mapstructure:"jwt_secret"`
 	Database   struct {
-		Driver   string `json:"db_driver"`
-		Host     string `json:"db_host"`
-		Port     int    `json:"db_port"`
-		Username string `json:"db_username"`
-		Password string `json:"db_password"`
-		Name     string `json:"db_name"`
+		Driver   string `mapstructure:"db_driver"`
+		Host     string `mapstructure:"db_host"`
+		Port     int    `mapstructure:"db_port"`
+		Username string `mapstructure:"db_username"`
+		Password string `mapstructure:"db_password"`
+		Name     string `mapstructure:"db_name"`
 	}
 	AWS struct {
-		AccessKeyID string `json:"aws_accesskeyid"`
-		SecretKey   string `json:"aws_secretkey"`
-		Region      string `json:"aws_region"`
-		Bucket      string `json:"aws_bucket"`
+		AccessKeyID string `mapstructure:"aws_accesskeyid"`
+		SecretKey   string `mapstructure:"aws_secretkey"`
+		Region      string `mapstructure:"aws_region"`
+		Bucket      string `mapstructure:"aws_bucket"`
 	}
 }
 
@@ -66,7 +66,7 @@ func initConfig() *AppConfig {
 	defaultConfig.AWS.Region = os.Getenv("AWS_REGION")
 	defaultConfig.AWS.Bucket = os.Getenv("AWS_BUCKET")
 
-	viper.SetConfigType("json")
+	viper.SetConfigType("mapstructure")
 	viper.SetConfigName("config")
 	viper.AddConfigPath("./config/")
 
