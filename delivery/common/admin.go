@@ -20,3 +20,19 @@ func GetAllProcureRequestResponse(requests []_entity.Procure) map[string]interfa
 		"data":    requests,
 	}
 }
+
+func GetBorrowRequestResponse(request _entity.Borrow) map[string]interface{} {
+	return map[string]interface{}{
+		"code":    http.StatusOK,
+		"message": "success get request",
+		"data":    request,
+	}
+}
+
+func GetProcureRequestResponse(request _entity.Procure) map[string]interface{} {
+	return map[string]interface{}{
+		"code":    http.StatusOK,
+		"message": "success get request",
+		"data":    request,
+	}
+}
