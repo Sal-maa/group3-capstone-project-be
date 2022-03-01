@@ -20,6 +20,14 @@ func LoginResponse(user _entity.User, token string, expire int64) map[string]int
 	}
 }
 
+func GetAllUsersResponse(users []_entity.UserSimplified) map[string]interface{} {
+	return map[string]interface{}{
+		"code":    http.StatusOK,
+		"message": "success get all users",
+		"data":    users,
+	}
+}
+
 func GetUserByIdResponse(user _entity.User) map[string]interface{} {
 	return map[string]interface{}{
 		"code":    http.StatusOK,
@@ -35,14 +43,6 @@ func GetUserByIdResponse(user _entity.User) map[string]interface{} {
 			"address":  user.Address,
 			"avatar":   user.Avatar,
 		},
-	}
-}
-
-func GetAllUsersResponse(users []_entity.UserSimplified) map[string]interface{} {
-	return map[string]interface{}{
-		"code":    http.StatusOK,
-		"message": "success get all users",
-		"data":    users,
 	}
 }
 

@@ -123,6 +123,48 @@ func (ur *UserRepository) LoginByPhone(phone string) (loginUser _entity.User, co
 	return loginUser, http.StatusOK, nil
 }
 
+func (ur *UserRepository) GetAll() (users []_entity.UserSimplified, code int, err error) {
+	stmt, err := ur.db.Prepare(`
+		SELECT id, name, email, phone, avatar
+		FROM users
+		WHERE deleted_at IS NULL
+	`)
+
+	if err != nil {
+		log.Println(err)
+		code, err = http.StatusInternalServerError, errors.New("internal server error")
+		return users, code, err
+	}
+
+	defer stmt.Close()
+
+	res, err := stmt.Query()
+
+	if err != nil {
+		log.Println(err)
+		code, err = http.StatusInternalServerError, errors.New("internal server error")
+		return users, code, err
+	}
+
+	defer res.Close()
+
+	for res.Next() {
+		user := _entity.UserSimplified{}
+
+		if err := res.Scan(&user.Id, &user.Name, &user.Email, &user.Phone, &user.Avatar); err != nil {
+			log.Println(err)
+			code, err = http.StatusInternalServerError, errors.New("internal server error")
+			return users, code, err
+		}
+
+		user.Avatar = fmt.Sprintf("https://capstone-group3.s3.ap-southeast-1.amazonaws.com/%s", user.Avatar)
+
+		users = append(users, user)
+	}
+
+	return users, http.StatusOK, nil
+}
+
 func (ur *UserRepository) GetById(id int) (user _entity.User, code int, err error) {
 	stmt, err := ur.db.Prepare(`
 		SELECT d.name, u.role, u.name, u.email, u.phone, u.password, u.gender, u.address, u.avatar

@@ -37,6 +37,22 @@ func (m mockRepoSuccess) LoginByPhone(string) (_entity.User, int, error) {
 	}, http.StatusOK, nil
 }
 
+func (m mockRepoSuccess) GetAll() ([]_entity.UserSimplified, int, error) {
+	return []_entity.UserSimplified{
+		{
+			Id:       1,
+			Division: "Human Capital",
+			Role:     "Manager",
+			Name:     "Salmaa",
+			Email:    "salma@sirclo.com",
+			Phone:    "08123456789",
+			Gender:   "Female",
+			Address:  "Jl. Sudirman No. 1, Tebet, Jakarta Selatan",
+			Avatar:   "https://capstone-group3.s3.ap-southeast-1.amazonaws.com/default_avatar.png",
+		},
+	}, http.StatusOK, nil
+}
+
 func (m mockRepoSuccess) GetById(int) (_entity.User, int, error) {
 	return _entity.User{
 		Id:       1,
@@ -149,6 +165,46 @@ func TestLoginByPhoneSuccess(t *testing.T) {
 				"expire": expire,
 				"token":  token,
 				"avatar": "https://capstone-group3.s3.ap-southeast-1.amazonaws.com/default_avatar.png",
+			},
+		}
+
+		assert.Equal(t, expected, actual)
+	})
+}
+
+func TestGetAllSuccess(t *testing.T) {
+	t.Run("TestGetAllSuccess", func(t *testing.T) {
+		request := httptest.NewRequest(http.MethodGet, "/", nil)
+
+		response := httptest.NewRecorder()
+
+		e := echo.New()
+
+		context := e.NewContext(request, response)
+		context.SetPath("/users")
+
+		userController := New(mockRepoSuccess{})
+		userController.GetAll()(context)
+
+		actual := map[string]interface{}{}
+		body := response.Body.String()
+		json.Unmarshal([]byte(body), &actual)
+
+		expected := map[string]interface{}{
+			"code":    float64(http.StatusOK),
+			"message": "success get all users",
+			"data": []interface{}{
+				map[string]interface{}{
+					"id":       float64(1),
+					"division": "Human Capital",
+					"role":     "Manager",
+					"name":     "Salmaa",
+					"email":    "salma@sirclo.com",
+					"phone":    "08123456789",
+					"gender":   "Female",
+					"address":  "Jl. Sudirman No. 1, Tebet, Jakarta Selatan",
+					"avatar":   "https://capstone-group3.s3.ap-southeast-1.amazonaws.com/default_avatar.png",
+				},
 			},
 		}
 
@@ -1048,6 +1104,10 @@ func (m mockRepoFail) LoginByPhone(string) (_entity.User, int, error) {
 	return _entity.User{}, http.StatusInternalServerError, errors.New("internal server error")
 }
 
+func (m mockRepoFail) GetAll() ([]_entity.UserSimplified, int, error) {
+	return nil, http.StatusInternalServerError, errors.New("internal server error")
+}
+
 func (m mockRepoFail) GetById(int) (_entity.User, int, error) {
 	return _entity.User{}, http.StatusInternalServerError, errors.New("internal server error")
 }
@@ -1108,6 +1168,33 @@ func TestLoginByPhoneFailRepo(t *testing.T) {
 
 		userController := New(mockRepoFail{})
 		userController.Login()(context)
+
+		actual := map[string]interface{}{}
+		body := response.Body.String()
+		json.Unmarshal([]byte(body), &actual)
+
+		expected := map[string]interface{}{
+			"code":    float64(http.StatusInternalServerError),
+			"message": "internal server error",
+		}
+
+		assert.Equal(t, expected, actual)
+	})
+}
+
+func TestGetAllFailRepo(t *testing.T) {
+	t.Run("TestGetAllFailRepo", func(t *testing.T) {
+		request := httptest.NewRequest(http.MethodGet, "/", nil)
+
+		response := httptest.NewRecorder()
+
+		e := echo.New()
+
+		context := e.NewContext(request, response)
+		context.SetPath("/users")
+
+		userController := New(mockRepoFail{})
+		userController.GetAll()(context)
 
 		actual := map[string]interface{}{}
 		body := response.Body.String()

@@ -95,6 +95,20 @@ func (uc UserController) Login() echo.HandlerFunc {
 	}
 }
 
+func (uc UserController) GetAll() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// calling repository
+		users, code, err := uc.repository.GetAll()
+
+		// detect failure in repository
+		if err != nil {
+			return c.JSON(code, _common.NoDataResponse(code, err.Error()))
+		}
+
+		return c.JSON(http.StatusOK, _common.GetAllUsersResponse(users))
+	}
+}
+
 func (uc UserController) GetById() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		id, err := strconv.Atoi(c.Param("id"))

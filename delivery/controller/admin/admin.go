@@ -207,12 +207,6 @@ func (ac AdminController) ManagerGetAllProcure() echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "You don't have permission"))
 		}
 
-		// idLogin := _midware.ExtractId(c)
-		// divLogin, _, err := ac.reqRepository.GetUserDivision(idLogin)
-		// if err != nil {
-		// 	return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed get division id user"))
-		// }
-
 		// filter by page number
 		p := c.QueryParam("p")
 		// default value for page
