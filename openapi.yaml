@@ -101,6 +101,59 @@ paths:
                   value:
                     code: 500
                     message: internal server error
+  /users:
+    get:
+      tags:
+        - User
+      summary: How to get all users information
+      responses:
+        '200':
+          description: Response for get all users information successful
+          content:
+            application/json:
+              example:
+                code: 200
+                message: successful
+                data:
+                - avatar: https://capstone-group3.s3.ap-southeast-1.amazonaws.com/default_avatar.png
+                  id: 1
+                  division: Store
+                  role: Manager
+                  email: bagusbpg@gmail.com
+                  name: Bagus Brahmantya
+                  phone: "08123456789"
+                  gender: Male
+                  address: Green Office Park 1 (GOP 1), South Tower, Level 3, Zone 5-7 BSD, Jl. BSD Green Office Park, Sampora, Kec. Cisauk, Kabupaten Tangerang, Banten 15345
+                - avatar: https://capstone-group3.s3.ap-southeast-1.amazonaws.com/default_avatar.png
+                  id: 2
+                  division: Legal
+                  role: Manager
+                  email: bagusbpg@gmail.com
+                  name: Bagus Brahmantya
+                  phone: "08123456789"
+                  gender: Male
+                  address: Green Office Park 1 (GOP 1), South Tower, Level 3, Zone 5-7 BSD, Jl. BSD Green Office Park, Sampora, Kec. Cisauk, Kabupaten Tangerang, Banten 15345
+        '400':
+          description: Response for get all assets failed (bad request)
+          content:
+            application/json:
+              example:
+                code: 400
+                message: invalid or expired jwt
+        '401':
+          description: Response for get all assets failed (unauthorized)
+          content:
+            application/json:
+              example:
+                code: 400
+                message: missing or malformed jwt
+        '500':
+          description: Response for get all user information failed (internal server error)
+          content:
+            application/json:
+              example:
+                code: 500
+                message: internal server error
   /users/{id}:
     get:
       tags:
@@ -994,25 +1047,20 @@ paths:
       summary: Create New Request for Procurement by Admin
       requestBody:
         content:
-          'application/json':
+          'multipart/form-data':
             schema:
+              type: object
               properties:
-                image:
-                  type: string
                 category:
                   type: string
                 description:
                   type: string
-              required:
-                - image
-                - category
-                - description
-            examples:
-              Login as Admin:
-                value:
-                  image: "gambar.jpg"
-                  category: "Computer"
-                  description: "Perlu macbook air untuk kebutuhan BE"
+                image:
+                  type: string
+                  format: base64
+            encoding:
+              image:
+                contentType: image/png, image/jpeg, image/jpg
         required: true
       responses:
         '200':
@@ -1045,7 +1093,6 @@ paths:
                   value:
                     code: 400
                     message: failed create request
-
         '403':
           description: Response for forbidden request (forbidden)
           content:
