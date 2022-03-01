@@ -123,13 +123,14 @@ func (ur *UserRepository) LoginByPhone(phone string) (loginUser _entity.User, co
 	return loginUser, http.StatusOK, nil
 }
 
-func (ur *UserRepository) GetAll() (users []string, code int, err error) {
+func (ur *UserRepository) GetAll() (users []_entity.UserCompactString, code int, err error) {
 	stmt, err := ur.db.Prepare(`
-		SELECT u.name, u.role, d.name
+		SELECT u.id, u.name, u.role, d.name
 		FROM users u
 		JOIN divisions d
 		ON u.division_id = d.id
-		WHERE u.deleted_at IS NULL AND u.id = ?
+		WHERE u.deleted_at IS NULL
+		ORDER BY u.role DESC, d.name, u.id
 	`)
 
 	if err != nil {
@@ -153,13 +154,15 @@ func (ur *UserRepository) GetAll() (users []string, code int, err error) {
 	for res.Next() {
 		_user := _entity.UserSimplified{}
 
-		if err := res.Scan(&_user.Name, &_user.Role, &_user.Division); err != nil {
+		if err := res.Scan(&_user.Id, &_user.Name, &_user.Role, &_user.Division); err != nil {
 			log.Println(err)
 			code, err = http.StatusInternalServerError, errors.New("internal server error")
 			return users, code, err
 		}
 
-		user := fmt.Sprintf("%s - %s (%s)", _user.Name, _user.Role, _user.Division)
+		user := _entity.UserCompactString{}
+		user.Id = _user.Id
+		user.User = fmt.Sprintf("%s - %s (%s)", _user.Name, _user.Role, _user.Division)
 
 		users = append(users, user)
 	}

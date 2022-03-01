@@ -117,24 +117,10 @@ paths:
                 code: 200
                 message: successful
                 data:
-                - avatar: https://capstone-group3.s3.ap-southeast-1.amazonaws.com/default_avatar.png
-                  id: 1
-                  division: Store
-                  role: Manager
-                  email: bagusbpg@gmail.com
-                  name: Bagus Brahmantya
-                  phone: "08123456789"
-                  gender: Male
-                  address: Green Office Park 1 (GOP 1), South Tower, Level 3, Zone 5-7 BSD, Jl. BSD Green Office Park, Sampora, Kec. Cisauk, Kabupaten Tangerang, Banten 15345
-                - avatar: https://capstone-group3.s3.ap-southeast-1.amazonaws.com/default_avatar.png
-                  id: 2
-                  division: Legal
-                  role: Manager
-                  email: bagusbpg@gmail.com
-                  name: Bagus Brahmantya
-                  phone: "08123456789"
-                  gender: Male
-                  address: Green Office Park 1 (GOP 1), South Tower, Level 3, Zone 5-7 BSD, Jl. BSD Green Office Park, Sampora, Kec. Cisauk, Kabupaten Tangerang, Banten 15345
+                - id: 1
+                  user: Bagus Brahmantya - Manager (Legal)
+                - id: 2
+                  user: Salmaa - Manager (Human Capital)
         '400':
           description: Response for get all assets failed (bad request)
           content:
@@ -146,9 +132,15 @@ paths:
           description: Response for get all assets failed (unauthorized)
           content:
             application/json:
-              example:
-                code: 400
-                message: missing or malformed jwt
+              examples:
+                missing or malformed jwt:
+                  value:
+                    code: 400
+                    message: missing or malformed jwt
+                unauthorized (access by non-Administrator):
+                  value:
+                    code: 400
+                    message: unauthorized
         '500':
           description: Response for get all user information failed (internal server error)
           content:

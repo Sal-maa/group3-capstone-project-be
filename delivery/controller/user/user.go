@@ -6,6 +6,7 @@ import (
 	_midware "capstone/be/delivery/middleware"
 	_entity "capstone/be/entity"
 	_userRepo "capstone/be/repository/user"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -109,6 +110,8 @@ func (uc UserController) GetAll() echo.HandlerFunc {
 		if err != nil {
 			return c.JSON(code, _common.NoDataResponse(code, err.Error()))
 		}
+
+		fmt.Println(users)
 
 		return c.JSON(http.StatusOK, _common.GetAllUsersResponse(users))
 	}

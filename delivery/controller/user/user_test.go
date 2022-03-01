@@ -37,9 +37,12 @@ func (m mockRepoSuccess) LoginByPhone(string) (_entity.User, int, error) {
 	}, http.StatusOK, nil
 }
 
-func (m mockRepoSuccess) GetAll() ([]string, int, error) {
-	return []string{
-		"Salmaa - Manager (Human Capital)",
+func (m mockRepoSuccess) GetAll() ([]_entity.UserCompactString, int, error) {
+	return []_entity.UserCompactString{
+		{
+			Id:   1,
+			User: "Salmaa - Manager (Human Capital)",
+		},
 	}, http.StatusOK, nil
 }
 
@@ -187,7 +190,12 @@ func TestGetAllSuccess(t *testing.T) {
 		expected := map[string]interface{}{
 			"code":    float64(http.StatusOK),
 			"message": "success get all users",
-			"data":    []interface{}{"Salmaa - Manager (Human Capital)"},
+			"data": []interface{}{
+				map[string]interface{}{
+					"id":   float64(1),
+					"user": "Salmaa - Manager (Human Capital)",
+				},
+			},
 		}
 
 		assert.Equal(t, expected, actual)
@@ -1128,8 +1136,8 @@ func (m mockRepoFail) LoginByPhone(string) (_entity.User, int, error) {
 	return _entity.User{}, http.StatusInternalServerError, errors.New("internal server error")
 }
 
-func (m mockRepoFail) GetAll() ([]string, int, error) {
-	return []string{}, http.StatusInternalServerError, errors.New("internal server error")
+func (m mockRepoFail) GetAll() ([]_entity.UserCompactString, int, error) {
+	return []_entity.UserCompactString{}, http.StatusInternalServerError, errors.New("internal server error")
 }
 
 func (m mockRepoFail) GetById(int) (_entity.User, int, error) {

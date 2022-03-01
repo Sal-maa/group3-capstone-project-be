@@ -45,3 +45,8 @@ type UserSimplified struct {
 	Address  string `json:"address" form:"address"`
 	Avatar   string `json:"avatar" form:"avatar"`
 }
+
+type UserCompactString struct {
+	Id   int    `json:"id" form:"id"`
+	User string `json:"user" form:"user"`
+}
