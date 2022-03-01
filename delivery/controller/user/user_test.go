@@ -37,19 +37,9 @@ func (m mockRepoSuccess) LoginByPhone(string) (_entity.User, int, error) {
 	}, http.StatusOK, nil
 }
 
-func (m mockRepoSuccess) GetAll() ([]_entity.UserSimplified, int, error) {
-	return []_entity.UserSimplified{
-		{
-			Id:       1,
-			Division: "Human Capital",
-			Role:     "Manager",
-			Name:     "Salmaa",
-			Email:    "salma@sirclo.com",
-			Phone:    "08123456789",
-			Gender:   "Female",
-			Address:  "Jl. Sudirman No. 1, Tebet, Jakarta Selatan",
-			Avatar:   "https://capstone-group3.s3.ap-southeast-1.amazonaws.com/default_avatar.png",
-		},
+func (m mockRepoSuccess) GetAll() ([]string, int, error) {
+	return []string{
+		"Salmaa - Manager (Human Capital)",
 	}, http.StatusOK, nil
 }
 
@@ -174,7 +164,11 @@ func TestLoginByPhoneSuccess(t *testing.T) {
 
 func TestGetAllSuccess(t *testing.T) {
 	t.Run("TestGetAllSuccess", func(t *testing.T) {
+		token, _, _ := _midware.CreateToken(1, "Administrator")
+
 		request := httptest.NewRequest(http.MethodGet, "/", nil)
+		request.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", token))
+		request.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 
 		response := httptest.NewRecorder()
 
@@ -184,7 +178,7 @@ func TestGetAllSuccess(t *testing.T) {
 		context.SetPath("/users")
 
 		userController := New(mockRepoSuccess{})
-		userController.GetAll()(context)
+		_midware.JWTMiddleWare()(userController.GetAll())(context)
 
 		actual := map[string]interface{}{}
 		body := response.Body.String()
@@ -193,19 +187,7 @@ func TestGetAllSuccess(t *testing.T) {
 		expected := map[string]interface{}{
 			"code":    float64(http.StatusOK),
 			"message": "success get all users",
-			"data": []interface{}{
-				map[string]interface{}{
-					"id":       float64(1),
-					"division": "Human Capital",
-					"role":     "Manager",
-					"name":     "Salmaa",
-					"email":    "salma@sirclo.com",
-					"phone":    "08123456789",
-					"gender":   "Female",
-					"address":  "Jl. Sudirman No. 1, Tebet, Jakarta Selatan",
-					"avatar":   "https://capstone-group3.s3.ap-southeast-1.amazonaws.com/default_avatar.png",
-				},
-			},
+			"data":    []interface{}{"Salmaa - Manager (Human Capital)"},
 		}
 
 		assert.Equal(t, expected, actual)
@@ -214,7 +196,11 @@ func TestGetAllSuccess(t *testing.T) {
 
 func TestGetByIdSuccess(t *testing.T) {
 	t.Run("TestGetByIdSuccess", func(t *testing.T) {
+		token, _, _ := _midware.CreateToken(1, "Manager")
+
 		request := httptest.NewRequest(http.MethodGet, "/", nil)
+		request.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", token))
+		request.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 
 		response := httptest.NewRecorder()
 
@@ -226,7 +212,7 @@ func TestGetByIdSuccess(t *testing.T) {
 		context.SetParamValues("1")
 
 		userController := New(mockRepoSuccess{})
-		userController.GetById()(context)
+		_midware.JWTMiddleWare()(userController.GetById())(context)
 
 		actual := map[string]interface{}{}
 		body := response.Body.String()
@@ -374,7 +360,7 @@ func TestLoginByPhoneFailBinding(t *testing.T) {
 
 func TestUpdateFailBinding(t *testing.T) {
 	t.Run("TestUpdateFailBinding", func(t *testing.T) {
-		token, _, _ := _midware.CreateToken(1, "admin")
+		token, _, _ := _midware.CreateToken(1, "Administrator")
 
 		requestBody, _ := json.Marshal(map[string]interface{}{
 			"name":     "Salmaa",
@@ -481,6 +467,40 @@ func TestLoginByPhoneFailEmptyInput(t *testing.T) {
 	})
 }
 
+// unauthorized
+func TestGetByIdFailUnauthorized(t *testing.T) {
+	t.Run("TestGetByIdSuccess", func(t *testing.T) {
+		token, _, _ := _midware.CreateToken(1, "Manager")
+
+		request := httptest.NewRequest(http.MethodGet, "/", nil)
+		request.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", token))
+		request.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+
+		response := httptest.NewRecorder()
+
+		e := echo.New()
+
+		context := e.NewContext(request, response)
+		context.SetPath("/users/:id")
+		context.SetParamNames("id")
+		context.SetParamValues("2")
+
+		userController := New(mockRepoSuccess{})
+		_midware.JWTMiddleWare()(userController.GetById())(context)
+
+		actual := map[string]interface{}{}
+		body := response.Body.String()
+		json.Unmarshal([]byte(body), &actual)
+
+		expected := map[string]interface{}{
+			"code":    float64(http.StatusUnauthorized),
+			"message": "unauthorized",
+		}
+
+		assert.Equal(t, expected, actual)
+	})
+}
+
 // string pattern
 
 func TestLoginByEmailFailMaliciousCharacter(t *testing.T) {
@@ -551,7 +571,7 @@ func TestLoginByPhoneFailMaliciousCharacter(t *testing.T) {
 
 func TestUpdateFailMaliciousCharacter1(t *testing.T) {
 	t.Run("TestUpdateFailMaliciousCharacter1", func(t *testing.T) {
-		token, _, _ := _midware.CreateToken(1, "admin")
+		token, _, _ := _midware.CreateToken(1, "Administrator")
 
 		requestBody, _ := json.Marshal(map[string]string{
 			"name":     "; --",
@@ -592,7 +612,7 @@ func TestUpdateFailMaliciousCharacter1(t *testing.T) {
 
 func TestUpdateFailMaliciousCharacter2(t *testing.T) {
 	t.Run("TestUpdateFailMaliciousCharacter2", func(t *testing.T) {
-		token, _, _ := _midware.CreateToken(1, "admin")
+		token, _, _ := _midware.CreateToken(1, "Administrator")
 
 		requestBody, _ := json.Marshal(map[string]string{
 			"name":     "Salmaa",
@@ -633,7 +653,7 @@ func TestUpdateFailMaliciousCharacter2(t *testing.T) {
 
 func TestUpdateFailMaliciousCharacter3(t *testing.T) {
 	t.Run("TestUpdateFailMaliciousCharacter3", func(t *testing.T) {
-		token, _, _ := _midware.CreateToken(1, "admin")
+		token, _, _ := _midware.CreateToken(1, "Administrator")
 
 		requestBody, _ := json.Marshal(map[string]string{
 			"name":     "Salmaa",
@@ -674,7 +694,7 @@ func TestUpdateFailMaliciousCharacter3(t *testing.T) {
 
 func TestUpdateFailMaliciousCharacter4(t *testing.T) {
 	t.Run("TestUpdateFailMaliciousCharacter4", func(t *testing.T) {
-		token, _, _ := _midware.CreateToken(1, "admin")
+		token, _, _ := _midware.CreateToken(1, "Administrator")
 
 		requestBody, _ := json.Marshal(map[string]string{
 			"name":     "Salmaa",
@@ -715,7 +735,7 @@ func TestUpdateFailMaliciousCharacter4(t *testing.T) {
 
 func TestUpdateFailMaliciousCharacter5(t *testing.T) {
 	t.Run("TestUpdateFailMaliciousCharacter5", func(t *testing.T) {
-		token, _, _ := _midware.CreateToken(1, "admin")
+		token, _, _ := _midware.CreateToken(1, "Administrator")
 
 		requestBody, _ := json.Marshal(map[string]string{
 			"division": "; --",
@@ -755,7 +775,7 @@ func TestUpdateFailMaliciousCharacter5(t *testing.T) {
 
 func TestUpdateFailMaliciousCharacter6(t *testing.T) {
 	t.Run("TestUpdateFailMaliciousCharacter6", func(t *testing.T) {
-		token, _, _ := _midware.CreateToken(1, "admin")
+		token, _, _ := _midware.CreateToken(1, "Administrator")
 
 		requestBody, _ := json.Marshal(map[string]string{
 			"division": "Finance",
@@ -795,7 +815,7 @@ func TestUpdateFailMaliciousCharacter6(t *testing.T) {
 
 func TestUpdateFailMaliciousCharacter7(t *testing.T) {
 	t.Run("TestUpdateFailMaliciousCharacter7", func(t *testing.T) {
-		token, _, _ := _midware.CreateToken(1, "admin")
+		token, _, _ := _midware.CreateToken(1, "Administrator")
 
 		requestBody, _ := json.Marshal(map[string]string{
 			"division": "Finance",
@@ -868,7 +888,7 @@ func TestLoginByEmailFailInvalidEmail(t *testing.T) {
 
 func TestUpdateFailInvalidEmail(t *testing.T) {
 	t.Run("TestUpdateFailInvalidEmail", func(t *testing.T) {
-		token, _, _ := _midware.CreateToken(1, "admin")
+		token, _, _ := _midware.CreateToken(1, "Administrator")
 
 		requestBody, _ := json.Marshal(map[string]string{
 			"name":     "Salmaa",
@@ -942,7 +962,7 @@ func TestLoginByPhoneFailInvalidPhone(t *testing.T) {
 
 func TestUpdateFailInvalidPhone(t *testing.T) {
 	t.Run("TestUpdateFailInvalidPhone", func(t *testing.T) {
-		token, _, _ := _midware.CreateToken(1, "admin")
+		token, _, _ := _midware.CreateToken(1, "Administrator")
 
 		requestBody, _ := json.Marshal(map[string]string{
 			"name":     "Salmaa",
@@ -983,7 +1003,7 @@ func TestUpdateFailInvalidPhone(t *testing.T) {
 
 func TestUpdateFailInvalidPassword(t *testing.T) {
 	t.Run("TestUpdateFailInvalidPassword", func(t *testing.T) {
-		token, _, _ := _midware.CreateToken(1, "admin")
+		token, _, _ := _midware.CreateToken(1, "Administrator")
 
 		requestBody, _ := json.Marshal(map[string]string{
 			"name":     "Salmaa",
@@ -1026,7 +1046,11 @@ func TestUpdateFailInvalidPassword(t *testing.T) {
 
 func TestGetByIdFailInvalidParameter(t *testing.T) {
 	t.Run("TestGetByIdFailInvalidParameter", func(t *testing.T) {
+		token, _, _ := _midware.CreateToken(1, "Administrator")
+
 		request := httptest.NewRequest(http.MethodGet, "/", nil)
+		request.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", token))
+		request.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 
 		response := httptest.NewRecorder()
 
@@ -1038,7 +1062,7 @@ func TestGetByIdFailInvalidParameter(t *testing.T) {
 		context.SetParamValues("a")
 
 		userController := New(mockRepoSuccess{})
-		userController.GetById()(context)
+		_midware.JWTMiddleWare()(userController.GetById())(context)
 
 		actual := map[string]interface{}{}
 		body := response.Body.String()
@@ -1055,7 +1079,7 @@ func TestGetByIdFailInvalidParameter(t *testing.T) {
 
 func TestUpdateFailInvalidParameter(t *testing.T) {
 	t.Run("TestUpdateFailInvalidParameter", func(t *testing.T) {
-		token, _, _ := _midware.CreateToken(1, "admin")
+		token, _, _ := _midware.CreateToken(1, "Administrator")
 
 		requestBody, _ := json.Marshal(map[string]string{
 			"name":     "Salmaa",
@@ -1104,8 +1128,8 @@ func (m mockRepoFail) LoginByPhone(string) (_entity.User, int, error) {
 	return _entity.User{}, http.StatusInternalServerError, errors.New("internal server error")
 }
 
-func (m mockRepoFail) GetAll() ([]_entity.UserSimplified, int, error) {
-	return nil, http.StatusInternalServerError, errors.New("internal server error")
+func (m mockRepoFail) GetAll() ([]string, int, error) {
+	return []string{}, http.StatusInternalServerError, errors.New("internal server error")
 }
 
 func (m mockRepoFail) GetById(int) (_entity.User, int, error) {
@@ -1184,7 +1208,11 @@ func TestLoginByPhoneFailRepo(t *testing.T) {
 
 func TestGetAllFailRepo(t *testing.T) {
 	t.Run("TestGetAllFailRepo", func(t *testing.T) {
+		token, _, _ := _midware.CreateToken(1, "Administrator")
+
 		request := httptest.NewRequest(http.MethodGet, "/", nil)
+		request.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", token))
+		request.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 
 		response := httptest.NewRecorder()
 
@@ -1194,7 +1222,7 @@ func TestGetAllFailRepo(t *testing.T) {
 		context.SetPath("/users")
 
 		userController := New(mockRepoFail{})
-		userController.GetAll()(context)
+		_midware.JWTMiddleWare()(userController.GetAll())(context)
 
 		actual := map[string]interface{}{}
 		body := response.Body.String()
@@ -1211,7 +1239,11 @@ func TestGetAllFailRepo(t *testing.T) {
 
 func TestGetByIdFailRepo(t *testing.T) {
 	t.Run("TestGetByIdFailRepo", func(t *testing.T) {
+		token, _, _ := _midware.CreateToken(1, "Administrator")
+
 		request := httptest.NewRequest(http.MethodGet, "/", nil)
+		request.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", token))
+		request.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 
 		response := httptest.NewRecorder()
 
@@ -1223,7 +1255,7 @@ func TestGetByIdFailRepo(t *testing.T) {
 		context.SetParamValues("1")
 
 		userController := New(mockRepoFail{})
-		userController.GetById()(context)
+		_midware.JWTMiddleWare()(userController.GetById())(context)
 
 		actual := map[string]interface{}{}
 		body := response.Body.String()
@@ -1240,7 +1272,7 @@ func TestGetByIdFailRepo(t *testing.T) {
 
 func TestUpdateFailRepo(t *testing.T) {
 	t.Run("TestUpdateFailRepo", func(t *testing.T) {
-		token, _, _ := _midware.CreateToken(1, "admin")
+		token, _, _ := _midware.CreateToken(1, "Administrator")
 
 		requestBody, _ := json.Marshal(map[string]string{
 			"name":     "Salmaa",

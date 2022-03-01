@@ -97,6 +97,11 @@ func (uc UserController) Login() echo.HandlerFunc {
 
 func (uc UserController) GetAll() echo.HandlerFunc {
 	return func(c echo.Context) error {
+		// check authorization
+		if _midware.ExtractRole(c) != "Administrator" {
+			return c.JSON(http.StatusUnauthorized, _common.NoDataResponse(http.StatusUnauthorized, "unauthorized"))
+		}
+
 		// calling repository
 		users, code, err := uc.repository.GetAll()
 
@@ -116,6 +121,11 @@ func (uc UserController) GetById() echo.HandlerFunc {
 		// detect invalid parameter
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "invalid user id"))
+		}
+
+		// check authorization
+		if id != _midware.ExtractId(c) {
+			return c.JSON(http.StatusUnauthorized, _common.NoDataResponse(http.StatusUnauthorized, "unauthorized"))
 		}
 
 		// calling repository

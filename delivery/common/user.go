@@ -20,7 +20,7 @@ func LoginResponse(user _entity.User, token string, expire int64) map[string]int
 	}
 }
 
-func GetAllUsersResponse(users []_entity.UserSimplified) map[string]interface{} {
+func GetAllUsersResponse(users []string) map[string]interface{} {
 	return map[string]interface{}{
 		"code":    http.StatusOK,
 		"message": "success get all users",

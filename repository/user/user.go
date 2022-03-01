@@ -123,11 +123,13 @@ func (ur *UserRepository) LoginByPhone(phone string) (loginUser _entity.User, co
 	return loginUser, http.StatusOK, nil
 }
 
-func (ur *UserRepository) GetAll() (users []_entity.UserSimplified, code int, err error) {
+func (ur *UserRepository) GetAll() (users []string, code int, err error) {
 	stmt, err := ur.db.Prepare(`
-		SELECT id, name, email, phone, avatar
-		FROM users
-		WHERE deleted_at IS NULL
+		SELECT u.name, u.role, d.name
+		FROM users u
+		JOIN divisions d
+		ON u.division_id = d.id
+		WHERE u.deleted_at IS NULL AND u.id = ?
 	`)
 
 	if err != nil {
@@ -149,15 +151,15 @@ func (ur *UserRepository) GetAll() (users []_entity.UserSimplified, code int, er
 	defer res.Close()
 
 	for res.Next() {
-		user := _entity.UserSimplified{}
+		_user := _entity.UserSimplified{}
 
-		if err := res.Scan(&user.Id, &user.Name, &user.Email, &user.Phone, &user.Avatar); err != nil {
+		if err := res.Scan(&_user.Name, &_user.Role, &_user.Division); err != nil {
 			log.Println(err)
 			code, err = http.StatusInternalServerError, errors.New("internal server error")
 			return users, code, err
 		}
 
-		user.Avatar = fmt.Sprintf("https://capstone-group3.s3.ap-southeast-1.amazonaws.com/%s", user.Avatar)
+		user := fmt.Sprintf("%s - %s (%s)", _user.Name, _user.Role, _user.Division)
 
 		users = append(users, user)
 	}
