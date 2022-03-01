@@ -46,14 +46,14 @@ func (m mockRepoSuccess) GetDetailRequestHistoryByRequestId(int) (_entity.UserRe
 }
 func (m mockRepoSuccess) GetAllUsageHistoryOfAsset(string) (_entity.AssetInfo, []_entity.AssetUser, int, error) {
 	return _entity.AssetInfo{
-			Category:   "",
-			AssetName:  "",
-			AssetImage: "",
+			Category:   "test",
+			AssetName:  "test",
+			AssetImage: "test",
 		}, []_entity.AssetUser{
 			{
-				Name:        "",
+				Name:        "test",
 				RequestDate: time.Time{},
-				Status:      "",
+				Status:      "test",
 			},
 		}, http.StatusOK, nil
 }
@@ -169,13 +169,13 @@ func TestGetAllUsageHistoryOfAsset(t *testing.T) {
 			"code":    float64(http.StatusOK),
 			"message": "success get all histories",
 			"data": map[string]interface{}{
-				"asset_image": "",
-				"asset_name":  "",
-				"category":    "",
+				"asset_image": "test",
+				"asset_name":  "test",
+				"category":    "test",
 				"users": []interface{}{map[string]interface{}{
 					"request_date": "0001-01-01T00:00:00Z",
-					"status":       "",
-					"user_name":    ""}}},
+					"status":       "test",
+					"user_name":    "test"}}},
 		}
 		assert.Equal(t, expected, actual)
 	})
