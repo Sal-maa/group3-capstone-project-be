@@ -213,5 +213,5 @@ func (rr *AdminRepository) GetUserDivision(id int) (divId int, code int, err err
 		return divId, code, err
 	}
 
-	return divId, http.StatusBadRequest, nil
+	return divId, http.StatusOK, nil
 }

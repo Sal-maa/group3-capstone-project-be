@@ -139,20 +139,12 @@ func (ac AdminController) ManagerGetAllBorrow() echo.HandlerFunc {
 
 		// filter by records per page
 		rp := c.QueryParam("rp")
-<<<<<<< HEAD
-		// default value for record of page
-		if rp == "" {
-			rp = "5"
-		}
-		offset, err := strconv.Atoi(rp)
-=======
 		// default value for page
 		if rp == "" {
 			rp = "5"
 		}
 
 		limit, err := strconv.Atoi(rp)
->>>>>>> main
 
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Error parsing record of page"))
@@ -236,20 +228,12 @@ func (ac AdminController) ManagerGetAllProcure() echo.HandlerFunc {
 
 		// filter by records per page
 		rp := c.QueryParam("rp")
-<<<<<<< HEAD
-		// default value for record of page
-		if rp == "" {
-			rp = "5"
-		}
-		limit, err := strconv.Atoi(rp)
-=======
 		// default value for page
 		if rp == "" {
 			rp = "5"
 		}
 
-		offset, err := strconv.Atoi(rp)
->>>>>>> main
+		limit, err := strconv.Atoi(rp)
 
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Error parsing record of page"))
