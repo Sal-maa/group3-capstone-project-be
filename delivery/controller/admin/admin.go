@@ -49,6 +49,10 @@ func (ac AdminController) AdminGetAll() echo.HandlerFunc {
 
 		// filter by records per page
 		rp := c.QueryParam("rp")
+		// default value for page
+		if rp == "" {
+			rp = "5"
+		}
 
 		offset, err := strconv.Atoi(rp)
 
@@ -135,6 +139,10 @@ func (ac AdminController) ManagerGetAllBorrow() echo.HandlerFunc {
 
 		// filter by records per page
 		rp := c.QueryParam("rp")
+		// default value for page
+		if rp == "" {
+			rp = "5"
+		}
 
 		offset, err := strconv.Atoi(rp)
 
@@ -220,6 +228,10 @@ func (ac AdminController) ManagerGetAllProcure() echo.HandlerFunc {
 
 		// filter by records per page
 		rp := c.QueryParam("rp")
+		// default value for page
+		if rp == "" {
+			rp = "5"
+		}
 
 		offset, err := strconv.Atoi(rp)
 
