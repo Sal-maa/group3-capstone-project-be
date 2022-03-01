@@ -76,7 +76,7 @@ func (ar ActivityRepository) GetAllActivityOfUser(user_id int) (activities []_en
 
 func (ar ActivityRepository) GetDetailActivityByRequestId(request_id int) (activity _entity.Activity, code int, err error) {
 	stmt, err := ar.db.Prepare(`
-		SELECT c.name, a.name, a.image, u.name, b.request_time, b.return_time, b.description, b.activity, b.status, b.short_name
+		SELECT c.name, a.name, a.image, u.name, b.request_time, b.return_time, b.description, b.activity, b.status, a.short_name
 		FROM borrowORreturn_requests b
 		JOIN assets a
 		ON b.asset_id = a.id

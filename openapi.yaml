@@ -902,7 +902,7 @@ paths:
                   short_name: "asset-1645748000"
                   employee_id: 1
                   description: "Laptop Tahir butuh spek yang lebih tinggi"
-                  return_time: "2022-12-12"
+                  return_time: "2018–09–22T12:42:31+07:00"
         required: true
       responses:
         '200':
