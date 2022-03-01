@@ -109,7 +109,7 @@ func (ar ActivityRepository) GetDetailActivityByRequestId(request_id int) (activ
 	short_name := ""
 
 	if res.Next() {
-		if err := res.Scan(&activity.Category, &activity.AssetName, &activity.AssetImage, &activity.UserName, &activity.RequestDate, &activity.ReturnDate, &activity.Description, &activity.ActivityType, &activity.Status, short_name); err != nil {
+		if err := res.Scan(&activity.Category, &activity.AssetName, &activity.AssetImage, &activity.UserName, &activity.RequestDate, &activity.ReturnDate, &activity.Description, &activity.ActivityType, &activity.Status, &short_name); err != nil {
 			log.Println(err)
 			code, err = http.StatusInternalServerError, errors.New("internal server error")
 			return activity, code, err
