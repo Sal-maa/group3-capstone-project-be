@@ -181,6 +181,52 @@ func (rc RequestController) Procure() echo.HandlerFunc {
 	}
 }
 
+func (rc RequestController) GetBorrowById() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		role := _midware.ExtractRole(c)
+		if role != "Administrator" || role != "Manager" {
+			return c.JSON(http.StatusUnauthorized, _common.NoDataResponse(http.StatusUnauthorized, "You don't have permission"))
+		}
+
+		idReq, err := strconv.Atoi(c.Param("id"))
+
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "invalid request id"))
+		}
+
+		// get existing borrow request by id
+		request, code, err := rc.repository.GetBorrowById(idReq)
+
+		if err != nil {
+			return c.JSON(code, _common.NoDataResponse(code, err.Error()))
+		}
+		return c.JSON(http.StatusOK, _common.GetBorrowRequestResponse(request))
+	}
+}
+
+func (rc RequestController) GetProcureById() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		role := _midware.ExtractRole(c)
+		if role != "Administrator" || role != "Manager" {
+			return c.JSON(http.StatusUnauthorized, _common.NoDataResponse(http.StatusUnauthorized, "You don't have permission"))
+		}
+
+		idReq, err := strconv.Atoi(c.Param("id"))
+
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "invalid request id"))
+		}
+
+		// get existing Procure request by id
+		request, code, err := rc.repository.GetProcureById(idReq)
+
+		if err != nil {
+			return c.JSON(code, _common.NoDataResponse(code, err.Error()))
+		}
+		return c.JSON(http.StatusOK, _common.GetProcureRequestResponse(request))
+	}
+}
+
 func (rc RequestController) UpdateBorrow() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		// get request id to be updated
