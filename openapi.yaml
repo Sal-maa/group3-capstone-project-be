@@ -106,6 +106,8 @@ paths:
       tags:
         - User
       summary: How to get all users information
+      security:
+        - JWTAuth: []
       responses:
         '200':
           description: Response for get all users information successful
