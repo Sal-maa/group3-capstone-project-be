@@ -23,8 +23,8 @@ type AdminController struct {
 	reqRepository   _requestRepo.Request
 }
 
-func New(admin _adminRepo.Admin, request _requestRepo.Request) *AdminController {
-	return &AdminController{adminRepository: admin, reqRepository: request}
+func New(admin _adminRepo.Admin) *AdminController {
+	return &AdminController{adminRepository: admin}
 }
 
 func (ac AdminController) AdminGetAll() echo.HandlerFunc {
@@ -49,7 +49,10 @@ func (ac AdminController) AdminGetAll() echo.HandlerFunc {
 
 		// filter by records per page
 		rp := c.QueryParam("rp")
-
+		// default value for record of page
+		if rp == "" {
+			rp = "5"
+		}
 		offset, err := strconv.Atoi(rp)
 
 		if err != nil {
@@ -115,7 +118,7 @@ func (ac AdminController) ManagerGetAllBorrow() echo.HandlerFunc {
 		}
 
 		idLogin := _midware.ExtractId(c)
-		divLogin, _, err := ac.reqRepository.GetUserDivision(idLogin)
+		divLogin, _, err := ac.adminRepository.GetUserDivision(idLogin)
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed get division id user"))
 		}
@@ -135,7 +138,10 @@ func (ac AdminController) ManagerGetAllBorrow() echo.HandlerFunc {
 
 		// filter by records per page
 		rp := c.QueryParam("rp")
-
+		// default value for record of page
+		if rp == "" {
+			rp = "5"
+		}
 		offset, err := strconv.Atoi(rp)
 
 		if err != nil {
@@ -212,7 +218,7 @@ func (ac AdminController) ManagerGetAllProcure() echo.HandlerFunc {
 			p = "1"
 		}
 
-		limit, err := strconv.Atoi(p)
+		offset, err := strconv.Atoi(p)
 
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Error parsing page"))
@@ -220,8 +226,11 @@ func (ac AdminController) ManagerGetAllProcure() echo.HandlerFunc {
 
 		// filter by records per page
 		rp := c.QueryParam("rp")
-
-		offset, err := strconv.Atoi(rp)
+		// default value for record of page
+		if rp == "" {
+			rp = "5"
+		}
+		limit, err := strconv.Atoi(rp)
 
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Error parsing record of page"))

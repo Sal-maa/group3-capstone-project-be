@@ -15,17 +15,35 @@ import (
 	"github.com/magiconair/properties/assert"
 )
 
-type mockRepoSuccess struct{}
+type mockRepoSuccess1 struct{}
+type mockRepoSuccess2 struct{}
+type mockRepoSuccess3 struct{}
 
-func (m mockRepoSuccess) Borrow(reqData _entity.Borrow) (code int, err error) {
+func (m mockRepoSuccess1) Borrow(reqData _entity.Borrow) (code int, err error) {
 	return http.StatusOK, nil
 }
 
-func (m mockRepoSuccess) Procure(reqData _entity.Procure) (code int, err error) {
+func (m mockRepoSuccess2) Borrow(reqData _entity.Borrow) (code int, err error) {
 	return http.StatusOK, nil
 }
 
-func (m mockRepoSuccess) GetBorrowById(id int) (req _entity.Borrow, code int, err error) {
+func (m mockRepoSuccess3) Borrow(reqData _entity.Borrow) (code int, err error) {
+	return http.StatusOK, nil
+}
+
+func (m mockRepoSuccess1) Procure(reqData _entity.Procure) (code int, err error) {
+	return http.StatusOK, nil
+}
+
+func (m mockRepoSuccess2) Procure(reqData _entity.Procure) (code int, err error) {
+	return http.StatusOK, nil
+}
+
+func (m mockRepoSuccess3) Procure(reqData _entity.Procure) (code int, err error) {
+	return http.StatusOK, nil
+}
+
+func (m mockRepoSuccess1) GetBorrowById(id int) (req _entity.Borrow, code int, err error) {
 	return _entity.Borrow{
 		Id: 1,
 		User: _entity.User{
@@ -40,18 +58,65 @@ func (m mockRepoSuccess) GetBorrowById(id int) (req _entity.Borrow, code int, er
 		},
 		Activity:    "Borrow",
 		RequestTime: time.Date(2022, 02, 27, 12, 23, 23, 0, time.UTC),
-		// Status:      "Waiting approval from Admin",
-		// Status:      "Waiting approval from Manager",
-		Status:      "Approved by Admin",
+		Status:      "Waiting approval from Admin",
 		Description: "trying to borrow",
 	}, http.StatusOK, nil
 }
 
-func (m mockRepoSuccess) GetUserDivision(id int) (divId int, code int, err error) {
+func (m mockRepoSuccess2) GetBorrowById(id int) (req _entity.Borrow, code int, err error) {
+	return _entity.Borrow{
+		Id: 1,
+		User: _entity.User{
+			Id:   1,
+			Name: "Siska Kohl",
+		},
+		Asset: _entity.Asset{
+			Id:        1,
+			Name:      "Dell Latitude 3420 (i7-1165G7, 8GB, 512GB)",
+			Image:     "https://capstone-group3.s3.ap-southeast-1.amazonaws.com/asset-6-1645748000.png",
+			ShortName: "asset-1645748000",
+		},
+		Activity:    "Borrow",
+		RequestTime: time.Date(2022, 02, 27, 12, 23, 23, 0, time.UTC),
+		Status:      "Waiting approval from Manager",
+		// Status:      "Approved by Admin",
+		Description: "trying to borrow",
+	}, http.StatusOK, nil
+}
+
+func (m mockRepoSuccess3) GetBorrowById(id int) (req _entity.Borrow, code int, err error) {
+	return _entity.Borrow{
+		Id: 1,
+		User: _entity.User{
+			Id:   1,
+			Name: "Siska Kohl",
+		},
+		Asset: _entity.Asset{
+			Id:        1,
+			Name:      "Dell Latitude 3420 (i7-1165G7, 8GB, 512GB)",
+			Image:     "https://capstone-group3.s3.ap-southeast-1.amazonaws.com/asset-6-1645748000.png",
+			ShortName: "asset-1645748000",
+		},
+		Activity:    "Borrow",
+		Status:      "Approved by Admin",
+		RequestTime: time.Date(2022, 02, 27, 12, 23, 23, 0, time.UTC),
+		Description: "trying to borrow",
+	}, http.StatusOK, nil
+}
+
+func (m mockRepoSuccess1) GetUserDivision(id int) (divId int, code int, err error) {
 	return 1, http.StatusOK, nil
 }
 
-func (m mockRepoSuccess) UpdateBorrow(reqData _entity.Borrow) (req _entity.Borrow, code int, err error) {
+func (m mockRepoSuccess2) GetUserDivision(id int) (divId int, code int, err error) {
+	return 1, http.StatusOK, nil
+}
+
+func (m mockRepoSuccess3) GetUserDivision(id int) (divId int, code int, err error) {
+	return 1, http.StatusOK, nil
+}
+
+func (m mockRepoSuccess1) UpdateBorrow(reqData _entity.Borrow) (req _entity.Borrow, code int, err error) {
 	return _entity.Borrow{
 		Id: 1,
 		User: _entity.User{
@@ -71,8 +136,47 @@ func (m mockRepoSuccess) UpdateBorrow(reqData _entity.Borrow) (req _entity.Borro
 		Description: "trying to borrow",
 	}, http.StatusOK, nil
 }
+func (m mockRepoSuccess2) UpdateBorrow(reqData _entity.Borrow) (req _entity.Borrow, code int, err error) {
+	return _entity.Borrow{
+		Id: 1,
+		User: _entity.User{
+			Id:   1,
+			Name: "Siska Kohl",
+		},
+		Asset: _entity.Asset{
+			Id:        1,
+			Name:      "Dell Latitude 3420 (i7-1165G7, 8GB, 512GB)",
+			Image:     "https://capstone-group3.s3.ap-southeast-1.amazonaws.com/asset-6-1645748000.png",
+			ShortName: "asset-1645748000",
+		},
+		Activity:    "Borrow",
+		RequestTime: time.Date(2022, 02, 27, 12, 23, 23, 0, time.UTC),
+		Status:      "Waiting approval from Manager",
+		Description: "trying to borrow",
+	}, http.StatusOK, nil
+}
 
-func (m mockRepoSuccess) UpdateProcure(reqData _entity.Procure) (req _entity.Procure, code int, err error) {
+func (m mockRepoSuccess3) UpdateBorrow(reqData _entity.Borrow) (req _entity.Borrow, code int, err error) {
+	return _entity.Borrow{
+		Id: 1,
+		User: _entity.User{
+			Id:   1,
+			Name: "Siska Kohl",
+		},
+		Asset: _entity.Asset{
+			Id:        1,
+			Name:      "Dell Latitude 3420 (i7-1165G7, 8GB, 512GB)",
+			Image:     "https://capstone-group3.s3.ap-southeast-1.amazonaws.com/asset-6-1645748000.png",
+			ShortName: "asset-1645748000",
+		},
+		Activity:    "Borrow",
+		RequestTime: time.Date(2022, 02, 27, 12, 23, 23, 0, time.UTC),
+		Status:      "Waiting approval from Manager",
+		Description: "trying to borrow",
+	}, http.StatusOK, nil
+}
+
+func (m mockRepoSuccess1) UpdateProcure(reqData _entity.Procure) (req _entity.Procure, code int, err error) {
 	return _entity.Procure{
 		Id: 1,
 		User: _entity.User{
@@ -88,7 +192,7 @@ func (m mockRepoSuccess) UpdateProcure(reqData _entity.Procure) (req _entity.Pro
 	}, http.StatusOK, nil
 }
 
-func (m mockRepoSuccess) GetProcureById(id int) (req _entity.Procure, code int, err error) {
+func (m mockRepoSuccess2) UpdateProcure(reqData _entity.Procure) (req _entity.Procure, code int, err error) {
 	return _entity.Procure{
 		Id: 1,
 		User: _entity.User{
@@ -104,7 +208,71 @@ func (m mockRepoSuccess) GetProcureById(id int) (req _entity.Procure, code int, 
 	}, http.StatusOK, nil
 }
 
-func (m mockRepoSuccess) UpdateBorrowByAdmin(reqData _entity.Borrow) (_entity.Borrow, error) {
+func (m mockRepoSuccess3) UpdateProcure(reqData _entity.Procure) (req _entity.Procure, code int, err error) {
+	return _entity.Procure{
+		Id: 1,
+		User: _entity.User{
+			Id:   1,
+			Name: "Siska Kohl",
+		},
+		Category:    "Computer",
+		Image:       "https://capstone-group3.s3.ap-southeast-1.amazonaws.com/asset-6-1645748000.png",
+		Activity:    "Procure",
+		RequestTime: time.Date(2022, 02, 27, 12, 23, 23, 0, time.UTC),
+		Status:      "Waiting approval from manager",
+		Description: "trying to procure",
+	}, http.StatusOK, nil
+}
+
+func (m mockRepoSuccess1) GetProcureById(id int) (req _entity.Procure, code int, err error) {
+	return _entity.Procure{
+		Id: 1,
+		User: _entity.User{
+			Id:   1,
+			Name: "Siska Kohl",
+		},
+		Category:    "Computer",
+		Image:       "https://capstone-group3.s3.ap-southeast-1.amazonaws.com/asset-6-1645748000.png",
+		Activity:    "Procure",
+		RequestTime: time.Date(2022, 02, 27, 12, 23, 23, 0, time.UTC),
+		Status:      "Waiting approval from manager",
+		Description: "trying to procure",
+	}, http.StatusOK, nil
+}
+
+func (m mockRepoSuccess2) GetProcureById(id int) (req _entity.Procure, code int, err error) {
+	return _entity.Procure{
+		Id: 1,
+		User: _entity.User{
+			Id:   1,
+			Name: "Siska Kohl",
+		},
+		Category:    "Computer",
+		Image:       "https://capstone-group3.s3.ap-southeast-1.amazonaws.com/asset-6-1645748000.png",
+		Activity:    "Procure",
+		RequestTime: time.Date(2022, 02, 27, 12, 23, 23, 0, time.UTC),
+		Status:      "Waiting approval from manager",
+		Description: "trying to procure",
+	}, http.StatusOK, nil
+}
+
+func (m mockRepoSuccess3) GetProcureById(id int) (req _entity.Procure, code int, err error) {
+	return _entity.Procure{
+		Id: 1,
+		User: _entity.User{
+			Id:   1,
+			Name: "Siska Kohl",
+		},
+		Category:    "Computer",
+		Image:       "https://capstone-group3.s3.ap-southeast-1.amazonaws.com/asset-6-1645748000.png",
+		Activity:    "Procure",
+		RequestTime: time.Date(2022, 02, 27, 12, 23, 23, 0, time.UTC),
+		Status:      "Waiting approval from manager",
+		Description: "trying to procure",
+	}, http.StatusOK, nil
+}
+
+func (m mockRepoSuccess1) UpdateBorrowByAdmin(reqData _entity.Borrow) (_entity.Borrow, error) {
 	return _entity.Borrow{
 		Id: 1,
 		User: _entity.User{
@@ -124,7 +292,87 @@ func (m mockRepoSuccess) UpdateBorrowByAdmin(reqData _entity.Borrow) (_entity.Bo
 	}, nil
 }
 
-func (m mockRepoSuccess) ReturnAdmin(reqData _entity.Borrow) (updatedReq _entity.Borrow, code int, err error) {
+func (m mockRepoSuccess2) UpdateBorrowByAdmin(reqData _entity.Borrow) (_entity.Borrow, error) {
+	return _entity.Borrow{
+		Id: 1,
+		User: _entity.User{
+			Id:   1,
+			Name: "Siska Kohl",
+		},
+		Asset: _entity.Asset{
+			Id:        1,
+			Name:      "Dell Latitude 3420 (i7-1165G7, 8GB, 512GB)",
+			Image:     "https://capstone-group3.s3.ap-southeast-1.amazonaws.com/asset-6-1645748000.png",
+			ShortName: "asset-1645748000",
+		},
+		Activity:    "Borrow",
+		RequestTime: time.Date(2022, 02, 27, 12, 23, 23, 0, time.UTC),
+		Status:      "Waiting approval from Admin",
+		Description: "trying to borrow",
+	}, nil
+}
+
+func (m mockRepoSuccess3) UpdateBorrowByAdmin(reqData _entity.Borrow) (_entity.Borrow, error) {
+	return _entity.Borrow{
+		Id: 1,
+		User: _entity.User{
+			Id:   1,
+			Name: "Siska Kohl",
+		},
+		Asset: _entity.Asset{
+			Id:        1,
+			Name:      "Dell Latitude 3420 (i7-1165G7, 8GB, 512GB)",
+			Image:     "https://capstone-group3.s3.ap-southeast-1.amazonaws.com/asset-6-1645748000.png",
+			ShortName: "asset-1645748000",
+		},
+		Activity:    "Borrow",
+		RequestTime: time.Date(2022, 02, 27, 12, 23, 23, 0, time.UTC),
+		Status:      "Waiting approval from Admin",
+		Description: "trying to borrow",
+	}, nil
+}
+
+func (m mockRepoSuccess1) ReturnAdmin(reqData _entity.Borrow) (updatedReq _entity.Borrow, code int, err error) {
+	return _entity.Borrow{
+		Id: 1,
+		User: _entity.User{
+			Id:   1,
+			Name: "Siska Kohl",
+		},
+		Asset: _entity.Asset{
+			Id:        1,
+			Name:      "Dell Latitude 3420 (i7-1165G7, 8GB, 512GB)",
+			Image:     "https://capstone-group3.s3.ap-southeast-1.amazonaws.com/asset-6-1645748000.png",
+			ShortName: "asset-1645748000",
+		},
+		RequestTime: time.Date(2022, 02, 27, 12, 23, 23, 0, time.UTC),
+		Activity:    "Request to Return",
+		Description: "trying to borrow",
+		Status:      "Approved by Admin",
+	}, http.StatusOK, nil
+}
+
+func (m mockRepoSuccess2) ReturnAdmin(reqData _entity.Borrow) (updatedReq _entity.Borrow, code int, err error) {
+	return _entity.Borrow{
+		Id: 1,
+		User: _entity.User{
+			Id:   1,
+			Name: "Siska Kohl",
+		},
+		Asset: _entity.Asset{
+			Id:        1,
+			Name:      "Dell Latitude 3420 (i7-1165G7, 8GB, 512GB)",
+			Image:     "https://capstone-group3.s3.ap-southeast-1.amazonaws.com/asset-6-1645748000.png",
+			ShortName: "asset-1645748000",
+		},
+		RequestTime: time.Date(2022, 02, 27, 12, 23, 23, 0, time.UTC),
+		Activity:    "Request to Return",
+		Description: "trying to borrow",
+		Status:      "Approved by Admin",
+	}, http.StatusOK, nil
+}
+
+func (m mockRepoSuccess3) ReturnAdmin(reqData _entity.Borrow) (updatedReq _entity.Borrow, code int, err error) {
 	return _entity.Borrow{
 		Id: 1,
 		User: _entity.User{
@@ -167,7 +415,7 @@ func TestBorrowSuccess(t *testing.T) {
 		context := e.NewContext(request, response)
 		context.SetPath("/requests/borrow")
 
-		requestController := New(mockRepoSuccess{})
+		requestController := New(mockRepoSuccess1{})
 		_midware.JWTMiddleWare()(requestController.Borrow())(context)
 
 		actual := map[string]interface{}{}
@@ -203,7 +451,7 @@ func TestBorrowSuccess(t *testing.T) {
 		context := e.NewContext(request, response)
 		context.SetPath("/requests/borrow")
 
-		requestController := New(mockRepoSuccess{})
+		requestController := New(mockRepoSuccess1{})
 		_midware.JWTMiddleWare()(requestController.Borrow())(context)
 
 		actual := map[string]interface{}{}
@@ -241,7 +489,7 @@ func TestProcureSuccess(t *testing.T) {
 		context := e.NewContext(request, response)
 		context.SetPath("/requests/procure")
 
-		requestController := New(mockRepoSuccess{})
+		requestController := New(mockRepoSuccess1{})
 		_midware.JWTMiddleWare()(requestController.Procure())(context)
 
 		actual := map[string]interface{}{}
@@ -275,7 +523,7 @@ func TestGetBorrowById(t *testing.T) {
 		context.SetParamNames("id")
 		context.SetParamValues("1")
 
-		requestController := New(mockRepoSuccess{})
+		requestController := New(mockRepoSuccess1{})
 		_midware.JWTMiddleWare()(requestController.GetBorrowById())(context)
 
 		actual := map[string]interface{}{}
@@ -347,7 +595,7 @@ func TestGetProcureById(t *testing.T) {
 		context.SetParamNames("id")
 		context.SetParamValues("1")
 
-		requestController := New(mockRepoSuccess{})
+		requestController := New(mockRepoSuccess1{})
 		_midware.JWTMiddleWare()(requestController.GetProcureById())(context)
 
 		actual := map[string]interface{}{}
@@ -410,7 +658,7 @@ func TestUpdateBorrowSuccess(t *testing.T) {
 		context.SetParamNames("id")
 		context.SetParamValues("1")
 
-		requestController := New(mockRepoSuccess{})
+		requestController := New(mockRepoSuccess1{})
 		_midware.JWTMiddleWare()(requestController.UpdateBorrow())(context)
 
 		actual := map[string]interface{}{}
@@ -445,8 +693,8 @@ func TestUpdateBorrowSuccess(t *testing.T) {
 		context.SetParamNames("id")
 		context.SetParamValues("1")
 
-		assetController := New(mockRepoSuccess{})
-		_midware.JWTMiddleWare()(assetController.UpdateBorrow())(context)
+		requestController := New(mockRepoSuccess2{})
+		_midware.JWTMiddleWare()(requestController.UpdateBorrow())(context)
 
 		actual := map[string]interface{}{}
 		body := response.Body.String()
@@ -483,7 +731,7 @@ func TestUpdateProcureSuccess(t *testing.T) {
 		context.SetParamNames("id")
 		context.SetParamValues("1")
 
-		requestController := New(mockRepoSuccess{})
+		requestController := New(mockRepoSuccess1{})
 		_midware.JWTMiddleWare()(requestController.UpdateProcure())(context)
 
 		actual := map[string]interface{}{}
@@ -504,7 +752,7 @@ func TestReturnAdminSuccess(t *testing.T) {
 		token, _, _ := _midware.CreateToken(1, "Administrator")
 
 		requestBody, _ := json.Marshal(map[string]interface{}{
-			"approved": true,
+			"askingreturn": true,
 		})
 
 		request := httptest.NewRequest(http.MethodPut, "/", bytes.NewBuffer(requestBody))
@@ -521,7 +769,7 @@ func TestReturnAdminSuccess(t *testing.T) {
 		context.SetParamNames("id")
 		context.SetParamValues("1")
 
-		requestController := New(mockRepoSuccess{})
+		requestController := New(mockRepoSuccess3{})
 		_midware.JWTMiddleWare()(requestController.AdminReturn())(context)
 
 		actual := map[string]interface{}{}
@@ -530,9 +778,11 @@ func TestReturnAdminSuccess(t *testing.T) {
 
 		expected := map[string]interface{}{
 			"code":    float64(http.StatusOK),
-			"message": "success update request",
+			"message": "success asking return",
 		}
 
 		assert.Equal(t, expected, actual)
 	})
 }
+
+//
