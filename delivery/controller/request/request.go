@@ -181,6 +181,52 @@ func (rc RequestController) Procure() echo.HandlerFunc {
 	}
 }
 
+func (rc RequestController) GetBorrowById() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		role := _midware.ExtractRole(c)
+		if role == "Employee" {
+			return c.JSON(http.StatusUnauthorized, _common.NoDataResponse(http.StatusUnauthorized, "You don't have permission"))
+		}
+
+		idReq, err := strconv.Atoi(c.Param("id"))
+
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "invalid request id"))
+		}
+
+		// get existing borrow request by id
+		request, code, err := rc.repository.GetBorrowById(idReq)
+
+		if err != nil {
+			return c.JSON(code, _common.NoDataResponse(code, err.Error()))
+		}
+		return c.JSON(http.StatusOK, _common.GetBorrowRequestResponse(request))
+	}
+}
+
+func (rc RequestController) GetProcureById() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		role := _midware.ExtractRole(c)
+		if role == "Employee" {
+			return c.JSON(http.StatusUnauthorized, _common.NoDataResponse(http.StatusUnauthorized, "You don't have permission"))
+		}
+
+		idReq, err := strconv.Atoi(c.Param("id"))
+
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "invalid request id"))
+		}
+
+		// get existing Procure request by id
+		request, code, err := rc.repository.GetProcureById(idReq)
+
+		if err != nil {
+			return c.JSON(code, _common.NoDataResponse(code, err.Error()))
+		}
+		return c.JSON(http.StatusOK, _common.GetProcureRequestResponse(request))
+	}
+}
+
 func (rc RequestController) UpdateBorrow() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		// get request id to be updated
@@ -381,7 +427,6 @@ func (rc RequestController) AdminReturn() echo.HandlerFunc {
 			// set request status
 			if act.AskingReturn {
 				request.Activity = "Request to Return"
-				request.Status = "Waiting Approval from Admin"
 			} else {
 				return c.JSON(http.StatusForbidden, _common.NoDataResponse(http.StatusForbidden, "you are not asking for a return"))
 			}
