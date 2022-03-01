@@ -342,6 +342,175 @@ func TestGetDetailActivityByRequestIdUnauthorized(t *testing.T) {
 	})
 }
 
+func TestUpdateRrquestStatusRetrunAssset(t *testing.T) {
+	t.Run("TestUpdateRrquestStatusFailRepo", func(t *testing.T) {
+		token, _, _ := _midware.CreateToken(2, "Employee")
+
+		requestBody, _ := json.Marshal(map[string]interface{}{
+			"status": "cancel",
+		})
+		request := httptest.NewRequest(http.MethodPut, "/", bytes.NewBuffer(requestBody))
+		request.Header.Set("Content-Type", "application/json")
+		request.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", token))
+		request.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+
+		response := httptest.NewRecorder()
+
+		e := echo.New()
+
+		context := e.NewContext(request, response)
+		context.SetPath("/activities/:user_id/:request_id")
+		context.SetParamNames("user_id", "request_id")
+		context.SetParamValues("1", "1")
+		activityController := New(mockRepoSuccess{})
+		_midware.JWTMiddleWare()(activityController.UpdateRequestStatus())(context)
+
+		actual := map[string]interface{}{}
+		body := response.Body.String()
+		json.Unmarshal([]byte(body), &actual)
+
+		expected := map[string]interface{}{
+			"code":    float64(http.StatusUnauthorized),
+			"message": "unauthorized",
+		}
+		assert.Equal(t, expected, actual)
+	})
+}
+
+//cannot return asset
+func TestUpdateRrquestStatusRetrunAsset(t *testing.T) {
+	t.Run("TestUpdateRrquestStatusFailRepo", func(t *testing.T) {
+		token, _, _ := _midware.CreateToken(1, "Administrator")
+
+		requestBody, _ := json.Marshal(map[string]interface{}{
+			"status": "return",
+		})
+		request := httptest.NewRequest(http.MethodPut, "/", bytes.NewBuffer(requestBody))
+		request.Header.Set("Content-Type", "application/json")
+		request.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", token))
+		request.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+
+		response := httptest.NewRecorder()
+
+		e := echo.New()
+
+		context := e.NewContext(request, response)
+		context.SetPath("/activities/:user_id/:request_id")
+		context.SetParamNames("user_id", "request_id")
+		context.SetParamValues("1", "1")
+		activityController := New(mockRepoSuccess{})
+		_midware.JWTMiddleWare()(activityController.UpdateRequestStatus())(context)
+
+		actual := map[string]interface{}{}
+		body := response.Body.String()
+		json.Unmarshal([]byte(body), &actual)
+
+		expected := map[string]interface{}{
+			"code":    float64(http.StatusBadRequest),
+			"message": "cannot return asset",
+		}
+		assert.Equal(t, expected, actual)
+	})
+}
+
+//invalid input status
+func TestUpdateRrquestStatusFailRepo(t *testing.T) {
+	t.Run("TestUpdateRrquestStatusFailRepo", func(t *testing.T) {
+		token, _, _ := _midware.CreateToken(1, "Administrator")
+
+		request := httptest.NewRequest(http.MethodPut, "/", nil)
+		request.Header.Set("Content-Type", "application/json")
+		request.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", token))
+		request.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+
+		response := httptest.NewRecorder()
+
+		e := echo.New()
+
+		context := e.NewContext(request, response)
+		context.SetPath("/activities/:user_id/:request_id")
+		context.SetParamNames("user_id", "request_id")
+		context.SetParamValues("1", "1")
+		activityController := New(mockRepoSuccess{})
+		_midware.JWTMiddleWare()(activityController.UpdateRequestStatus())(context)
+
+		actual := map[string]interface{}{}
+		body := response.Body.String()
+		json.Unmarshal([]byte(body), &actual)
+
+		expected := map[string]interface{}{
+			"code":    float64(http.StatusBadRequest),
+			"message": "invalid input status",
+		}
+		assert.Equal(t, expected, actual)
+	})
+}
+
+// invalid user id
+func TestUpdateRrquestStatusFailRepoInvalidUSerid(t *testing.T) {
+	t.Run("TestUpdateRrquestStatusFailRepoInvalidUSerid", func(t *testing.T) {
+		token, _, _ := _midware.CreateToken(1, "Administrator")
+
+		request := httptest.NewRequest(http.MethodPut, "/", nil)
+		request.Header.Set("Content-Type", "application/json")
+		request.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", token))
+		request.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+
+		response := httptest.NewRecorder()
+
+		e := echo.New()
+
+		context := e.NewContext(request, response)
+		context.SetPath("/activities/:user_id/:request_id")
+		context.SetParamNames("user_id", "request_id")
+		context.SetParamValues("s", "1")
+		activityController := New(mockRepoSuccess{})
+		_midware.JWTMiddleWare()(activityController.UpdateRequestStatus())(context)
+
+		actual := map[string]interface{}{}
+		body := response.Body.String()
+		json.Unmarshal([]byte(body), &actual)
+
+		expected := map[string]interface{}{
+			"code": float64(400), "message": "invalid user id",
+		}
+		assert.Equal(t, expected, actual)
+	})
+}
+
+// invalid req id
+func TestUpdateRrquestStatusFsailRepoInvalidReqid(t *testing.T) {
+	t.Run("TestUpdateRrquestStatusFsailRepoInvalidReqid", func(t *testing.T) {
+		token, _, _ := _midware.CreateToken(1, "Administrator")
+
+		request := httptest.NewRequest(http.MethodPut, "/", nil)
+		request.Header.Set("Content-Type", "application/json")
+		request.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", token))
+		request.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+
+		response := httptest.NewRecorder()
+
+		e := echo.New()
+
+		context := e.NewContext(request, response)
+		context.SetPath("/activities/:user_id/:request_id")
+		context.SetParamNames("user_id", "request_id")
+		context.SetParamValues("1", "s")
+		activityController := New(mockRepoSuccess{})
+		_midware.JWTMiddleWare()(activityController.UpdateRequestStatus())(context)
+
+		actual := map[string]interface{}{}
+		body := response.Body.String()
+		json.Unmarshal([]byte(body), &actual)
+
+		expected := map[string]interface{}{
+			"code":    float64(400),
+			"message": "invalid request id",
+		}
+		assert.Equal(t, expected, actual)
+	})
+}
+
 type mockRepoFail struct{}
 
 func (m mockRepoFail) GetAllActivityOfUser(int) ([]_entity.ActivitySimplified, int, error) {
@@ -416,6 +585,53 @@ func TestGetDetailActivityByRequestIdFaildRepo(t *testing.T) {
 		expected := map[string]interface{}{
 			"code":    float64(http.StatusInternalServerError),
 			"message": "internal server error",
+		}
+		assert.Equal(t, expected, actual)
+	})
+}
+
+func TestUpdateRrquestStastus(t *testing.T) {
+	t.Run("TestUpdateRrquestStatus", func(t *testing.T) {
+		token, _, _ := _midware.CreateToken(1, "Administrator")
+
+		requestBody, _ := json.Marshal(map[string]interface{}{
+			"status": "cancel",
+		})
+		request := httptest.NewRequest(http.MethodPut, "/", bytes.NewBuffer(requestBody))
+		request.Header.Set("Content-Type", "application/json")
+		request.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", token))
+		request.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+
+		response := httptest.NewRecorder()
+
+		e := echo.New()
+
+		context := e.NewContext(request, response)
+		context.SetPath("/activities/:user_id/:request_id")
+		context.SetParamNames("user_id", "request_id")
+		context.SetParamValues("1", "1")
+		activityController := New(mockRepoSuccess{})
+		_midware.JWTMiddleWare()(activityController.UpdateRequestStatus())(context)
+
+		actual := map[string]interface{}{}
+		body := response.Body.String()
+		json.Unmarshal([]byte(body), &actual)
+
+		expected := map[string]interface{}{
+			"code":    float64(http.StatusOK),
+			"message": "success cancel request",
+			"data": map[string]interface{}{
+				"activity_type": "test",
+				"asset_image":   "test",
+				"asset_name":    "test",
+				"category":      "test",
+				"id":            float64(1),
+				"note":          "test",
+				"request_date":  "0001-01-01T00:00:00Z",
+				"return_date":   "0001-01-01T00:00:00Z",
+				"status":        "Cancelled",
+				"stock_left":    float64(1),
+				"user_name":     "test"},
 		}
 		assert.Equal(t, expected, actual)
 	})
