@@ -49,8 +49,8 @@ func (m mockRepoSuccess) GetAssetsByCategory(int) ([]_entity.AssetSimplified, in
 	}, http.StatusOK, nil
 }
 
-func (m mockRepoSuccess) GetByShortName(string) (int, _entity.AssetSimplified, int, error) {
-	return 1, _entity.AssetSimplified{
+func (m mockRepoSuccess) GetByShortName(string) (int, int, _entity.AssetSimplified, int, error) {
+	return 1, 0, _entity.AssetSimplified{
 		Category:       "Computer",
 		Name:           "Dell Latitude 3420 (i7-1165G7, 8GB, 512GB)",
 		Image:          "https://capstone-group3.s3.ap-southeast-1.amazonaws.com/asset-6-1645748000.png",
@@ -194,11 +194,12 @@ func TestGetByShortNameSuccess(t *testing.T) {
 			"code":    float64(http.StatusOK),
 			"message": "success get asset detail",
 			"data": map[string]interface{}{
-				"category":    "Computer",
-				"name":        "Dell Latitude 3420 (i7-1165G7, 8GB, 512GB)",
-				"image":       "https://capstone-group3.s3.ap-southeast-1.amazonaws.com/asset-6-1645748000.png",
-				"description": "Processor : Intel Core i7-1165G7, RAM : 8GB DDR4, SSD : 512GB, VGA : Intel Iris Xe Graphics, Konektivitas : Wifi + Bluetooth, Ukuran Layar : 14 Inch FHD, Sistem Operasi : Windows 10 Home",
-				"total_asset": float64(1),
+				"category":          "Computer",
+				"name":              "Dell Latitude 3420 (i7-1165G7, 8GB, 512GB)",
+				"image":             "https://capstone-group3.s3.ap-southeast-1.amazonaws.com/asset-6-1645748000.png",
+				"description":       "Processor : Intel Core i7-1165G7, RAM : 8GB DDR4, SSD : 512GB, VGA : Intel Iris Xe Graphics, Konektivitas : Wifi + Bluetooth, Ukuran Layar : 14 Inch FHD, Sistem Operasi : Windows 10 Home",
+				"total_asset":       float64(1),
+				"under_maintenance": float64(0),
 			},
 		}
 
@@ -581,8 +582,8 @@ func (m mockRepoFail) GetAssetsByCategory(int) ([]_entity.AssetSimplified, int, 
 	return []_entity.AssetSimplified{}, http.StatusInternalServerError, errors.New("internal server error")
 }
 
-func (m mockRepoFail) GetByShortName(string) (int, _entity.AssetSimplified, int, error) {
-	return 0, _entity.AssetSimplified{}, http.StatusInternalServerError, errors.New("internal server error")
+func (m mockRepoFail) GetByShortName(string) (int, int, _entity.AssetSimplified, int, error) {
+	return 0, 0, _entity.AssetSimplified{}, http.StatusInternalServerError, errors.New("internal server error")
 }
 
 func (m mockRepoFail) SetMaintenance(string) (int, error) {

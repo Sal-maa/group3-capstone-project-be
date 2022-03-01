@@ -1,5 +1,5 @@
 config/config.json
 .env
 .vscode
-cover.out
 cover.html
+cover.out

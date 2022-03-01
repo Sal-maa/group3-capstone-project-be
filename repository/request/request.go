@@ -84,7 +84,7 @@ func (rr *RequestRepository) Procure(reqData _entity.Procure) (code int, err err
 
 	defer stmt.Close()
 
-	_, err = stmt.Exec(reqData.User.Id, categoryId, reqData.Image, reqData.Status, reqData.Description)
+	_, err = stmt.Exec(reqData.User.Id, categoryId, reqData.Activity, reqData.Image, reqData.Status, reqData.Description)
 
 	if err != nil {
 		log.Println(err)
@@ -433,7 +433,7 @@ func (rr *RequestRepository) UpdateBorrow(reqData _entity.Borrow) (updatedReq _e
 
 func (rr *RequestRepository) GetProcureById(id int) (req _entity.Procure, code int, err error) {
 	stmt, err := rr.db.Prepare(`
-		SELECT p.id, p.user_id, c.name, p.image, p.request_time, p.status, p.description 
+		SELECT p.id, p.user_id, c.name, p.activity, p.image, p.request_time, p.status, p.description 
 		FROM procurement_requests p
 		JOIN categories c
 		ON p.category_id = c.id
@@ -460,7 +460,7 @@ func (rr *RequestRepository) GetProcureById(id int) (req _entity.Procure, code i
 	defer res.Close()
 
 	if res.Next() {
-		if err := res.Scan(&req.Id, &req.User.Id, &req.Category, &req.Image, &req.RequestTime, &req.Status, &req.Description); err != nil {
+		if err := res.Scan(&req.Id, &req.User.Id, &req.Category, &req.Activity, &req.Image, &req.RequestTime, &req.Status, &req.Description); err != nil {
 			log.Println(err)
 			code, err = http.StatusInternalServerError, errors.New("internal server error")
 			return req, code, err

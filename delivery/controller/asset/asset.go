@@ -178,14 +178,14 @@ func (ac AssetController) GetByShortName() echo.HandlerFunc {
 		short_name := c.Param("short_name")
 
 		// calling repository
-		total, asset, code, err := ac.repository.GetByShortName(short_name)
+		total, maintenance, asset, code, err := ac.repository.GetByShortName(short_name)
 
 		// detect failure in repository
 		if err != nil {
 			return c.JSON(code, _common.NoDataResponse(code, err.Error()))
 		}
 
-		return c.JSON(http.StatusOK, _common.GetByShortNameResponse(total, asset))
+		return c.JSON(http.StatusOK, _common.GetByShortNameResponse(total, maintenance, asset))
 	}
 }
 

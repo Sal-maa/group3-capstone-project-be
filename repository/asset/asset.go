@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 )
 
 type AssetRepository struct {
@@ -151,7 +152,7 @@ func (ar *AssetRepository) GetAssetsByCategory(category_id int) (assets []_entit
 	return assets, http.StatusOK, nil
 }
 
-func (ar *AssetRepository) GetByShortName(short_name string) (total int, asset _entity.AssetSimplified, code int, err error) {
+func (ar *AssetRepository) GetByShortName(short_name string) (total int, maintenance int, asset _entity.AssetSimplified, code int, err error) {
 	stmt, err := ar.db.Prepare(`
 		SELECT c.name, a.name, a.image, a.description, COUNT(a.id)
 		FROM assets a
@@ -165,7 +166,7 @@ func (ar *AssetRepository) GetByShortName(short_name string) (total int, asset _
 	if err != nil {
 		log.Println(err)
 		code, err = http.StatusInternalServerError, errors.New("internal server error")
-		return total, asset, code, err
+		return total, maintenance, asset, code, err
 	}
 
 	defer stmt.Close()
@@ -174,7 +175,7 @@ func (ar *AssetRepository) GetByShortName(short_name string) (total int, asset _
 	if err != nil {
 		log.Println(err)
 		code, err = http.StatusInternalServerError, errors.New("internal server error")
-		return total, asset, code, err
+		return total, maintenance, asset, code, err
 	}
 
 	defer res.Close()
@@ -183,19 +184,29 @@ func (ar *AssetRepository) GetByShortName(short_name string) (total int, asset _
 		if err := res.Scan(&asset.Category, &asset.Name, &asset.Image, &asset.Description, &total); err != nil {
 			log.Println(err)
 			code, err = http.StatusInternalServerError, errors.New("internal server error")
-			return total, asset, code, err
+			return total, maintenance, asset, code, err
 		}
 	}
 
 	if asset == (_entity.AssetSimplified{}) {
 		log.Println("asset not found")
 		code, err = http.StatusBadRequest, errors.New("asset not found")
-		return total, asset, code, err
+		return total, maintenance, asset, code, err
 	}
 
 	asset.Image = fmt.Sprintf("https://capstone-group3.s3.ap-southeast-1.amazonaws.com/%s", asset.Image)
 
-	return total, asset, http.StatusOK, nil
+	users, available, err := ar.getStatsByShortName(short_name)
+
+	if err != nil {
+		log.Println(err)
+		code, err = http.StatusInternalServerError, errors.New("internal server error")
+		return total, maintenance, asset, code, err
+	}
+
+	maintenance = total - (users + available)
+
+	return total, maintenance, asset, http.StatusOK, nil
 }
 
 func (ar *AssetRepository) SetMaintenance(short_name string) (code int, err error) {
@@ -337,7 +348,7 @@ func (ar *AssetRepository) GetCategoryId(category string) (id int, code int, err
 	stmt, err := ar.db.Prepare(`
 		SELECT id
 		FROM categories
-		WHERE name = ?
+		WHERE UPPER(name) = ?
 	`)
 
 	if err != nil {
@@ -348,7 +359,7 @@ func (ar *AssetRepository) GetCategoryId(category string) (id int, code int, err
 
 	defer stmt.Close()
 
-	res, err := stmt.Query(category)
+	res, err := stmt.Query(strings.ToUpper(category))
 
 	if err != nil {
 		log.Println(err)

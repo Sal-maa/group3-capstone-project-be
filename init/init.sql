@@ -90,6 +90,7 @@ CREATE TABLE `procurement_requests` (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT,
   `user_id` bigint unsigned DEFAULT NULL,
   `category_id` bigint unsigned DEFAULT NULL,
+  `activity` longtext,
   `status` longtext,
   `request_time` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `description` longtext,

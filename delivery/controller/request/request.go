@@ -325,11 +325,6 @@ func (rc RequestController) UpdateBorrow() echo.HandlerFunc {
 				}
 			}
 
-			// // check request status
-			// if request.Status == "Approved by Manager" {
-			// 	return c.JSON(http.StatusForbidden, _common.NoDataResponse(http.StatusForbidden, "cannot approve/reject this request"))
-			// }
-
 			// calling repository
 			_, code, err = rc.repository.UpdateBorrow(request)
 
