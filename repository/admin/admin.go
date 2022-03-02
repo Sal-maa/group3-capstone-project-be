@@ -3,7 +3,9 @@ package admin
 import (
 	_entity "capstone/be/entity"
 	"database/sql"
+	"errors"
 	"log"
+	"net/http"
 )
 
 type AdminRepository struct {
@@ -97,7 +99,7 @@ func (ar *AdminRepository) GetAllManager(divLogin, limit, offset int, status, ca
 
 	defer stmt.Close()
 
-	res, err := stmt.Query(divLogin, "%"+status+"%", "%"+category+"%", "%"+date+"%", limit, offset-1)
+	res, err := stmt.Query(divLogin, status+"%Manager", "%"+category+"%", "%"+date+"%", limit, offset-1)
 
 	if err != nil {
 		log.Println(err)
@@ -169,4 +171,47 @@ func (ar *AdminRepository) GetAllProcureManager(limit, offset int, status, categ
 	}
 
 	return requests, nil
+}
+
+func (rr *AdminRepository) GetUserDivision(id int) (divId int, code int, err error) {
+	stmt, err := rr.db.Prepare(`
+		SELECT division_id
+		FROM users 
+		WHERE deleted_at IS NULL
+		  AND id = ? 
+	`)
+
+	if err != nil {
+		log.Println(err)
+		code, err = http.StatusInternalServerError, errors.New("internal server error")
+		return divId, code, err
+	}
+
+	defer stmt.Close()
+
+	res, err := stmt.Query(id)
+
+	if err != nil {
+		log.Println(err)
+		code, err = http.StatusInternalServerError, errors.New("internal server error")
+		return divId, code, err
+	}
+
+	defer res.Close()
+
+	if res.Next() {
+		if err := res.Scan(&divId); err != nil {
+			log.Println(err)
+			code, err = http.StatusInternalServerError, errors.New("internal server error")
+			return divId, code, err
+		}
+	}
+
+	if divId == 0 {
+		log.Println("user id not found")
+		code, err = http.StatusBadRequest, errors.New("user not found")
+		return divId, code, err
+	}
+
+	return divId, http.StatusOK, nil
 }
