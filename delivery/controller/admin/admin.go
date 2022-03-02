@@ -96,13 +96,13 @@ func (ac AdminController) AdminGetAll() echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request"))
 		}
 
-		requests, err := ac.adminRepository.GetAllAdmin(limit, offset, status, category, date)
+		requests, total, err := ac.adminRepository.GetAllAdmin(limit, offset, status, category, date)
 		if err != nil {
 			log.Println(err)
 			return c.JSON(http.StatusInternalServerError, _common.NoDataResponse(http.StatusInternalServerError, "Failed to read data"))
 		}
 
-		return c.JSON(http.StatusOK, _common.GetAllRequestResponse(requests))
+		return c.JSON(http.StatusOK, _common.GetAllRequestResponse(requests, total))
 	}
 }
 
@@ -185,13 +185,13 @@ func (ac AdminController) ManagerGetAllBorrow() echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request"))
 		}
 
-		requests, err := ac.adminRepository.GetAllManager(divLogin, limit, offset, status, category, date)
+		requests, total, err := ac.adminRepository.GetAllManager(divLogin, limit, offset, status, category, date)
 		if err != nil {
 			log.Println(err)
 			return c.JSON(http.StatusInternalServerError, _common.NoDataResponse(http.StatusInternalServerError, "Failed to read data"))
 		}
 
-		return c.JSON(http.StatusOK, _common.GetAllRequestResponse(requests))
+		return c.JSON(http.StatusOK, _common.GetAllRequestResponse(requests, total))
 	}
 }
 
@@ -268,12 +268,12 @@ func (ac AdminController) ManagerGetAllProcure() echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request"))
 		}
 
-		requests, err := ac.adminRepository.GetAllProcureManager(limit, offset, status, category, date)
+		requests, total, err := ac.adminRepository.GetAllProcureManager(limit, offset, status, category, date)
 		if err != nil {
 			log.Println(err)
 			return c.JSON(http.StatusInternalServerError, _common.NoDataResponse(http.StatusInternalServerError, "Failed to read data"))
 		}
 
-		return c.JSON(http.StatusOK, _common.GetAllProcureRequestResponse(requests))
+		return c.JSON(http.StatusOK, _common.GetAllProcureRequestResponse(requests, total))
 	}
 }
