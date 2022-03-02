@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html><head>
 		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-		<title>user: Go Coverage Report</title>
+		<title>activity: Go Coverage Report</title>
 		<style>
 			body {
 				background: black;
@@ -53,7 +53,17 @@
 			<div id="nav">
 				<select id="files">
 				
-				<option value="file0" selected="selected">capstone/be/delivery/controller/user/user.go (85.0%)</option>
+				<option value="file0">capstone/be/delivery/controller/activity/activity.go (76.5%)</option>
+				
+				<option value="file1">capstone/be/delivery/controller/admin/admin.go (84.0%)</option>
+				
+				<option value="file2" selected="selected">capstone/be/delivery/controller/asset/asset.go (75.0%)</option>
+				
+				<option value="file3">capstone/be/delivery/controller/history/history.go (94.4%)</option>
+				
+				<option value="file4">capstone/be/delivery/controller/request/request.go (66.9%)</option>
+				
+				<option value="file5">capstone/be/delivery/controller/user/user.go (84.3%)</option>
 				
 				</select>
 			</div>
@@ -67,7 +77,1262 @@
 		</div>
 		<div id="content">
 		
-		<pre class="file" id="file0" style="display: block;">package user
+		<pre class="file" id="file0" style="display: none;">package activity
+
+import (
+        _common "capstone/be/delivery/common"
+        _midware "capstone/be/delivery/middleware"
+        _entity "capstone/be/entity"
+        _activityRepo "capstone/be/repository/activity"
+        "net/http"
+        "strconv"
+        "strings"
+
+        "github.com/labstack/echo/v4"
+)
+
+type ActivityController struct {
+        repository _activityRepo.Activity
+}
+
+func New(activity _activityRepo.Activity) *ActivityController <span class="cov8" title="1">{
+        return &amp;ActivityController{repository: activity}
+}</span>
+
+func (ac ActivityController) GetAllActivityOfUser() echo.HandlerFunc <span class="cov8" title="1">{
+        return func(c echo.Context) error </span><span class="cov8" title="1">{
+                user_id, err := strconv.Atoi(c.Param("user_id"))
+
+                // detect invalid parameter
+                if err != nil </span><span class="cov8" title="1">{
+                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "invalid user id"))
+                }</span>
+
+                // check authorization
+                <span class="cov8" title="1">if user_id != _midware.ExtractId(c) &amp;&amp; _midware.ExtractRole(c) != "Administrator" </span><span class="cov8" title="1">{
+                        return c.JSON(http.StatusUnauthorized, _common.NoDataResponse(http.StatusUnauthorized, "unauthorized"))
+                }</span>
+
+                // calling repository
+                <span class="cov8" title="1">activities, code, err := ac.repository.GetAllActivityOfUser(user_id)
+
+                // detect failure in repository
+                if err != nil </span><span class="cov8" title="1">{
+                        return c.JSON(code, _common.NoDataResponse(code, err.Error()))
+                }</span>
+
+                <span class="cov8" title="1">return c.JSON(http.StatusOK, _common.GetAllActivityOfUserResponse(activities))</span>
+        }
+}
+
+func (ac ActivityController) GetDetailActivityByRequestId() echo.HandlerFunc <span class="cov8" title="1">{
+        return func(c echo.Context) error </span><span class="cov8" title="1">{
+                user_id, err := strconv.Atoi(c.Param("user_id"))
+
+                // detect invalid parameter
+                if err != nil </span><span class="cov8" title="1">{
+                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "invalid user id"))
+                }</span>
+
+                // check authorization
+                <span class="cov8" title="1">if user_id != _midware.ExtractId(c) &amp;&amp; _midware.ExtractRole(c) != "Administrator" </span><span class="cov0" title="0">{
+                        return c.JSON(http.StatusUnauthorized, _common.NoDataResponse(http.StatusUnauthorized, "unauthorized"))
+                }</span>
+
+                <span class="cov8" title="1">request_id, err := strconv.Atoi(c.Param("request_id"))
+
+                // detect invalid parameter
+                if err != nil </span><span class="cov8" title="1">{
+                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "invalid request id"))
+                }</span>
+
+                // calling repository
+                <span class="cov8" title="1">activity, code, err := ac.repository.GetDetailActivityByRequestId(request_id)
+
+                // detect failure in repository
+                if err != nil </span><span class="cov8" title="1">{
+                        return c.JSON(code, _common.NoDataResponse(code, err.Error()))
+                }</span>
+
+                <span class="cov8" title="1">return c.JSON(http.StatusOK, _common.GetDetailActivityByRequestId(activity))</span>
+        }
+}
+
+func (ac ActivityController) UpdateRequestStatus() echo.HandlerFunc <span class="cov8" title="1">{
+        return func(c echo.Context) error </span><span class="cov8" title="1">{
+                user_id, err := strconv.Atoi(c.Param("user_id"))
+
+                // detect invalid parameter
+                if err != nil </span><span class="cov8" title="1">{
+                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "invalid user id"))
+                }</span>
+
+                // check authorization
+                <span class="cov8" title="1">if user_id != _midware.ExtractId(c) &amp;&amp; _midware.ExtractRole(c) != "Administrator" </span><span class="cov8" title="1">{
+                        return c.JSON(http.StatusUnauthorized, _common.NoDataResponse(http.StatusUnauthorized, "unauthorized"))
+                }</span>
+
+                <span class="cov8" title="1">request_id, err := strconv.Atoi(c.Param("request_id"))
+
+                // detect invalid parameter
+                if err != nil </span><span class="cov8" title="1">{
+                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "invalid request id"))
+                }</span>
+
+                <span class="cov8" title="1">activityData := _entity.UpdateActivityStatus{}
+
+                // detect failure in binding
+                if err := c.Bind(&amp;activityData); err != nil </span><span class="cov0" title="0">{
+                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed to bind data"))
+                }</span>
+
+                // prepare input string
+                <span class="cov8" title="1">status := strings.ToLower(strings.TrimSpace(activityData.Status))
+
+                // calling repository to get existing activity data
+                updateActivityData, code, err := ac.repository.GetDetailActivityByRequestId(request_id)
+
+                // detect failure in repository
+                if err != nil </span><span class="cov0" title="0">{
+                        return c.JSON(code, _common.NoDataResponse(code, err.Error()))
+                }</span>
+
+                <span class="cov8" title="1">updatedActivity := _entity.Activity{}
+
+                switch status </span>{
+                case "cancel":<span class="cov8" title="1">
+                        if updateActivityData.Status == "Cancelled" </span><span class="cov0" title="0">{
+                                return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "request already cancelled"))
+                        }</span> else<span class="cov8" title="1"> if updateActivityData.ActivityType == "Return" </span><span class="cov0" title="0">{
+                                return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "asset already in return process"))
+                        }</span> else<span class="cov8" title="1"> if updateActivityData.Status != "Waiting Approval" &amp;&amp; updateActivityData.Status != "Approved by Manager" </span><span class="cov0" title="0">{
+                                return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "request cannot be cancelled"))
+                        }</span>
+
+                        <span class="cov8" title="1">code, err := ac.repository.CancelRequest(request_id)
+
+                        if err != nil </span><span class="cov0" title="0">{
+                                return c.JSON(code, _common.NoDataResponse(code, err.Error()))
+                        }</span>
+
+                        <span class="cov8" title="1">updatedActivity = updateActivityData
+                        updatedActivity.Status = "Cancelled"
+
+                        return c.JSON(http.StatusOK, _common.UpdateRequestStatusResponse(updatedActivity, "cancel"))</span>
+                case "return":<span class="cov8" title="1">
+                        if updateActivityData.Status == "Cancelled" </span><span class="cov0" title="0">{
+                                return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "request already cancelled"))
+                        }</span> else<span class="cov8" title="1"> if updateActivityData.ActivityType == "Return" </span><span class="cov0" title="0">{
+                                return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "asset already in return process"))
+                        }</span> else<span class="cov8" title="1"> if updateActivityData.Status != "Approved by Admin" </span><span class="cov8" title="1">{
+                                return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "cannot return asset"))
+                        }</span>
+
+                        <span class="cov0" title="0">code, err := ac.repository.ReturnRequest(request_id)
+
+                        if err != nil </span><span class="cov0" title="0">{
+                                return c.JSON(code, _common.NoDataResponse(code, err.Error()))
+                        }</span>
+
+                        <span class="cov0" title="0">updatedActivity = updateActivityData
+                        updatedActivity.Status = "Waiting approval"
+                        updatedActivity.ActivityType = "Return"
+
+                        return c.JSON(http.StatusOK, _common.UpdateRequestStatusResponse(updatedActivity, "return"))</span>
+                default:<span class="cov8" title="1">
+                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "invalid input status"))</span>
+                }
+        }
+}
+</pre>
+		
+		<pre class="file" id="file1" style="display: none">package admin
+
+import (
+        _common "capstone/be/delivery/common"
+        "log"
+        "strconv"
+        "strings"
+
+        _midware "capstone/be/delivery/middleware"
+        "net/http"
+
+        _adminRepo "capstone/be/repository/admin"
+
+        "github.com/labstack/echo/v4"
+)
+
+type AdminController struct {
+        adminRepository _adminRepo.Admin
+}
+
+func New(admin _adminRepo.Admin) *AdminController <span class="cov8" title="1">{
+        return &amp;AdminController{adminRepository: admin}
+}</span>
+
+func (ac AdminController) AdminGetAll() echo.HandlerFunc <span class="cov8" title="1">{
+        return func(c echo.Context) error </span><span class="cov8" title="1">{
+                role := _midware.ExtractRole(c)
+                if role != "Administrator" </span><span class="cov8" title="1">{
+                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "You don't have permission"))
+                }</span>
+
+                // filter by page number
+                <span class="cov8" title="1">p := c.QueryParam("p")
+                // default value for page
+                if p == "" </span><span class="cov8" title="1">{
+                        p = "1"
+                }</span>
+
+                <span class="cov8" title="1">offset, err := strconv.Atoi(p)
+
+                if err != nil </span><span class="cov0" title="0">{
+                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Error parsing page"))
+                }</span>
+
+                // filter by records per page
+                <span class="cov8" title="1">rp := c.QueryParam("rp")
+                // default value for page
+                if rp == "" </span><span class="cov8" title="1">{
+                        rp = "5"
+                }</span>
+
+                <span class="cov8" title="1">limit, err := strconv.Atoi(rp)
+
+                if err != nil </span><span class="cov0" title="0">{
+                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Error parsing record of page"))
+                }</span>
+
+                // filter by status
+                <span class="cov8" title="1">status := c.QueryParam("s")
+
+                // default value for status
+                if status == "" </span><span class="cov8" title="1">{
+                        status = "all"
+                }</span>
+
+                // to prevent sql injection
+                <span class="cov8" title="1">if strings.ContainsAny(status, ";") </span><span class="cov0" title="0">{
+                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request"))
+                }</span>
+
+                <span class="cov8" title="1">allstatus := map[string]int{"all": 1, "Waiting Approval": 1, "Approved": 1, "Rejected": 1, "Request to Return": 1}
+
+                if _, exist := allstatus[status]; !exist </span><span class="cov0" title="0">{
+                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request"))
+                }</span>
+
+                // filter by date
+                <span class="cov8" title="1">date := c.QueryParam("d")
+
+                // filter by category
+                category := c.QueryParam("c")
+
+                // to prevent sql injection
+                if strings.ContainsAny(category, ";") </span><span class="cov0" title="0">{
+                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request"))
+                }</span>
+
+                // default value for category
+                <span class="cov8" title="1">if category == "" </span><span class="cov8" title="1">{
+                        category = "all"
+                }</span>
+
+                <span class="cov8" title="1">categories := map[string]int{"all": 1, "Computer": 1, "Computer Accessories": 1, "Networking": 1, "UPS": 1, "Printer and Scanner": 1, "Electronics": 1, "Others": 1}
+
+                if _, exist := categories[category]; !exist </span><span class="cov0" title="0">{
+                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request"))
+                }</span>
+
+                <span class="cov8" title="1">requests, err := ac.adminRepository.GetAllAdmin(limit, offset, status, category, date)
+                if err != nil </span><span class="cov8" title="1">{
+                        log.Println(err)
+                        return c.JSON(http.StatusInternalServerError, _common.NoDataResponse(http.StatusInternalServerError, "Failed to read data"))
+                }</span>
+
+                <span class="cov8" title="1">return c.JSON(http.StatusOK, _common.GetAllRequestResponse(requests))</span>
+        }
+}
+
+func (ac AdminController) ManagerGetAllBorrow() echo.HandlerFunc <span class="cov8" title="1">{
+        return func(c echo.Context) error </span><span class="cov8" title="1">{
+                role := _midware.ExtractRole(c)
+                if role != "Manager" </span><span class="cov8" title="1">{
+                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "You don't have permission"))
+                }</span>
+
+                <span class="cov8" title="1">idLogin := _midware.ExtractId(c)
+                divLogin, _, err := ac.adminRepository.GetUserDivision(idLogin)
+                if err != nil </span><span class="cov0" title="0">{
+                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed get division id user"))
+                }</span>
+
+                // filter by page number
+                <span class="cov8" title="1">p := c.QueryParam("p")
+                // default value for page
+                if p == "" </span><span class="cov8" title="1">{
+                        p = "1"
+                }</span>
+
+                <span class="cov8" title="1">offset, err := strconv.Atoi(p)
+
+                if err != nil </span><span class="cov0" title="0">{
+                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Error parsing page"))
+                }</span>
+
+                // filter by records per page
+                <span class="cov8" title="1">rp := c.QueryParam("rp")
+                // default value for page
+                if rp == "" </span><span class="cov8" title="1">{
+                        rp = "5"
+                }</span>
+
+                <span class="cov8" title="1">limit, err := strconv.Atoi(rp)
+
+                if err != nil </span><span class="cov0" title="0">{
+                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Error parsing record of page"))
+                }</span>
+
+                // filter by status
+                <span class="cov8" title="1">status := c.QueryParam("s")
+
+                // default value for status
+                if status == "" </span><span class="cov8" title="1">{
+                        status = "all"
+                }</span>
+
+                // to prevent sql injection
+                <span class="cov8" title="1">if strings.ContainsAny(status, ";") </span><span class="cov0" title="0">{
+                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request"))
+                }</span>
+
+                <span class="cov8" title="1">allstatus := map[string]int{"all": 1, "Waiting Approval": 1, "Approved": 1, "Rejected": 1, "Request to Return": 1}
+
+                if _, exist := allstatus[status]; !exist </span><span class="cov0" title="0">{
+                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request"))
+                }</span>
+                // filter by date
+                <span class="cov8" title="1">date := c.QueryParam("d")
+
+                // filter by category
+                category := c.QueryParam("c")
+
+                // to prevent sql injection
+                if strings.ContainsAny(category, ";") </span><span class="cov0" title="0">{
+                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request"))
+                }</span>
+
+                // default value for category
+                <span class="cov8" title="1">if category == "" </span><span class="cov8" title="1">{
+                        category = "all"
+                }</span>
+
+                <span class="cov8" title="1">categories := map[string]int{"all": 1, "Computer": 1, "Computer Accessories": 1, "Networking": 1, "UPS": 1, "Printer and Scanner": 1, "Electronics": 1, "Others": 1}
+
+                if _, exist := categories[category]; !exist </span><span class="cov0" title="0">{
+                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request"))
+                }</span>
+
+                <span class="cov8" title="1">requests, err := ac.adminRepository.GetAllManager(divLogin, limit, offset, status, category, date)
+                if err != nil </span><span class="cov8" title="1">{
+                        log.Println(err)
+                        return c.JSON(http.StatusInternalServerError, _common.NoDataResponse(http.StatusInternalServerError, "Failed to read data"))
+                }</span>
+
+                <span class="cov8" title="1">return c.JSON(http.StatusOK, _common.GetAllRequestResponse(requests))</span>
+        }
+}
+
+func (ac AdminController) ManagerGetAllProcure() echo.HandlerFunc <span class="cov8" title="1">{
+        return func(c echo.Context) error </span><span class="cov8" title="1">{
+                role := _midware.ExtractRole(c)
+                if role != "Manager" </span><span class="cov8" title="1">{
+                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "You don't have permission"))
+                }</span>
+
+                // filter by page number
+                <span class="cov8" title="1">p := c.QueryParam("p")
+                // default value for page
+                if p == "" </span><span class="cov8" title="1">{
+                        p = "1"
+                }</span>
+
+                <span class="cov8" title="1">offset, err := strconv.Atoi(p)
+
+                if err != nil </span><span class="cov0" title="0">{
+                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Error parsing page"))
+                }</span>
+
+                // filter by records per page
+                <span class="cov8" title="1">rp := c.QueryParam("rp")
+                // default value for page
+                if rp == "" </span><span class="cov8" title="1">{
+                        rp = "5"
+                }</span>
+
+                <span class="cov8" title="1">limit, err := strconv.Atoi(rp)
+
+                if err != nil </span><span class="cov0" title="0">{
+                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Error parsing record of page"))
+                }</span>
+
+                // filter by status
+                <span class="cov8" title="1">status := c.QueryParam("s")
+
+                // default value for status
+                if status == "" </span><span class="cov8" title="1">{
+                        status = "all"
+                }</span>
+
+                // to prevent sql injection
+                <span class="cov8" title="1">if strings.ContainsAny(status, ";") </span><span class="cov0" title="0">{
+                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request"))
+                }</span>
+
+                <span class="cov8" title="1">allstatus := map[string]int{"all": 1, "Waiting Approval": 1, "Approved": 1, "Rejected": 1}
+
+                if _, exist := allstatus[status]; !exist </span><span class="cov0" title="0">{
+                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request"))
+                }</span>
+                // filter by date
+                <span class="cov8" title="1">date := c.QueryParam("d")
+
+                // filter by category
+                category := c.QueryParam("c")
+
+                // to prevent sql injection
+                if strings.ContainsAny(category, ";") </span><span class="cov0" title="0">{
+                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request"))
+                }</span>
+
+                // default value for category
+                <span class="cov8" title="1">if category == "" </span><span class="cov8" title="1">{
+                        category = "all"
+                }</span>
+
+                <span class="cov8" title="1">categories := map[string]int{"all": 1, "Computer": 1, "Computer Accessories": 1, "Networking": 1, "UPS": 1, "Printer and Scanner": 1, "Electronics": 1, "Others": 1}
+
+                if _, exist := categories[category]; !exist </span><span class="cov0" title="0">{
+                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request"))
+                }</span>
+
+                <span class="cov8" title="1">requests, err := ac.adminRepository.GetAllProcureManager(limit, offset, status, category, date)
+                if err != nil </span><span class="cov8" title="1">{
+                        log.Println(err)
+                        return c.JSON(http.StatusInternalServerError, _common.NoDataResponse(http.StatusInternalServerError, "Failed to read data"))
+                }</span>
+
+                <span class="cov8" title="1">return c.JSON(http.StatusOK, _common.GetAllProcureRequestResponse(requests))</span>
+        }
+}
+</pre>
+		
+		<pre class="file" id="file2" style="display: block;">package asset
+
+import (
+        _common "capstone/be/delivery/common"
+        _helper "capstone/be/delivery/helper"
+        "capstone/be/delivery/middleware"
+        "fmt"
+        "time"
+
+        _entity "capstone/be/entity"
+        _assetRepo "capstone/be/repository/asset"
+
+        // _userRepo "capstone/be/repository/user"
+
+        "log"
+
+        "net/http"
+        "strings"
+
+        "github.com/labstack/echo/v4"
+)
+
+type AssetController struct {
+        repository _assetRepo.Asset
+}
+
+func New(asset _assetRepo.Asset) *AssetController <span class="cov8" title="1">{
+        return &amp;AssetController{repository: asset}
+}</span>
+
+func (ac AssetController) Create() echo.HandlerFunc <span class="cov8" title="1">{
+        return func(c echo.Context) error </span><span class="cov8" title="1">{
+                // check authorization
+                if role := middleware.ExtractRole(c); role != "Administrator" </span><span class="cov8" title="1">{
+                        return c.JSON(http.StatusUnauthorized, _common.NoDataResponse(http.StatusUnauthorized, "unauthorized"))
+                }</span>
+
+                <span class="cov8" title="1">assetData := _entity.CreateAsset{}
+
+                // detect failure in binding
+                if err := c.Bind(&amp;assetData); err != nil </span><span class="cov8" title="1">{
+                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed to bind data"))
+                }</span>
+
+                // prepare input
+                <span class="cov8" title="1">name := strings.TrimSpace(assetData.Name)
+                category := strings.TrimSpace(assetData.Category)
+                description := strings.TrimSpace(assetData.Description)
+
+                // check input string
+                check := []string{name, category, description}
+
+                for _, s := range check </span><span class="cov8" title="1">{
+                        // check empty string in required input
+                        if s == "" </span><span class="cov8" title="1">{
+                                return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "input cannot be empty"))
+                        }</span>
+
+                        // check malicious character in input
+                        <span class="cov8" title="1">if err := _helper.CheckStringInput(s); err != nil </span><span class="cov8" title="1">{
+                                return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, s+": "+err.Error()))
+                        }</span>
+                }
+
+                // check input quantity
+                <span class="cov8" title="1">if assetData.Quantity &lt;= 0 </span><span class="cov8" title="1">{
+                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "quantity must be greater than zero"))
+                }</span>
+
+                // prepare input to repository
+                <span class="cov8" title="1">createAssetData := _entity.Asset{}
+                createAssetData.Name = name
+                createAssetData.Description = description
+
+                // get category id via repository
+                id, code, err := ac.repository.GetCategoryId(category)
+
+                // detect failure in repository
+                if err != nil </span><span class="cov8" title="1">{
+                        return c.JSON(code, _common.NoDataResponse(code, err.Error()))
+                }</span>
+
+                <span class="cov8" title="1">createAssetData.CategoryId = id
+
+                short_name := fmt.Sprintf("asset-%d", (time.Now().Unix()))
+                createAssetData.ShortName = short_name
+
+                if assetData.UnderMaintenance </span><span class="cov0" title="0">{
+                        createAssetData.Status = "Asset Under Maintenance"
+                }</span> else<span class="cov8" title="1"> {
+                        createAssetData.Status = "Available"
+                }</span>
+
+                // detect asset image upload
+                <span class="cov8" title="1">src, file, err := c.Request().FormFile("image")
+
+                // detect failure in parsing file
+                switch err </span>{
+                case nil:<span class="cov0" title="0">
+                        defer src.Close()
+
+                        // upload avatar to amazon s3
+                        id := middleware.ExtractId(c)
+                        image, code, err := _helper.UploadImage("asset", id, file, src)
+
+                        // detect failure while uploading avatar
+                        if err != nil </span><span class="cov0" title="0">{
+                                return c.JSON(code, _common.NoDataResponse(code, err.Error()))
+                        }</span>
+
+                        <span class="cov0" title="0">createAssetData.Image = image</span>
+                case http.ErrMissingFile:<span class="cov0" title="0">
+                        log.Println(err)
+                        createAssetData.Image = "default_image.png"</span>
+                case http.ErrNotMultipart:<span class="cov8" title="1">
+                        log.Println(err)
+                        createAssetData.Image = "default_image.png"</span>
+                default:<span class="cov0" title="0">
+                        log.Println(err)
+                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed to upload image"))</span>
+                }
+
+                <span class="cov8" title="1">for i := 1; i &lt;= assetData.Quantity; i++ </span><span class="cov8" title="1">{
+                        createAssetData.Code = fmt.Sprintf("%s-%d", short_name, i)
+
+                        // calling repository
+                        code, err := ac.repository.Create(createAssetData)
+
+                        // detect failure in repository
+                        if err != nil </span><span class="cov0" title="0">{
+                                return c.JSON(code, _common.NoDataResponse(code, err.Error()))
+                        }</span>
+                }
+
+                <span class="cov8" title="1">return c.JSON(http.StatusOK, _common.CreateAssetResponse())</span>
+        }
+}
+
+func (ac AssetController) GetAll() echo.HandlerFunc <span class="cov8" title="1">{
+        return func(c echo.Context) error </span><span class="cov8" title="1">{
+                // filter by category
+                category := strings.Title(strings.TrimSpace(c.QueryParam("category")))
+
+                if category != "" </span><span class="cov0" title="0">{
+                        // get category id via repository
+                        id, code, err := ac.repository.GetCategoryId(category)
+
+                        // detect failure in repository
+                        if err != nil </span><span class="cov0" title="0">{
+                                return c.JSON(code, _common.NoDataResponse(code, err.Error()))
+                        }</span>
+
+                        // calling repository
+                        <span class="cov0" title="0">assets, code, err := ac.repository.GetAssetsByCategory(id)
+
+                        // detect failure in repository
+                        if err != nil </span><span class="cov0" title="0">{
+                                return c.JSON(code, _common.NoDataResponse(code, err.Error()))
+                        }</span>
+
+                        <span class="cov0" title="0">return c.JSON(http.StatusOK, _common.GetAllAssetsResponse(assets))</span>
+                }
+
+                // calling repository
+                <span class="cov8" title="1">assets, code, err := ac.repository.GetAll()
+
+                // detect failure in repository
+                if err != nil </span><span class="cov8" title="1">{
+                        return c.JSON(code, _common.NoDataResponse(code, err.Error()))
+                }</span>
+
+                <span class="cov8" title="1">return c.JSON(http.StatusOK, _common.GetAllAssetsResponse(assets))</span>
+        }
+}
+
+func (ac AssetController) GetByShortName() echo.HandlerFunc <span class="cov8" title="1">{
+        return func(c echo.Context) error </span><span class="cov8" title="1">{
+                short_name := c.Param("short_name")
+
+                // calling repository
+                total, maintenance, asset, code, err := ac.repository.GetByShortName(short_name)
+
+                // detect failure in repository
+                if err != nil </span><span class="cov8" title="1">{
+                        return c.JSON(code, _common.NoDataResponse(code, err.Error()))
+                }</span>
+
+                <span class="cov8" title="1">return c.JSON(http.StatusOK, _common.GetByShortNameResponse(total, maintenance, asset))</span>
+        }
+}
+
+func (ac AssetController) Update() echo.HandlerFunc <span class="cov8" title="1">{
+        return func(c echo.Context) error </span><span class="cov8" title="1">{
+                short_name := c.Param("short_name")
+
+                if role := middleware.ExtractRole(c); role != "Administrator" </span><span class="cov8" title="1">{
+                        return c.JSON(http.StatusUnauthorized, _common.NoDataResponse(http.StatusUnauthorized, "unauthorized"))
+                }</span>
+
+                <span class="cov8" title="1">updateData := _entity.UpdateAsset{}
+
+                // detect failure in binding
+                if err := c.Bind(&amp;updateData); err != nil </span><span class="cov8" title="1">{
+                        log.Println(err)
+                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed to bind data"))
+                }</span>
+
+                <span class="cov8" title="1">if updateData.UnderMaintenance </span><span class="cov8" title="1">{
+                        // calling repository
+                        code, err := ac.repository.SetMaintenance(short_name)
+
+                        // detect failure in repository
+                        if err != nil </span><span class="cov8" title="1">{
+                                return c.JSON(code, _common.NoDataResponse(code, err.Error()))
+                        }</span>
+
+                        <span class="cov8" title="1">return c.JSON(http.StatusOK, _common.UpdateAssetResponse())</span>
+                }
+
+                // calling repository
+                <span class="cov0" title="0">code, err := ac.repository.SetAvailable(short_name)
+
+                // detect failure in repository
+                if err != nil </span><span class="cov0" title="0">{
+                        return c.JSON(code, _common.NoDataResponse(code, err.Error()))
+                }</span>
+
+                <span class="cov0" title="0">return c.JSON(http.StatusOK, _common.UpdateAssetResponse())</span>
+        }
+}
+
+func (ac AssetController) GetStats() echo.HandlerFunc <span class="cov8" title="1">{
+        return func(c echo.Context) error </span><span class="cov8" title="1">{
+                // calling repository
+                statistics, code, err := ac.repository.GetStats()
+
+                // detect failure in repository
+                if err != nil </span><span class="cov8" title="1">{
+                        return c.JSON(code, _common.NoDataResponse(code, err.Error()))
+                }</span>
+
+                <span class="cov8" title="1">return c.JSON(http.StatusOK, _common.GetStatsResponse(statistics))</span>
+        }
+}
+</pre>
+		
+		<pre class="file" id="file3" style="display: none">package history
+
+import (
+        _common "capstone/be/delivery/common"
+        _midware "capstone/be/delivery/middleware"
+        _historyRepo "capstone/be/repository/history"
+        "net/http"
+        "strconv"
+        "strings"
+
+        "github.com/labstack/echo/v4"
+)
+
+type HistoryController struct {
+        repository _historyRepo.History
+}
+
+func New(history _historyRepo.History) *HistoryController <span class="cov8" title="1">{
+        return &amp;HistoryController{repository: history}
+}</span>
+
+func (hc HistoryController) GetAllRequestHistoryOfUser() echo.HandlerFunc <span class="cov8" title="1">{
+        return func(c echo.Context) error </span><span class="cov8" title="1">{
+                user_id, err := strconv.Atoi(c.Param("user_id"))
+
+                // detect invalid parameter
+                if err != nil </span><span class="cov0" title="0">{
+                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "invalid user id"))
+                }</span>
+
+                // check authorization
+                <span class="cov8" title="1">if user_id != _midware.ExtractId(c) &amp;&amp; _midware.ExtractRole(c) != "Administrator" </span><span class="cov8" title="1">{
+                        return c.JSON(http.StatusUnauthorized, _common.NoDataResponse(http.StatusUnauthorized, "unauthorized"))
+                }</span>
+
+                // pagination
+                <span class="cov8" title="1">p := strings.TrimSpace(c.QueryParam("page"))
+                if p == "" </span><span class="cov8" title="1">{
+                        p = "1"
+                }</span>
+
+                <span class="cov8" title="1">page, err := strconv.Atoi(p)
+
+                // detect invalid page number
+                if err != nil </span><span class="cov0" title="0">{
+                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "invalid page number"))
+                }</span>
+
+                // calling repository
+                <span class="cov8" title="1">count, histories, code, err := hc.repository.GetAllRequestHistoryOfUser(user_id, page)
+
+                // detect failure in repository
+                if err != nil </span><span class="cov8" title="1">{
+                        return c.JSON(code, _common.NoDataResponse(code, err.Error()))
+                }</span>
+
+                <span class="cov8" title="1">return c.JSON(http.StatusOK, _common.GetAllRequestHistoryOfUserResponse(histories, count))</span>
+        }
+}
+
+func (hc HistoryController) GetDetailRequestHistoryByRequestId() echo.HandlerFunc <span class="cov8" title="1">{
+        return func(c echo.Context) error </span><span class="cov8" title="1">{
+                user_id, err := strconv.Atoi(c.Param("user_id"))
+
+                // detect invalid parameter
+                if err != nil </span><span class="cov8" title="1">{
+                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "invalid user id"))
+                }</span>
+
+                // check authorization
+                <span class="cov8" title="1">if user_id != _midware.ExtractId(c) &amp;&amp; _midware.ExtractRole(c) != "Administrator" </span><span class="cov8" title="1">{
+                        return c.JSON(http.StatusUnauthorized, _common.NoDataResponse(http.StatusUnauthorized, "unauthorized"))
+                }</span>
+
+                <span class="cov8" title="1">request_id, err := strconv.Atoi(c.Param("request_id"))
+
+                // detect invalid parameter
+                if err != nil </span><span class="cov8" title="1">{
+                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "invalid request id"))
+                }</span>
+
+                // calling repository
+                <span class="cov8" title="1">history, code, err := hc.repository.GetDetailRequestHistoryByRequestId(request_id)
+
+                // detect failure in repository
+                if err != nil </span><span class="cov8" title="1">{
+                        return c.JSON(code, _common.NoDataResponse(code, err.Error()))
+                }</span>
+
+                <span class="cov8" title="1">return c.JSON(http.StatusOK, _common.GetDetailRequestHistoryByRequestId(history))</span>
+        }
+}
+
+func (hc HistoryController) GetAllUsageHistoryOfAsset() echo.HandlerFunc <span class="cov8" title="1">{
+        return func(c echo.Context) error </span><span class="cov8" title="1">{
+                short_name := c.Param("short_name")
+
+                // calling repository
+                asset, users, code, err := hc.repository.GetAllUsageHistoryOfAsset(short_name)
+
+                // detect failure in repository
+                if err != nil </span><span class="cov8" title="1">{
+                        return c.JSON(code, _common.NoDataResponse(code, err.Error()))
+                }</span>
+
+                <span class="cov8" title="1">return c.JSON(http.StatusOK, _common.GetAllUsageHistoryOfAsset(asset, users))</span>
+        }
+}
+</pre>
+		
+		<pre class="file" id="file4" style="display: none">package request
+
+import (
+        _common "capstone/be/delivery/common"
+        _helper "capstone/be/delivery/helper"
+        _midware "capstone/be/delivery/middleware"
+        _entity "capstone/be/entity"
+        _requestRepo "capstone/be/repository/request"
+        "log"
+        "net/http"
+        "strconv"
+        "strings"
+        "time"
+
+        "github.com/labstack/echo/v4"
+)
+
+type RequestController struct {
+        repository _requestRepo.Request
+}
+
+func New(request _requestRepo.Request) *RequestController <span class="cov8" title="1">{
+        return &amp;RequestController{repository: request}
+}</span>
+
+func (rc RequestController) Borrow() echo.HandlerFunc <span class="cov8" title="1">{
+        return func(c echo.Context) error </span><span class="cov8" title="1">{
+                newReq := _entity.CreateBorrow{}
+
+                // handle failure in binding
+                if err := c.Bind(&amp;newReq); err != nil </span><span class="cov0" title="0">{
+                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed to bind data"))
+                }</span>
+
+                // prepare input string
+                <span class="cov8" title="1">shortName := strings.TrimSpace(newReq.ShortName)
+                description := strings.TrimSpace(newReq.Description)
+
+                // check empty string in required input
+                // description is not required, such as when admin assigns asset to employee
+                if shortName == "" </span><span class="cov0" title="0">{
+                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "input cannot be empty"))
+                }</span>
+
+                // check input string
+                <span class="cov8" title="1">check := []string{shortName, description}
+
+                for _, s := range check </span><span class="cov8" title="1">{
+                        // check malicious character in input
+                        if err := _helper.CheckStringInput(s); err != nil </span><span class="cov0" title="0">{
+                                return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, s+": "+err.Error()))
+                        }</span>
+                }
+
+                // prepare input to repository
+                <span class="cov8" title="1">reqData := _entity.Borrow{}
+                reqData.Asset.ShortName = shortName
+                reqData.Description = description
+
+                // check role
+                role := _midware.ExtractRole(c)
+
+                switch role </span>{
+                case "Administrator":<span class="cov8" title="1">
+                        // if return time not set, then set to max time
+                        if newReq.ReturnTime == (time.Time{}) </span><span class="cov0" title="0">{
+                                newReq.ReturnTime = time.Date(9999, 12, 31, 23, 59, 59, 0, time.UTC)
+                        }</span>
+
+                        <span class="cov8" title="1">reqData.User.Id = newReq.EmployeeId
+                        reqData.ReturnTime = newReq.ReturnTime
+                        reqData.Status = "Approved by Admin"
+
+                        // calling repository
+                        code, err := rc.repository.Borrow(reqData)
+
+                        // detect failure in repository
+                        if err != nil </span><span class="cov0" title="0">{
+                                return c.JSON(code, _common.NoDataResponse(code, err.Error()))
+                        }</span>
+
+                        <span class="cov8" title="1">return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "success create request"))</span>
+                case "Employee":<span class="cov8" title="1">
+                        // set return time to maximum value
+                        newReq.ReturnTime = time.Date(9999, 12, 31, 23, 59, 59, 0, time.UTC)
+
+                        reqData.User.Id = _midware.ExtractId(c)
+                        reqData.ReturnTime = newReq.ReturnTime
+                        reqData.Status = "Waiting approval from Admin"
+
+                        if code, err := rc.repository.Borrow(reqData); err != nil </span><span class="cov0" title="0">{
+                                return c.JSON(code, _common.NoDataResponse(code, err.Error()))
+                        }</span>
+
+                        <span class="cov8" title="1">return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "success create request"))</span>
+                default:<span class="cov0" title="0">
+                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusOK, "only admin/employee can make request"))</span>
+                }
+        }
+}
+
+func (rc RequestController) Procure() echo.HandlerFunc <span class="cov8" title="1">{
+        return func(c echo.Context) error </span><span class="cov8" title="1">{
+                // check authorization
+                if role := _midware.ExtractRole(c); role != "Administrator" </span><span class="cov0" title="0">{
+                        return c.JSON(http.StatusForbidden, _common.NoDataResponse(http.StatusForbidden, "only admin can create request"))
+                }</span>
+
+                <span class="cov8" title="1">newReq := _entity.CreateProcure{}
+
+                // handle failure in binding
+                if err := c.Bind(&amp;newReq); err != nil </span><span class="cov0" title="0">{
+                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed to bind data"))
+                }</span>
+
+                // prepare input string
+                <span class="cov8" title="1">category := strings.TrimSpace(newReq.Category)
+                description := strings.TrimSpace(newReq.Description)
+
+                // check input string
+                check := []string{category, description}
+
+                for _, s := range check </span><span class="cov8" title="1">{
+                        // check empty string in required input
+                        if s == "" </span><span class="cov0" title="0">{
+                                return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "input cannot be empty"))
+                        }</span>
+
+                        // check malicious character in input
+                        <span class="cov8" title="1">if err := _helper.CheckStringInput(s); err != nil </span><span class="cov0" title="0">{
+                                return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, s+": "+err.Error()))
+                        }</span>
+                }
+
+                // prepare input to repository
+                <span class="cov8" title="1">reqData := _entity.Procure{}
+                reqData.User.Id = _midware.ExtractId(c)
+                reqData.Category = category
+                reqData.Description = description
+                reqData.Activity = "Procure"
+
+                // detect image upload
+                src, file, err := c.Request().FormFile("image")
+
+                // detect failure in parsing file
+                switch err </span>{
+                case nil:<span class="cov0" title="0">
+                        defer src.Close()
+
+                        // upload avatar to amazon s3
+                        image, code, err := _helper.UploadImage("procure", reqData.User.Id, file, src)
+
+                        // detect failure while uploading avatar
+                        if err != nil </span><span class="cov0" title="0">{
+                                return c.JSON(code, _common.NoDataResponse(code, err.Error()))
+                        }</span>
+
+                        <span class="cov0" title="0">reqData.Image = image</span>
+                case http.ErrMissingFile:<span class="cov0" title="0">
+                        reqData.Image = "default_image.png"</span>
+                case http.ErrNotMultipart:<span class="cov8" title="1">
+                        reqData.Image = "default_image.png"</span>
+                default:<span class="cov0" title="0">
+                        log.Println(err)
+                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed to upload image"))</span>
+                }
+
+                <span class="cov8" title="1">reqData.User.Id = _midware.ExtractId(c)
+                reqData.Description = newReq.Description
+                reqData.Status = "Waiting approval from Manager"
+
+                // calling repository
+                code, err := rc.repository.Procure(reqData)
+
+                // detect failure in repository
+                if err != nil </span><span class="cov0" title="0">{
+                        return c.JSON(code, _common.NoDataResponse(code, err.Error()))
+                }</span>
+
+                <span class="cov8" title="1">return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "success create request"))</span>
+        }
+}
+
+func (rc RequestController) GetBorrowById() echo.HandlerFunc <span class="cov8" title="1">{
+        return func(c echo.Context) error </span><span class="cov8" title="1">{
+                role := _midware.ExtractRole(c)
+                if role == "Employee" </span><span class="cov0" title="0">{
+                        return c.JSON(http.StatusUnauthorized, _common.NoDataResponse(http.StatusUnauthorized, "You don't have permission"))
+                }</span>
+
+                <span class="cov8" title="1">idReq, err := strconv.Atoi(c.Param("id"))
+
+                if err != nil </span><span class="cov0" title="0">{
+                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "invalid request id"))
+                }</span>
+
+                // get existing borrow request by id
+                <span class="cov8" title="1">request, code, err := rc.repository.GetBorrowById(idReq)
+
+                if err != nil </span><span class="cov0" title="0">{
+                        return c.JSON(code, _common.NoDataResponse(code, err.Error()))
+                }</span>
+                <span class="cov8" title="1">return c.JSON(http.StatusOK, _common.GetBorrowRequestResponse(request))</span>
+        }
+}
+
+func (rc RequestController) GetProcureById() echo.HandlerFunc <span class="cov8" title="1">{
+        return func(c echo.Context) error </span><span class="cov8" title="1">{
+                role := _midware.ExtractRole(c)
+                if role == "Employee" </span><span class="cov0" title="0">{
+                        return c.JSON(http.StatusUnauthorized, _common.NoDataResponse(http.StatusUnauthorized, "You don't have permission"))
+                }</span>
+
+                <span class="cov8" title="1">idReq, err := strconv.Atoi(c.Param("id"))
+
+                if err != nil </span><span class="cov0" title="0">{
+                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "invalid request id"))
+                }</span>
+
+                // get existing Procure request by id
+                <span class="cov8" title="1">request, code, err := rc.repository.GetProcureById(idReq)
+
+                if err != nil </span><span class="cov0" title="0">{
+                        return c.JSON(code, _common.NoDataResponse(code, err.Error()))
+                }</span>
+                <span class="cov8" title="1">return c.JSON(http.StatusOK, _common.GetProcureRequestResponse(request))</span>
+        }
+}
+
+func (rc RequestController) UpdateBorrow() echo.HandlerFunc <span class="cov8" title="1">{
+        return func(c echo.Context) error </span><span class="cov8" title="1">{
+                // get request id to be updated
+                idReq, err := strconv.Atoi(c.Param("id"))
+
+                if err != nil </span><span class="cov0" title="0">{
+                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "invalid request id"))
+                }</span>
+
+                // get existing borrow request by id
+                <span class="cov8" title="1">request, code, err := rc.repository.GetBorrowById(idReq)
+
+                if err != nil </span><span class="cov0" title="0">{
+                        return c.JSON(code, _common.NoDataResponse(code, err.Error()))
+                }</span>
+
+                <span class="cov8" title="1">newStatus := _entity.UpdateBorrow{}
+
+                // handle failure in binding
+                if err := c.Bind(&amp;newStatus); err != nil </span><span class="cov0" title="0">{
+                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed to bind data"))
+                }</span>
+
+                // check role and division of currently logged in user
+                <span class="cov8" title="1">role := _midware.ExtractRole(c)
+                idLogin := _midware.ExtractId(c)
+
+                switch role </span>{
+                case "Manager":<span class="cov8" title="1">
+                        // this is the case where the logged in user is a manager
+                        // and he/she wants to approve or reject request ONLY IF
+                        // request status is waiting approval
+
+                        // check manager division
+                        divLogin, code, err := rc.repository.GetUserDivision(idLogin)
+
+                        if err != nil </span><span class="cov0" title="0">{
+                                return c.JSON(code, _common.NoDataResponse(code, err.Error()))
+                        }</span>
+
+                        // check user division
+                        <span class="cov8" title="1">divEmpl, code, err := rc.repository.GetUserDivision(request.User.Id)
+
+                        if err != nil </span><span class="cov0" title="0">{
+                                return c.JSON(code, _common.NoDataResponse(code, err.Error()))
+                        }</span>
+
+                        // check authorization
+                        <span class="cov8" title="1">if divEmpl != divLogin </span><span class="cov0" title="0">{
+                                return c.JSON(http.StatusForbidden, _common.NoDataResponse(http.StatusForbidden, "you are not in the same division"))
+                        }</span>
+
+                        // check request status
+                        <span class="cov8" title="1">if request.Status != "Waiting approval from Manager" </span><span class="cov0" title="0">{
+                                return c.JSON(http.StatusForbidden, _common.NoDataResponse(http.StatusForbidden, "cannot approve/reject this request"))
+                        }</span>
+
+                        // set request status
+                        <span class="cov8" title="1">if newStatus.Approved </span><span class="cov8" title="1">{
+                                request.Status = "Approved by Manager"
+                        }</span> else<span class="cov0" title="0"> {
+                                request.Status = "Rejected by Manager"
+                        }</span>
+
+                        // calling repository
+                        <span class="cov8" title="1">_, code, err = rc.repository.UpdateBorrow(request)
+
+                        // detect failure in repository
+                        if err != nil </span><span class="cov0" title="0">{
+                                return c.JSON(code, _common.NoDataResponse(code, err.Error()))
+                        }</span>
+
+                        <span class="cov8" title="1">return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "success update request"))</span>
+                case "Administrator":<span class="cov8" title="1">
+                        // this is the case where the logged in user is an administrator
+                        // and he/she wants to approve or reject request ONLY AFTER the request
+                        // has been approved by manager
+
+                        // check request status
+                        if request.Status != "Approved by Manager" &amp;&amp; request.Status != "Waiting approval from Admin" </span><span class="cov0" title="0">{
+                                return c.JSON(http.StatusForbidden, _common.NoDataResponse(http.StatusForbidden, "cannot approve/reject this request"))
+                        }</span>
+
+                        // set request status
+                        <span class="cov8" title="1">if request.Status == "Approved by Manager" </span><span class="cov0" title="0">{
+                                if newStatus.Approved </span><span class="cov0" title="0">{
+                                        request.Status = "Approved by Admin"
+                                }</span> else<span class="cov0" title="0"> {
+                                        request.Status = "Rejected by Admin"
+                                }</span>
+                        } else<span class="cov8" title="1"> if request.Status == "Waiting approval from Admin" </span><span class="cov8" title="1">{
+                                if newStatus.Approved </span><span class="cov8" title="1">{
+                                        request.Status = "Waiting approval from Manager"
+                                }</span> else<span class="cov0" title="0"> {
+                                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "cannot reject request before forwarding to manager"))
+                                }</span>
+                        }
+
+                        // calling repository
+                        <span class="cov8" title="1">_, code, err = rc.repository.UpdateBorrow(request)
+
+                        // detect failure in repository
+                        if err != nil </span><span class="cov0" title="0">{
+                                return c.JSON(code, _common.NoDataResponse(code, err.Error()))
+                        }</span>
+
+                        <span class="cov8" title="1">return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "success update request"))</span>
+
+                default:<span class="cov0" title="0">
+                        // this is the case where the logged in user is ordinary employee
+                        return c.JSON(http.StatusForbidden, _common.NoDataResponse(http.StatusForbidden, "not allowed to update request status"))</span>
+                }
+        }
+}
+
+func (rc RequestController) UpdateProcure() echo.HandlerFunc <span class="cov8" title="1">{
+        return func(c echo.Context) error </span><span class="cov8" title="1">{
+                // get request id to be updated
+                idReq, err := strconv.Atoi(c.Param("id"))
+
+                if err != nil </span><span class="cov0" title="0">{
+                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "invalid request id"))
+                }</span>
+
+                // check role of currently logged in user
+                <span class="cov8" title="1">if role := _midware.ExtractRole(c); role != "Manager" </span><span class="cov0" title="0">{
+                        return c.JSON(http.StatusForbidden, _common.NoDataResponse(http.StatusForbidden, "not allowed to update request status"))
+                }</span>
+
+                <span class="cov8" title="1">newStatus := _entity.UpdateProcure{}
+
+                // handle failure in binding
+                if err := c.Bind(&amp;newStatus); err != nil </span><span class="cov0" title="0">{
+                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed to bind data"))
+                }</span>
+
+                // get existing procure request by id
+                <span class="cov8" title="1">request, code, err := rc.repository.GetProcureById(idReq)
+
+                if err != nil </span><span class="cov0" title="0">{
+                        return c.JSON(code, _common.NoDataResponse(code, err.Error()))
+                }</span>
+
+                // check request status
+                <span class="cov8" title="1">if request.Status != "Waiting approval from Manager" </span><span class="cov8" title="1">{
+                        return c.JSON(http.StatusForbidden, _common.NoDataResponse(http.StatusForbidden, "cannot approve/reject this request"))
+                }</span>
+
+                // set request status
+                <span class="cov0" title="0">if newStatus.Approved </span><span class="cov0" title="0">{
+                        request.Status = "Approved by Manager"
+                }</span> else<span class="cov0" title="0"> {
+                        request.Status = "Rejected by Manager"
+                }</span>
+
+                // calling repository
+                <span class="cov0" title="0">_, code, err = rc.repository.UpdateProcure(request)
+
+                // detect failure in repository
+                if err != nil </span><span class="cov0" title="0">{
+                        return c.JSON(code, _common.NoDataResponse(code, err.Error()))
+                }</span>
+
+                <span class="cov0" title="0">return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "success update request"))</span>
+        }
+}
+
+func (rc RequestController) AdminReturn() echo.HandlerFunc <span class="cov8" title="1">{
+        return func(c echo.Context) error </span><span class="cov8" title="1">{
+                // get request id to be updated
+                idReq, err := strconv.Atoi(c.Param("id"))
+
+                if err != nil </span><span class="cov0" title="0">{
+                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "invalid request id"))
+                }</span>
+
+                // check role of currently logged in user
+                <span class="cov8" title="1">if role := _midware.ExtractRole(c); role != "Administrator" </span><span class="cov0" title="0">{
+                        return c.JSON(http.StatusForbidden, _common.NoDataResponse(http.StatusForbidden, "not allowed to update request status"))
+                }</span>
+
+                <span class="cov8" title="1">act := _entity.ActivityReturn{}
+
+                // handle failure in binding
+                if err := c.Bind(&amp;act); err != nil </span><span class="cov0" title="0">{
+                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed to bind data"))
+                }</span>
+
+                // get existing procure request by id
+                <span class="cov8" title="1">request, code, err := rc.repository.GetBorrowById(idReq)
+
+                if err != nil </span><span class="cov0" title="0">{
+                        return c.JSON(code, _common.NoDataResponse(code, err.Error()))
+                }</span>
+
+                // check request status
+                <span class="cov8" title="1">if request.Status == "Approved by Admin" &amp;&amp; request.Activity == "Borrow" </span><span class="cov8" title="1">{
+                        // set request status
+                        if act.AskingReturn </span><span class="cov8" title="1">{
+                                request.Activity = "Request to Return"
+                        }</span> else<span class="cov0" title="0"> {
+                                return c.JSON(http.StatusForbidden, _common.NoDataResponse(http.StatusForbidden, "you are not asking for a return"))
+                        }</span>
+
+                        // calling repository
+                        <span class="cov8" title="1">_, code, err = rc.repository.ReturnAdmin(request)
+
+                        // detect failure in repository
+                        if err != nil </span><span class="cov0" title="0">{
+                                return c.JSON(code, _common.NoDataResponse(code, err.Error()))
+                        }</span>
+                } else<span class="cov0" title="0"> {
+                        return c.JSON(http.StatusForbidden, _common.NoDataResponse(http.StatusForbidden, "no need to apply for a return"))
+                }</span>
+
+                <span class="cov8" title="1">return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "success asking return"))</span>
+        }
+}
+</pre>
+		
+		<pre class="file" id="file5" style="display: none">package user
 
 import (
         _common "capstone/be/delivery/common"
@@ -92,79 +1357,6 @@ type UserController struct {
 func New(user _userRepo.User) *UserController <span class="cov8" title="1">{
         return &amp;UserController{repository: user}
 }</span>
-
-func (uc UserController) Create() echo.HandlerFunc <span class="cov8" title="1">{
-        return func(c echo.Context) error </span><span class="cov8" title="1">{
-                userData := _entity.CreateUser{}
-
-                // detect failure in binding
-                if err := c.Bind(&amp;userData); err != nil </span><span class="cov8" title="1">{
-                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed to bind data"))
-                }</span>
-
-                // prepare input string
-                <span class="cov8" title="1">name := strings.Title(strings.ToLower(strings.TrimSpace(userData.Name)))
-                email := strings.TrimSpace(userData.Email)
-                phone := strings.TrimSpace(userData.Phone)
-                password := strings.TrimSpace(userData.Password)
-
-                // check input string
-                check := []string{name, email, phone, password}
-
-                for _, s := range check </span><span class="cov8" title="1">{
-                        // check empty string in required input
-                        if s == "" </span><span class="cov8" title="1">{
-                                return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "input cannot be empty"))
-                        }</span>
-
-                        // check malicious character in input
-                        <span class="cov8" title="1">if err := _helper.CheckStringInput(s); err != nil </span><span class="cov8" title="1">{
-                                return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, s+": "+err.Error()))
-                        }</span>
-                }
-
-                // check email pattern
-                <span class="cov8" title="1">if err := _helper.CheckEmailPattern(email); err != nil </span><span class="cov8" title="1">{
-                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, email+": "+err.Error()))
-                }</span>
-
-                // check phone pattern
-                <span class="cov8" title="1">if err := _helper.CheckPhonePattern(phone); err != nil </span><span class="cov8" title="1">{
-                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, phone+": "+err.Error()))
-                }</span>
-
-                // check password pattern
-                <span class="cov8" title="1">if err := _helper.CheckPasswordPattern(password); err != nil </span><span class="cov8" title="1">{
-                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, password+": "+err.Error()))
-                }</span>
-
-                // hashing password
-                <span class="cov8" title="1">hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.MinCost)
-
-                // detect failure in hashing password
-                if err != nil </span><span class="cov0" title="0">{
-                        return c.JSON(http.StatusInternalServerError, _common.NoDataResponse(http.StatusInternalServerError, "failed to hash password"))
-                }</span>
-
-                // prepare input to repository
-                <span class="cov8" title="1">createUserData := _entity.User{
-                        Name:     name,
-                        Email:    email,
-                        Phone:    phone,
-                        Password: string(hashedPassword),
-                }
-
-                // calling repository
-                createdUser, code, err := uc.repository.Create(createUserData)
-
-                // detect failure in repository
-                if err != nil </span><span class="cov8" title="1">{
-                        return c.JSON(code, _common.NoDataResponse(code, err.Error()))
-                }</span>
-
-                <span class="cov8" title="1">return c.JSON(http.StatusOK, _common.CreateUserResponse(createdUser))</span>
-        }
-}
 
 func (uc UserController) Login() echo.HandlerFunc <span class="cov8" title="1">{
         return func(c echo.Context) error </span><span class="cov8" title="1">{
@@ -227,14 +1419,35 @@ func (uc UserController) Login() echo.HandlerFunc <span class="cov8" title="1">{
                 }</span>
 
                 // create token based on user id
-                <span class="cov8" title="1">token, err := _midware.CreateToken(loginUser.Id)
+                <span class="cov8" title="1">token, expire, err := _midware.CreateToken(loginUser.Id, loginUser.Role)
 
                 // detect failure in creating token
                 if err != nil </span><span class="cov0" title="0">{
                         return c.JSON(http.StatusInternalServerError, _common.NoDataResponse(http.StatusInternalServerError, "failed to create token"))
                 }</span>
 
-                <span class="cov8" title="1">return c.JSON(http.StatusOK, _common.LoginResponse(loginUser, token))</span>
+                <span class="cov8" title="1">return c.JSON(http.StatusOK, _common.LoginResponse(loginUser, token, expire))</span>
+        }
+}
+
+func (uc UserController) GetAll() echo.HandlerFunc <span class="cov8" title="1">{
+        return func(c echo.Context) error </span><span class="cov8" title="1">{
+                // check authorization
+                if _midware.ExtractRole(c) != "Administrator" </span><span class="cov0" title="0">{
+                        return c.JSON(http.StatusUnauthorized, _common.NoDataResponse(http.StatusUnauthorized, "unauthorized"))
+                }</span>
+
+                // calling repository
+                <span class="cov8" title="1">users, code, err := uc.repository.GetAll()
+
+                // detect failure in repository
+                if err != nil </span><span class="cov8" title="1">{
+                        return c.JSON(code, _common.NoDataResponse(code, err.Error()))
+                }</span>
+
+                <span class="cov8" title="1">fmt.Println(users)
+
+                return c.JSON(http.StatusOK, _common.GetAllUsersResponse(users))</span>
         }
 }
 
@@ -245,6 +1458,11 @@ func (uc UserController) GetById() echo.HandlerFunc <span class="cov8" title="1"
                 // detect invalid parameter
                 if err != nil </span><span class="cov8" title="1">{
                         return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "invalid user id"))
+                }</span>
+
+                // check authorization
+                <span class="cov8" title="1">if id != _midware.ExtractId(c) </span><span class="cov8" title="1">{
+                        return c.JSON(http.StatusUnauthorized, _common.NoDataResponse(http.StatusUnauthorized, "unauthorized"))
                 }</span>
 
                 // calling repository
@@ -259,28 +1477,9 @@ func (uc UserController) GetById() echo.HandlerFunc <span class="cov8" title="1"
         }
 }
 
-func (uc UserController) GetAll() echo.HandlerFunc <span class="cov8" title="1">{
-        return func(c echo.Context) error </span><span class="cov8" title="1">{
-                // calling repository
-                users, code, err := uc.repository.GetAll()
-
-                // detect failure in repository
-                if err != nil </span><span class="cov8" title="1">{
-                        return c.JSON(code, _common.NoDataResponse(code, err.Error()))
-                }</span>
-
-                <span class="cov8" title="1">return c.JSON(http.StatusOK, _common.GetAllUsersResponse(users))</span>
-        }
-}
-
 func (uc UserController) Update() echo.HandlerFunc <span class="cov8" title="1">{
         return func(c echo.Context) error </span><span class="cov8" title="1">{
-                // check authentication
-                if valid := _midware.ValidateToken(c); !valid </span><span class="cov0" title="0">{
-                        return c.JSON(http.StatusUnauthorized, _common.NoDataResponse(http.StatusUnauthorized, "unauthorized"))
-                }</span>
-
-                <span class="cov8" title="1">id, err := strconv.Atoi(c.Param("id"))
+                id, err := strconv.Atoi(c.Param("id"))
 
                 // detect invalid parameter
                 if err != nil </span><span class="cov8" title="1">{
@@ -300,10 +1499,13 @@ func (uc UserController) Update() echo.HandlerFunc <span class="cov8" title="1">
                 }</span>
 
                 // prepare input string
-                <span class="cov8" title="1">name := strings.Title(strings.ToLower(strings.TrimSpace(userData.Name)))
+                <span class="cov8" title="1">division := strings.Title(strings.ToLower(strings.TrimSpace(userData.Division)))
+                name := strings.Title(strings.ToLower(strings.TrimSpace(userData.Name)))
                 email := strings.TrimSpace(userData.Email)
                 phone := strings.TrimSpace(userData.Phone)
                 password := strings.TrimSpace(userData.Password)
+                gender := strings.Title(strings.ToLower(strings.TrimSpace(userData.Gender)))
+                address := strings.Title(strings.ToLower(strings.TrimSpace(userData.Address)))
 
                 // calling repository to get existing user data
                 updateUserData, code, err := uc.repository.GetById(id)
@@ -312,6 +1514,16 @@ func (uc UserController) Update() echo.HandlerFunc <span class="cov8" title="1">
                 if err != nil </span><span class="cov8" title="1">{
                         return c.JSON(code, _common.NoDataResponse(code, err.Error()))
                 }</span>
+
+                // detect change in user division
+                <span class="cov8" title="1">if division != "" </span><span class="cov8" title="1">{
+                        // check malicious character in input
+                        if err := _helper.CheckStringInput(division); err != nil </span><span class="cov8" title="1">{
+                                return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, division+": "+err.Error()))
+                        }</span>
+
+                        <span class="cov8" title="1">updateUserData.Division = division</span>
+                }
 
                 // detect change in user name
                 <span class="cov8" title="1">if name != "" </span><span class="cov8" title="1">{
@@ -376,6 +1588,26 @@ func (uc UserController) Update() echo.HandlerFunc <span class="cov8" title="1">
                         <span class="cov8" title="1">updateUserData.Password = string(hashedPassword)</span>
                 }
 
+                // detect change in user gender
+                <span class="cov8" title="1">if gender != "" </span><span class="cov8" title="1">{
+                        // check malicious character in input
+                        if err := _helper.CheckStringInput(gender); err != nil </span><span class="cov8" title="1">{
+                                return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, gender+": "+err.Error()))
+                        }</span>
+
+                        <span class="cov8" title="1">updateUserData.Gender = gender</span>
+                }
+
+                // detect change in user address
+                <span class="cov8" title="1">if address != "" </span><span class="cov8" title="1">{
+                        // check malicious character in input
+                        if err := _helper.CheckStringInput(address); err != nil </span><span class="cov8" title="1">{
+                                return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, address+": "+err.Error()))
+                        }</span>
+
+                        <span class="cov0" title="0">updateUserData.Address = address</span>
+                }
+
                 // detect avatar image upload
                 <span class="cov8" title="1">src, file, err := c.Request().FormFile("avatar")
 
@@ -397,8 +1629,6 @@ func (uc UserController) Update() echo.HandlerFunc <span class="cov8" title="1">
 
                         if filename != "default_avatar.png" </span><span class="cov0" title="0">{
 
-                                fmt.Println(filename)
-
                                 if err = _helper.DeleteImage(filename); err != nil </span><span class="cov0" title="0">{
                                         log.Println(err)
                                 }</span>
@@ -406,9 +1636,11 @@ func (uc UserController) Update() echo.HandlerFunc <span class="cov8" title="1">
 
                         <span class="cov0" title="0">updateUserData.Avatar = avatar</span>
                 case http.ErrMissingFile:<span class="cov0" title="0">
-                        log.Println(err)</span>
+                        avatar := updateUserData.Avatar[strings.LastIndex(updateUserData.Avatar, "/")+1:]
+                        updateUserData.Avatar = avatar</span>
                 case http.ErrNotMultipart:<span class="cov8" title="1">
-                        log.Println(err)</span>
+                        avatar := updateUserData.Avatar[strings.LastIndex(updateUserData.Avatar, "/")+1:]
+                        updateUserData.Avatar = avatar</span>
                 default:<span class="cov0" title="0">
                         log.Println(err)
                         return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed to upload avatar"))</span>
@@ -425,33 +1657,6 @@ func (uc UserController) Update() echo.HandlerFunc <span class="cov8" title="1">
                 }</span>
 
                 <span class="cov8" title="1">return c.JSON(http.StatusOK, _common.UpdateUserResponse(updatedUser))</span>
-        }
-}
-
-func (uc UserController) Delete() echo.HandlerFunc <span class="cov8" title="1">{
-        return func(c echo.Context) error </span><span class="cov8" title="1">{
-                // check authentication
-                if valid := _midware.ValidateToken(c); !valid </span><span class="cov0" title="0">{
-                        return c.JSON(http.StatusUnauthorized, _common.NoDataResponse(http.StatusUnauthorized, "unauthorized"))
-                }</span>
-
-                <span class="cov8" title="1">id, err := strconv.Atoi(c.Param("id"))
-
-                // detect invalid parameter
-                if err != nil </span><span class="cov8" title="1">{
-                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "invalid user id"))
-                }</span>
-
-                // check authorization
-                <span class="cov8" title="1">if id != _midware.ExtractId(c) </span><span class="cov0" title="0">{
-                        return c.JSON(http.StatusUnauthorized, _common.NoDataResponse(http.StatusUnauthorized, "unauthorized"))
-                }</span>
-
-                <span class="cov8" title="1">if code, err := uc.repository.Delete(id); err != nil </span><span class="cov8" title="1">{
-                        return c.JSON(code, _common.NoDataResponse(code, err.Error()))
-                }</span>
-
-                <span class="cov8" title="1">return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "success delete user"))</span>
         }
 }
 </pre>

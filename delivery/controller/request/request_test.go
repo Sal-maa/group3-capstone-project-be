@@ -136,6 +136,7 @@ func (m mockRepoSuccess1) UpdateBorrow(reqData _entity.Borrow) (req _entity.Borr
 		Description: "trying to borrow",
 	}, http.StatusOK, nil
 }
+
 func (m mockRepoSuccess2) UpdateBorrow(reqData _entity.Borrow) (req _entity.Borrow, code int, err error) {
 	return _entity.Borrow{
 		Id: 1,
@@ -636,6 +637,7 @@ func TestGetProcureById(t *testing.T) {
 		assert.Equal(t, expected, actual)
 	})
 }
+
 func TestUpdateBorrowSuccess(t *testing.T) {
 	t.Run("TestUpdateBorrowEmployeeAdminSuccess", func(t *testing.T) {
 		token, _, _ := _midware.CreateToken(1, "Administrator")
@@ -739,8 +741,8 @@ func TestUpdateProcureSuccess(t *testing.T) {
 		json.Unmarshal([]byte(body), &actual)
 
 		expected := map[string]interface{}{
-			"code":    float64(http.StatusOK),
-			"message": "success update request",
+			"code":    float64(http.StatusForbidden),
+			"message": "cannot approve/reject this request",
 		}
 
 		assert.Equal(t, expected, actual)
@@ -784,5 +786,3 @@ func TestReturnAdminSuccess(t *testing.T) {
 		assert.Equal(t, expected, actual)
 	})
 }
-
-//
