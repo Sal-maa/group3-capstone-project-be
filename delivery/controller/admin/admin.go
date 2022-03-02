@@ -6,21 +6,16 @@ import (
 	"strconv"
 	"strings"
 
-	// _helper "capstone/be/delivery/helper"
 	_midware "capstone/be/delivery/middleware"
 	"net/http"
 
 	_adminRepo "capstone/be/repository/admin"
-	_requestRepo "capstone/be/repository/request"
 
 	"github.com/labstack/echo/v4"
 )
 
-// "github.com/labstack/echo/v4"
-
 type AdminController struct {
 	adminRepository _adminRepo.Admin
-	reqRepository   _requestRepo.Request
 }
 
 func New(admin _adminRepo.Admin) *AdminController {
