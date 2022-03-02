@@ -59,11 +59,11 @@ func (ac AdminController) AdminGetAll() echo.HandlerFunc {
 		}
 
 		// filter by status
-		status := c.QueryParam("s")
 
+		status := strings.ToUpper(c.QueryParam("s"))
 		// default value for status
 		if status == "" {
-			status = "all"
+			status = "ALL"
 		}
 
 		// to prevent sql injection
@@ -71,17 +71,18 @@ func (ac AdminController) AdminGetAll() echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request"))
 		}
 
-		allstatus := map[string]int{"all": 1, "Waiting Approval": 1, "Approved": 1, "Rejected": 1, "Request to Return": 1}
+		allstatus := map[string]string{"ALL": "all", "WAITING-APPROVAL": "Waiting Approval", "APPROVED": "Approved", "REJECTED": "Rejected", "REQUEST-TO-RETURN": "Request to Return"}
 
 		if _, exist := allstatus[status]; !exist {
 			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request"))
 		}
 
+		status = allstatus[status]
 		// filter by date
 		date := c.QueryParam("d")
 
 		// filter by category
-		category := c.QueryParam("c")
+		category := strings.ToUpper(c.QueryParam("c"))
 
 		// to prevent sql injection
 		if strings.ContainsAny(category, ";") {
@@ -90,15 +91,15 @@ func (ac AdminController) AdminGetAll() echo.HandlerFunc {
 
 		// default value for category
 		if category == "" {
-			category = "all"
+			category = "ALL"
 		}
 
-		categories := map[string]int{"all": 1, "Computer": 1, "Computer Accessories": 1, "Networking": 1, "UPS": 1, "Printer and Scanner": 1, "Electronics": 1, "Others": 1}
+		categories := map[string]string{"ALL": "all", "COMPUTER": "Computer", "COMPUTER-ACCESSORIES": "Computer Accessories", "NETWORKING": "Networking", "UPS": "UPS", "PRINTER-AND-SCANNER": "Printer and Scanner", "ELECTRONICS": "Electronics", "OTHERS": "Others"}
 
 		if _, exist := categories[category]; !exist {
 			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request"))
 		}
-
+		category = categories[category]
 		requests, total, err := ac.adminRepository.GetAllAdmin(limit, offset, status, category, date)
 		if err != nil {
 			log.Println(err)
@@ -161,16 +162,18 @@ func (ac AdminController) ManagerGetAllBorrow() echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request"))
 		}
 
-		allstatus := map[string]int{"all": 1, "Waiting Approval": 1, "Approved": 1, "Rejected": 1, "Request to Return": 1}
+		allstatus := map[string]string{"ALL": "all", "WAITING-APPROVAL": "Waiting Approval", "APPROVED": "Approved", "REJECTED": "Rejected", "REQUEST-TO-RETURN": "Request to Return"}
 
 		if _, exist := allstatus[status]; !exist {
 			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request"))
 		}
+
+		status = allstatus[status]
 		// filter by date
 		date := c.QueryParam("d")
 
 		// filter by category
-		category := c.QueryParam("c")
+		category := strings.ToUpper(c.QueryParam("c"))
 
 		// to prevent sql injection
 		if strings.ContainsAny(category, ";") {
@@ -179,14 +182,15 @@ func (ac AdminController) ManagerGetAllBorrow() echo.HandlerFunc {
 
 		// default value for category
 		if category == "" {
-			category = "all"
+			category = "ALL"
 		}
 
-		categories := map[string]int{"all": 1, "Computer": 1, "Computer Accessories": 1, "Networking": 1, "UPS": 1, "Printer and Scanner": 1, "Electronics": 1, "Others": 1}
+		categories := map[string]string{"ALL": "all", "COMPUTER": "Computer", "COMPUTER-ACCESSORIES": "Computer Accessories", "NETWORKING": "Networking", "UPS": "UPS", "PRINTER-AND-SCANNER": "Printer and Scanner", "ELECTRONICS": "Electronics", "OTHERS": "Others"}
 
 		if _, exist := categories[category]; !exist {
 			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request"))
 		}
+		category = categories[category]
 
 		requests, total, err := ac.adminRepository.GetAllManager(divLogin, limit, offset, status, category, date)
 		if err != nil {
@@ -244,16 +248,18 @@ func (ac AdminController) ManagerGetAllProcure() echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request"))
 		}
 
-		allstatus := map[string]int{"all": 1, "Waiting Approval": 1, "Approved": 1, "Rejected": 1}
+		allstatus := map[string]string{"ALL": "all", "WAITING-APPROVAL": "Waiting Approval", "APPROVED": "Approved", "REJECTED": "Rejected", "REQUEST-TO-RETURN": "Request to Return"}
 
 		if _, exist := allstatus[status]; !exist {
 			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request"))
 		}
+
+		status = allstatus[status]
 		// filter by date
 		date := c.QueryParam("d")
 
 		// filter by category
-		category := c.QueryParam("c")
+		category := strings.ToUpper(c.QueryParam("c"))
 
 		// to prevent sql injection
 		if strings.ContainsAny(category, ";") {
@@ -262,14 +268,15 @@ func (ac AdminController) ManagerGetAllProcure() echo.HandlerFunc {
 
 		// default value for category
 		if category == "" {
-			category = "all"
+			category = "ALL"
 		}
 
-		categories := map[string]int{"all": 1, "Computer": 1, "Computer Accessories": 1, "Networking": 1, "UPS": 1, "Printer and Scanner": 1, "Electronics": 1, "Others": 1}
+		categories := map[string]string{"ALL": "all", "COMPUTER": "Computer", "COMPUTER-ACCESSORIES": "Computer Accessories", "NETWORKING": "Networking", "UPS": "UPS", "PRINTER-AND-SCANNER": "Printer and Scanner", "ELECTRONICS": "Electronics", "OTHERS": "Others"}
 
 		if _, exist := categories[category]; !exist {
 			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request"))
 		}
+		category = categories[category]
 
 		requests, total, err := ac.adminRepository.GetAllProcureManager(limit, offset, status, category, date)
 		if err != nil {
