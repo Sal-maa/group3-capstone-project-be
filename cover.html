@@ -53,15 +53,15 @@
 			<div id="nav">
 				<select id="files">
 				
-				<option value="file0">capstone/be/delivery/controller/activity/activity.go (76.5%)</option>
+				<option value="file0" selected="selected">capstone/be/delivery/controller/activity/activity.go (76.5%)</option>
 				
-				<option value="file1">capstone/be/delivery/controller/admin/admin.go (84.0%)</option>
+				<option value="file1">capstone/be/delivery/controller/admin/admin.go (84.8%)</option>
 				
-				<option value="file2" selected="selected">capstone/be/delivery/controller/asset/asset.go (75.0%)</option>
+				<option value="file2">capstone/be/delivery/controller/asset/asset.go (75.0%)</option>
 				
 				<option value="file3">capstone/be/delivery/controller/history/history.go (94.4%)</option>
 				
-				<option value="file4">capstone/be/delivery/controller/request/request.go (66.9%)</option>
+				<option value="file4">capstone/be/delivery/controller/request/request.go (86.7%)</option>
 				
 				<option value="file5">capstone/be/delivery/controller/user/user.go (84.3%)</option>
 				
@@ -77,7 +77,7 @@
 		</div>
 		<div id="content">
 		
-		<pre class="file" id="file0" style="display: none;">package activity
+		<pre class="file" id="file0" style="display: block;">package activity
 
 import (
         _common "capstone/be/delivery/common"
@@ -304,11 +304,11 @@ func (ac AdminController) AdminGetAll() echo.HandlerFunc <span class="cov8" titl
                 }</span>
 
                 // filter by status
-                <span class="cov8" title="1">status := c.QueryParam("s")
 
+                <span class="cov8" title="1">status := strings.ToUpper(c.QueryParam("s"))
                 // default value for status
                 if status == "" </span><span class="cov8" title="1">{
-                        status = "all"
+                        status = "ALL"
                 }</span>
 
                 // to prevent sql injection
@@ -316,17 +316,18 @@ func (ac AdminController) AdminGetAll() echo.HandlerFunc <span class="cov8" titl
                         return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request"))
                 }</span>
 
-                <span class="cov8" title="1">allstatus := map[string]int{"all": 1, "Waiting Approval": 1, "Approved": 1, "Rejected": 1, "Request to Return": 1}
+                <span class="cov8" title="1">allstatus := map[string]string{"ALL": "all", "WAITING-APPROVAL": "Waiting Approval", "APPROVED": "Approved", "REJECTED": "Rejected", "REQUEST-TO-RETURN": "Request to Return"}
 
                 if _, exist := allstatus[status]; !exist </span><span class="cov0" title="0">{
                         return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request"))
                 }</span>
 
+                <span class="cov8" title="1">status = allstatus[status]
                 // filter by date
-                <span class="cov8" title="1">date := c.QueryParam("d")
+                date := c.QueryParam("d")
 
                 // filter by category
-                category := c.QueryParam("c")
+                category := strings.ToUpper(c.QueryParam("c"))
 
                 // to prevent sql injection
                 if strings.ContainsAny(category, ";") </span><span class="cov0" title="0">{
@@ -335,22 +336,22 @@ func (ac AdminController) AdminGetAll() echo.HandlerFunc <span class="cov8" titl
 
                 // default value for category
                 <span class="cov8" title="1">if category == "" </span><span class="cov8" title="1">{
-                        category = "all"
+                        category = "ALL"
                 }</span>
 
-                <span class="cov8" title="1">categories := map[string]int{"all": 1, "Computer": 1, "Computer Accessories": 1, "Networking": 1, "UPS": 1, "Printer and Scanner": 1, "Electronics": 1, "Others": 1}
+                <span class="cov8" title="1">categories := map[string]string{"ALL": "all", "COMPUTER": "Computer", "COMPUTER-ACCESSORIES": "Computer Accessories", "NETWORKING": "Networking", "UPS": "UPS", "PRINTER-AND-SCANNER": "Printer and Scanner", "ELECTRONICS": "Electronics", "OTHERS": "Others"}
 
                 if _, exist := categories[category]; !exist </span><span class="cov0" title="0">{
                         return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request"))
                 }</span>
-
-                <span class="cov8" title="1">requests, err := ac.adminRepository.GetAllAdmin(limit, offset, status, category, date)
+                <span class="cov8" title="1">category = categories[category]
+                requests, total, err := ac.adminRepository.GetAllAdmin(limit, offset, status, category, date)
                 if err != nil </span><span class="cov8" title="1">{
                         log.Println(err)
                         return c.JSON(http.StatusInternalServerError, _common.NoDataResponse(http.StatusInternalServerError, "Failed to read data"))
                 }</span>
 
-                <span class="cov8" title="1">return c.JSON(http.StatusOK, _common.GetAllRequestResponse(requests))</span>
+                <span class="cov8" title="1">return c.JSON(http.StatusOK, _common.GetAllRequestResponse(requests, total))</span>
         }
 }
 
@@ -398,7 +399,7 @@ func (ac AdminController) ManagerGetAllBorrow() echo.HandlerFunc <span class="co
 
                 // default value for status
                 if status == "" </span><span class="cov8" title="1">{
-                        status = "all"
+                        status = "ALL"
                 }</span>
 
                 // to prevent sql injection
@@ -406,16 +407,18 @@ func (ac AdminController) ManagerGetAllBorrow() echo.HandlerFunc <span class="co
                         return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request"))
                 }</span>
 
-                <span class="cov8" title="1">allstatus := map[string]int{"all": 1, "Waiting Approval": 1, "Approved": 1, "Rejected": 1, "Request to Return": 1}
+                <span class="cov8" title="1">allstatus := map[string]string{"ALL": "all", "WAITING-APPROVAL": "Waiting Approval", "APPROVED": "Approved", "REJECTED": "Rejected", "REQUEST-TO-RETURN": "Request to Return"}
 
                 if _, exist := allstatus[status]; !exist </span><span class="cov0" title="0">{
                         return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request"))
                 }</span>
+
+                <span class="cov8" title="1">status = allstatus[status]
                 // filter by date
-                <span class="cov8" title="1">date := c.QueryParam("d")
+                date := c.QueryParam("d")
 
                 // filter by category
-                category := c.QueryParam("c")
+                category := strings.ToUpper(c.QueryParam("c"))
 
                 // to prevent sql injection
                 if strings.ContainsAny(category, ";") </span><span class="cov0" title="0">{
@@ -424,22 +427,23 @@ func (ac AdminController) ManagerGetAllBorrow() echo.HandlerFunc <span class="co
 
                 // default value for category
                 <span class="cov8" title="1">if category == "" </span><span class="cov8" title="1">{
-                        category = "all"
+                        category = "ALL"
                 }</span>
 
-                <span class="cov8" title="1">categories := map[string]int{"all": 1, "Computer": 1, "Computer Accessories": 1, "Networking": 1, "UPS": 1, "Printer and Scanner": 1, "Electronics": 1, "Others": 1}
+                <span class="cov8" title="1">categories := map[string]string{"ALL": "all", "COMPUTER": "Computer", "COMPUTER-ACCESSORIES": "Computer Accessories", "NETWORKING": "Networking", "UPS": "UPS", "PRINTER-AND-SCANNER": "Printer and Scanner", "ELECTRONICS": "Electronics", "OTHERS": "Others"}
 
                 if _, exist := categories[category]; !exist </span><span class="cov0" title="0">{
                         return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request"))
                 }</span>
+                <span class="cov8" title="1">category = categories[category]
 
-                <span class="cov8" title="1">requests, err := ac.adminRepository.GetAllManager(divLogin, limit, offset, status, category, date)
+                requests, total, err := ac.adminRepository.GetAllManager(divLogin, limit, offset, status, category, date)
                 if err != nil </span><span class="cov8" title="1">{
                         log.Println(err)
                         return c.JSON(http.StatusInternalServerError, _common.NoDataResponse(http.StatusInternalServerError, "Failed to read data"))
                 }</span>
 
-                <span class="cov8" title="1">return c.JSON(http.StatusOK, _common.GetAllRequestResponse(requests))</span>
+                <span class="cov8" title="1">return c.JSON(http.StatusOK, _common.GetAllRequestResponse(requests, total))</span>
         }
 }
 
@@ -481,53 +485,56 @@ func (ac AdminController) ManagerGetAllProcure() echo.HandlerFunc <span class="c
 
                 // default value for status
                 if status == "" </span><span class="cov8" title="1">{
-                        status = "all"
+                        status = "ALL"
                 }</span>
 
                 // to prevent sql injection
                 <span class="cov8" title="1">if strings.ContainsAny(status, ";") </span><span class="cov0" title="0">{
-                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request"))
+                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request1"))
                 }</span>
 
-                <span class="cov8" title="1">allstatus := map[string]int{"all": 1, "Waiting Approval": 1, "Approved": 1, "Rejected": 1}
+                <span class="cov8" title="1">allstatus := map[string]string{"ALL": "all", "WAITING-APPROVAL": "Waiting Approval", "APPROVED": "Approved", "REJECTED": "Rejected", "REQUEST-TO-RETURN": "Request to Return"}
 
                 if _, exist := allstatus[status]; !exist </span><span class="cov0" title="0">{
-                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request"))
+                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request2"))
                 }</span>
+
+                <span class="cov8" title="1">status = allstatus[status]
                 // filter by date
-                <span class="cov8" title="1">date := c.QueryParam("d")
+                date := c.QueryParam("d")
 
                 // filter by category
-                category := c.QueryParam("c")
+                category := strings.ToUpper(c.QueryParam("c"))
 
                 // to prevent sql injection
                 if strings.ContainsAny(category, ";") </span><span class="cov0" title="0">{
-                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request"))
+                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request3"))
                 }</span>
 
                 // default value for category
                 <span class="cov8" title="1">if category == "" </span><span class="cov8" title="1">{
-                        category = "all"
+                        category = "ALL"
                 }</span>
 
-                <span class="cov8" title="1">categories := map[string]int{"all": 1, "Computer": 1, "Computer Accessories": 1, "Networking": 1, "UPS": 1, "Printer and Scanner": 1, "Electronics": 1, "Others": 1}
+                <span class="cov8" title="1">categories := map[string]string{"ALL": "all", "COMPUTER": "Computer", "COMPUTER-ACCESSORIES": "Computer Accessories", "NETWORKING": "Networking", "UPS": "UPS", "PRINTER-AND-SCANNER": "Printer and Scanner", "ELECTRONICS": "Electronics", "OTHERS": "Others"}
 
                 if _, exist := categories[category]; !exist </span><span class="cov0" title="0">{
-                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request"))
+                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request4"))
                 }</span>
+                <span class="cov8" title="1">category = categories[category]
 
-                <span class="cov8" title="1">requests, err := ac.adminRepository.GetAllProcureManager(limit, offset, status, category, date)
+                requests, total, err := ac.adminRepository.GetAllProcureManager(limit, offset, status, category, date)
                 if err != nil </span><span class="cov8" title="1">{
                         log.Println(err)
                         return c.JSON(http.StatusInternalServerError, _common.NoDataResponse(http.StatusInternalServerError, "Failed to read data"))
                 }</span>
 
-                <span class="cov8" title="1">return c.JSON(http.StatusOK, _common.GetAllProcureRequestResponse(requests))</span>
+                <span class="cov8" title="1">return c.JSON(http.StatusOK, _common.GetAllProcureRequestResponse(requests, total))</span>
         }
 }
 </pre>
 		
-		<pre class="file" id="file2" style="display: block;">package asset
+		<pre class="file" id="file2" style="display: none">package asset
 
 import (
         _common "capstone/be/delivery/common"
@@ -913,7 +920,7 @@ func (rc RequestController) Borrow() echo.HandlerFunc <span class="cov8" title="
                 newReq := _entity.CreateBorrow{}
 
                 // handle failure in binding
-                if err := c.Bind(&amp;newReq); err != nil </span><span class="cov0" title="0">{
+                if err := c.Bind(&amp;newReq); err != nil </span><span class="cov8" title="1">{
                         return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed to bind data"))
                 }</span>
 
@@ -923,7 +930,7 @@ func (rc RequestController) Borrow() echo.HandlerFunc <span class="cov8" title="
 
                 // check empty string in required input
                 // description is not required, such as when admin assigns asset to employee
-                if shortName == "" </span><span class="cov0" title="0">{
+                if shortName == "" </span><span class="cov8" title="1">{
                         return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "input cannot be empty"))
                 }</span>
 
@@ -948,7 +955,7 @@ func (rc RequestController) Borrow() echo.HandlerFunc <span class="cov8" title="
                 switch role </span>{
                 case "Administrator":<span class="cov8" title="1">
                         // if return time not set, then set to max time
-                        if newReq.ReturnTime == (time.Time{}) </span><span class="cov0" title="0">{
+                        if newReq.ReturnTime == (time.Time{}) </span><span class="cov8" title="1">{
                                 newReq.ReturnTime = time.Date(9999, 12, 31, 23, 59, 59, 0, time.UTC)
                         }</span>
 
@@ -960,7 +967,7 @@ func (rc RequestController) Borrow() echo.HandlerFunc <span class="cov8" title="
                         code, err := rc.repository.Borrow(reqData)
 
                         // detect failure in repository
-                        if err != nil </span><span class="cov0" title="0">{
+                        if err != nil </span><span class="cov8" title="1">{
                                 return c.JSON(code, _common.NoDataResponse(code, err.Error()))
                         }</span>
 
@@ -973,13 +980,13 @@ func (rc RequestController) Borrow() echo.HandlerFunc <span class="cov8" title="
                         reqData.ReturnTime = newReq.ReturnTime
                         reqData.Status = "Waiting approval from Admin"
 
-                        if code, err := rc.repository.Borrow(reqData); err != nil </span><span class="cov0" title="0">{
+                        if code, err := rc.repository.Borrow(reqData); err != nil </span><span class="cov8" title="1">{
                                 return c.JSON(code, _common.NoDataResponse(code, err.Error()))
                         }</span>
 
                         <span class="cov8" title="1">return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "success create request"))</span>
-                default:<span class="cov0" title="0">
-                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusOK, "only admin/employee can make request"))</span>
+                default:<span class="cov8" title="1">
+                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "only admin/employee can make request"))</span>
                 }
         }
 }
@@ -987,14 +994,14 @@ func (rc RequestController) Borrow() echo.HandlerFunc <span class="cov8" title="
 func (rc RequestController) Procure() echo.HandlerFunc <span class="cov8" title="1">{
         return func(c echo.Context) error </span><span class="cov8" title="1">{
                 // check authorization
-                if role := _midware.ExtractRole(c); role != "Administrator" </span><span class="cov0" title="0">{
+                if role := _midware.ExtractRole(c); role != "Administrator" </span><span class="cov8" title="1">{
                         return c.JSON(http.StatusForbidden, _common.NoDataResponse(http.StatusForbidden, "only admin can create request"))
                 }</span>
 
                 <span class="cov8" title="1">newReq := _entity.CreateProcure{}
 
                 // handle failure in binding
-                if err := c.Bind(&amp;newReq); err != nil </span><span class="cov0" title="0">{
+                if err := c.Bind(&amp;newReq); err != nil </span><span class="cov8" title="1">{
                         return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed to bind data"))
                 }</span>
 
@@ -1007,7 +1014,7 @@ func (rc RequestController) Procure() echo.HandlerFunc <span class="cov8" title=
 
                 for _, s := range check </span><span class="cov8" title="1">{
                         // check empty string in required input
-                        if s == "" </span><span class="cov0" title="0">{
+                        if s == "" </span><span class="cov8" title="1">{
                                 return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "input cannot be empty"))
                         }</span>
 
@@ -1058,7 +1065,7 @@ func (rc RequestController) Procure() echo.HandlerFunc <span class="cov8" title=
                 code, err := rc.repository.Procure(reqData)
 
                 // detect failure in repository
-                if err != nil </span><span class="cov0" title="0">{
+                if err != nil </span><span class="cov8" title="1">{
                         return c.JSON(code, _common.NoDataResponse(code, err.Error()))
                 }</span>
 
@@ -1069,20 +1076,20 @@ func (rc RequestController) Procure() echo.HandlerFunc <span class="cov8" title=
 func (rc RequestController) GetBorrowById() echo.HandlerFunc <span class="cov8" title="1">{
         return func(c echo.Context) error </span><span class="cov8" title="1">{
                 role := _midware.ExtractRole(c)
-                if role == "Employee" </span><span class="cov0" title="0">{
+                if role == "Employee" </span><span class="cov8" title="1">{
                         return c.JSON(http.StatusUnauthorized, _common.NoDataResponse(http.StatusUnauthorized, "You don't have permission"))
                 }</span>
 
                 <span class="cov8" title="1">idReq, err := strconv.Atoi(c.Param("id"))
 
-                if err != nil </span><span class="cov0" title="0">{
+                if err != nil </span><span class="cov8" title="1">{
                         return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "invalid request id"))
                 }</span>
 
                 // get existing borrow request by id
                 <span class="cov8" title="1">request, code, err := rc.repository.GetBorrowById(idReq)
 
-                if err != nil </span><span class="cov0" title="0">{
+                if err != nil </span><span class="cov8" title="1">{
                         return c.JSON(code, _common.NoDataResponse(code, err.Error()))
                 }</span>
                 <span class="cov8" title="1">return c.JSON(http.StatusOK, _common.GetBorrowRequestResponse(request))</span>
@@ -1092,20 +1099,20 @@ func (rc RequestController) GetBorrowById() echo.HandlerFunc <span class="cov8" 
 func (rc RequestController) GetProcureById() echo.HandlerFunc <span class="cov8" title="1">{
         return func(c echo.Context) error </span><span class="cov8" title="1">{
                 role := _midware.ExtractRole(c)
-                if role == "Employee" </span><span class="cov0" title="0">{
+                if role == "Employee" </span><span class="cov8" title="1">{
                         return c.JSON(http.StatusUnauthorized, _common.NoDataResponse(http.StatusUnauthorized, "You don't have permission"))
                 }</span>
 
                 <span class="cov8" title="1">idReq, err := strconv.Atoi(c.Param("id"))
 
-                if err != nil </span><span class="cov0" title="0">{
+                if err != nil </span><span class="cov8" title="1">{
                         return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "invalid request id"))
                 }</span>
 
                 // get existing Procure request by id
                 <span class="cov8" title="1">request, code, err := rc.repository.GetProcureById(idReq)
 
-                if err != nil </span><span class="cov0" title="0">{
+                if err != nil </span><span class="cov8" title="1">{
                         return c.JSON(code, _common.NoDataResponse(code, err.Error()))
                 }</span>
                 <span class="cov8" title="1">return c.JSON(http.StatusOK, _common.GetProcureRequestResponse(request))</span>
@@ -1117,21 +1124,21 @@ func (rc RequestController) UpdateBorrow() echo.HandlerFunc <span class="cov8" t
                 // get request id to be updated
                 idReq, err := strconv.Atoi(c.Param("id"))
 
-                if err != nil </span><span class="cov0" title="0">{
+                if err != nil </span><span class="cov8" title="1">{
                         return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "invalid request id"))
                 }</span>
 
                 // get existing borrow request by id
                 <span class="cov8" title="1">request, code, err := rc.repository.GetBorrowById(idReq)
 
-                if err != nil </span><span class="cov0" title="0">{
+                if err != nil </span><span class="cov8" title="1">{
                         return c.JSON(code, _common.NoDataResponse(code, err.Error()))
                 }</span>
 
                 <span class="cov8" title="1">newStatus := _entity.UpdateBorrow{}
 
                 // handle failure in binding
-                if err := c.Bind(&amp;newStatus); err != nil </span><span class="cov0" title="0">{
+                if err := c.Bind(&amp;newStatus); err != nil </span><span class="cov8" title="1">{
                         return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed to bind data"))
                 }</span>
 
@@ -1172,7 +1179,7 @@ func (rc RequestController) UpdateBorrow() echo.HandlerFunc <span class="cov8" t
                         // set request status
                         <span class="cov8" title="1">if newStatus.Approved </span><span class="cov8" title="1">{
                                 request.Status = "Approved by Manager"
-                        }</span> else<span class="cov0" title="0"> {
+                        }</span> else<span class="cov8" title="1"> {
                                 request.Status = "Rejected by Manager"
                         }</span>
 
@@ -1205,7 +1212,7 @@ func (rc RequestController) UpdateBorrow() echo.HandlerFunc <span class="cov8" t
                         } else<span class="cov8" title="1"> if request.Status == "Waiting approval from Admin" </span><span class="cov8" title="1">{
                                 if newStatus.Approved </span><span class="cov8" title="1">{
                                         request.Status = "Waiting approval from Manager"
-                                }</span> else<span class="cov0" title="0"> {
+                                }</span> else<span class="cov8" title="1"> {
                                         return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "cannot reject request before forwarding to manager"))
                                 }</span>
                         }
@@ -1220,7 +1227,7 @@ func (rc RequestController) UpdateBorrow() echo.HandlerFunc <span class="cov8" t
 
                         <span class="cov8" title="1">return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "success update request"))</span>
 
-                default:<span class="cov0" title="0">
+                default:<span class="cov8" title="1">
                         // this is the case where the logged in user is ordinary employee
                         return c.JSON(http.StatusForbidden, _common.NoDataResponse(http.StatusForbidden, "not allowed to update request status"))</span>
                 }
@@ -1232,26 +1239,26 @@ func (rc RequestController) UpdateProcure() echo.HandlerFunc <span class="cov8" 
                 // get request id to be updated
                 idReq, err := strconv.Atoi(c.Param("id"))
 
-                if err != nil </span><span class="cov0" title="0">{
+                if err != nil </span><span class="cov8" title="1">{
                         return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "invalid request id"))
                 }</span>
 
                 // check role of currently logged in user
-                <span class="cov8" title="1">if role := _midware.ExtractRole(c); role != "Manager" </span><span class="cov0" title="0">{
+                <span class="cov8" title="1">if role := _midware.ExtractRole(c); role != "Manager" </span><span class="cov8" title="1">{
                         return c.JSON(http.StatusForbidden, _common.NoDataResponse(http.StatusForbidden, "not allowed to update request status"))
                 }</span>
 
                 <span class="cov8" title="1">newStatus := _entity.UpdateProcure{}
 
                 // handle failure in binding
-                if err := c.Bind(&amp;newStatus); err != nil </span><span class="cov0" title="0">{
+                if err := c.Bind(&amp;newStatus); err != nil </span><span class="cov8" title="1">{
                         return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed to bind data"))
                 }</span>
 
                 // get existing procure request by id
                 <span class="cov8" title="1">request, code, err := rc.repository.GetProcureById(idReq)
 
-                if err != nil </span><span class="cov0" title="0">{
+                if err != nil </span><span class="cov8" title="1">{
                         return c.JSON(code, _common.NoDataResponse(code, err.Error()))
                 }</span>
 
@@ -1261,21 +1268,21 @@ func (rc RequestController) UpdateProcure() echo.HandlerFunc <span class="cov8" 
                 }</span>
 
                 // set request status
-                <span class="cov0" title="0">if newStatus.Approved </span><span class="cov0" title="0">{
+                <span class="cov8" title="1">if newStatus.Approved </span><span class="cov8" title="1">{
                         request.Status = "Approved by Manager"
                 }</span> else<span class="cov0" title="0"> {
                         request.Status = "Rejected by Manager"
                 }</span>
 
                 // calling repository
-                <span class="cov0" title="0">_, code, err = rc.repository.UpdateProcure(request)
+                <span class="cov8" title="1">_, code, err = rc.repository.UpdateProcure(request)
 
                 // detect failure in repository
                 if err != nil </span><span class="cov0" title="0">{
                         return c.JSON(code, _common.NoDataResponse(code, err.Error()))
                 }</span>
 
-                <span class="cov0" title="0">return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "success update request"))</span>
+                <span class="cov8" title="1">return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "success update request"))</span>
         }
 }
 
@@ -1284,26 +1291,26 @@ func (rc RequestController) AdminReturn() echo.HandlerFunc <span class="cov8" ti
                 // get request id to be updated
                 idReq, err := strconv.Atoi(c.Param("id"))
 
-                if err != nil </span><span class="cov0" title="0">{
+                if err != nil </span><span class="cov8" title="1">{
                         return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "invalid request id"))
                 }</span>
 
                 // check role of currently logged in user
-                <span class="cov8" title="1">if role := _midware.ExtractRole(c); role != "Administrator" </span><span class="cov0" title="0">{
-                        return c.JSON(http.StatusForbidden, _common.NoDataResponse(http.StatusForbidden, "not allowed to update request status"))
+                <span class="cov8" title="1">if role := _midware.ExtractRole(c); role != "Administrator" </span><span class="cov8" title="1">{
+                        return c.JSON(http.StatusForbidden, _common.NoDataResponse(http.StatusForbidden, "not allowed to update request activity"))
                 }</span>
 
                 <span class="cov8" title="1">act := _entity.ActivityReturn{}
 
                 // handle failure in binding
-                if err := c.Bind(&amp;act); err != nil </span><span class="cov0" title="0">{
+                if err := c.Bind(&amp;act); err != nil </span><span class="cov8" title="1">{
                         return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed to bind data"))
                 }</span>
 
                 // get existing procure request by id
                 <span class="cov8" title="1">request, code, err := rc.repository.GetBorrowById(idReq)
 
-                if err != nil </span><span class="cov0" title="0">{
+                if err != nil </span><span class="cov8" title="1">{
                         return c.JSON(code, _common.NoDataResponse(code, err.Error()))
                 }</span>
 
@@ -1312,7 +1319,7 @@ func (rc RequestController) AdminReturn() echo.HandlerFunc <span class="cov8" ti
                         // set request status
                         if act.AskingReturn </span><span class="cov8" title="1">{
                                 request.Activity = "Request to Return"
-                        }</span> else<span class="cov0" title="0"> {
+                        }</span> else<span class="cov8" title="1"> {
                                 return c.JSON(http.StatusForbidden, _common.NoDataResponse(http.StatusForbidden, "you are not asking for a return"))
                         }</span>
 
