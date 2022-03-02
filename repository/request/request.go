@@ -6,6 +6,7 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"strings"
 )
 
 type RequestRepository struct {
@@ -248,7 +249,7 @@ func (rr *RequestRepository) getCategoryId(category string) (categoryId int, cod
 	stmt, err := rr.db.Prepare(`
 		SELECT id 
 		FROM categories 
-		WHERE name = ?
+		WHERE UPPER(name) = ?
 	`)
 
 	if err != nil {
@@ -259,7 +260,7 @@ func (rr *RequestRepository) getCategoryId(category string) (categoryId int, cod
 
 	defer stmt.Close()
 
-	res, err := stmt.Query(category)
+	res, err := stmt.Query(strings.ToUpper(category))
 
 	if err != nil {
 		log.Println(err)
