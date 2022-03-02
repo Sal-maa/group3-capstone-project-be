@@ -101,6 +101,53 @@ paths:
                   value:
                     code: 500
                     message: internal server error
+  /users:
+    get:
+      tags:
+        - User
+      summary: How to get all users information
+      security:
+        - JWTAuth: []
+      responses:
+        '200':
+          description: Response for get all users information successful
+          content:
+            application/json:
+              example:
+                code: 200
+                message: successful
+                data:
+                - id: 1
+                  user: Bagus Brahmantya - Manager (Legal)
+                - id: 2
+                  user: Salmaa - Manager (Human Capital)
+        '400':
+          description: Response for get all assets failed (bad request)
+          content:
+            application/json:
+              example:
+                code: 400
+                message: invalid or expired jwt
+        '401':
+          description: Response for get all assets failed (unauthorized)
+          content:
+            application/json:
+              examples:
+                missing or malformed jwt:
+                  value:
+                    code: 400
+                    message: missing or malformed jwt
+                unauthorized (access by non-Administrator):
+                  value:
+                    code: 400
+                    message: unauthorized
+        '500':
+          description: Response for get all user information failed (internal server error)
+          content:
+            application/json:
+              example:
+                code: 500
+                message: internal server error
   /users/{id}:
     get:
       tags:
@@ -965,25 +1012,20 @@ paths:
       summary: Create New Request for Procurement by Admin
       requestBody:
         content:
-          'application/json':
+          'multipart/form-data':
             schema:
+              type: object
               properties:
-                image:
-                  type: string
                 category:
                   type: string
                 description:
                   type: string
-              required:
-                - image
-                - category
-                - description
-            examples:
-              Login as Admin:
-                value:
-                  image: "gambar.jpg"
-                  category: "Computer"
-                  description: "Perlu macbook air untuk kebutuhan BE"
+                image:
+                  type: string
+                  format: base64
+            encoding:
+              image:
+                contentType: image/png, image/jpeg, image/jpg
         required: true
       responses:
         '200':

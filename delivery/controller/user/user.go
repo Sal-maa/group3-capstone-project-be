@@ -6,6 +6,7 @@ import (
 	_midware "capstone/be/delivery/middleware"
 	_entity "capstone/be/entity"
 	_userRepo "capstone/be/repository/user"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -95,6 +96,27 @@ func (uc UserController) Login() echo.HandlerFunc {
 	}
 }
 
+func (uc UserController) GetAll() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// check authorization
+		if _midware.ExtractRole(c) != "Administrator" {
+			return c.JSON(http.StatusUnauthorized, _common.NoDataResponse(http.StatusUnauthorized, "unauthorized"))
+		}
+
+		// calling repository
+		users, code, err := uc.repository.GetAll()
+
+		// detect failure in repository
+		if err != nil {
+			return c.JSON(code, _common.NoDataResponse(code, err.Error()))
+		}
+
+		fmt.Println(users)
+
+		return c.JSON(http.StatusOK, _common.GetAllUsersResponse(users))
+	}
+}
+
 func (uc UserController) GetById() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		id, err := strconv.Atoi(c.Param("id"))
@@ -102,6 +124,11 @@ func (uc UserController) GetById() echo.HandlerFunc {
 		// detect invalid parameter
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "invalid user id"))
+		}
+
+		// check authorization
+		if id != _midware.ExtractId(c) {
+			return c.JSON(http.StatusUnauthorized, _common.NoDataResponse(http.StatusUnauthorized, "unauthorized"))
 		}
 
 		// calling repository
