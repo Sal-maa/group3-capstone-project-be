@@ -29,8 +29,6 @@ func (ar ActivityRepository) GetAllActivityOfUser(user_id int) (activities []_en
 		JOIN assets a
 		ON b.asset_id = a.id
 		WHERE b.deleted_at IS NULL
-		  AND b.activity <> "Return"
-		  AND b.status <> "Approved by Admin"
 		  AND b.user_id = ?
 		ORDER BY b.updated_at DESC
 	`)
@@ -62,13 +60,15 @@ func (ar ActivityRepository) GetAllActivityOfUser(user_id int) (activities []_en
 			return activities, code, err
 		}
 
-		activity.AssetImage = fmt.Sprintf("https://capstone-group3.s3.ap-southeast-1.amazonaws.com/%s", activity.AssetImage)
+		if activity.ActivityType != "Return" && activity.Status != "Waiting approval from Admin" {
+			activity.AssetImage = fmt.Sprintf("https://capstone-group3.s3.ap-southeast-1.amazonaws.com/%s", activity.AssetImage)
 
-		if activity.Status == "Waiting approval from Admin" || activity.Status == "Waiting approval from Manager" {
-			activity.Status = "Waiting approval"
+			if activity.Status == "Waiting approval from Admin" || activity.Status == "Waiting approval from Manager" {
+				activity.Status = "Waiting approval"
+			}
+
+			activities = append(activities, activity)
 		}
-
-		activities = append(activities, activity)
 	}
 
 	return activities, http.StatusOK, nil
