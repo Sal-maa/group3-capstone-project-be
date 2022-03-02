@@ -167,7 +167,7 @@ func (rc RequestController) Procure() echo.HandlerFunc {
 
 		reqData.User.Id = _midware.ExtractId(c)
 		reqData.Description = newReq.Description
-		reqData.Status = "Waiting approval from manager"
+		reqData.Status = "Waiting approval from Manager"
 
 		// calling repository
 		code, err := rc.repository.Procure(reqData)
@@ -371,7 +371,7 @@ func (rc RequestController) UpdateProcure() echo.HandlerFunc {
 		}
 
 		// check request status
-		if request.Status != "Waiting approval from manager" {
+		if request.Status != "Waiting approval from Manager" {
 			return c.JSON(http.StatusForbidden, _common.NoDataResponse(http.StatusForbidden, "cannot approve/reject this request"))
 		}
 
