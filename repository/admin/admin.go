@@ -99,7 +99,7 @@ func (ar *AdminRepository) GetAllManager(divLogin, limit, offset int, status, ca
 
 	defer stmt.Close()
 
-	res, err := stmt.Query(divLogin, "%"+status+"%", "%"+category+"%", "%"+date+"%", limit, offset-1)
+	res, err := stmt.Query(divLogin, status+"%Manager", "%"+category+"%", "%"+date+"%", limit, offset-1)
 
 	if err != nil {
 		log.Println(err)
