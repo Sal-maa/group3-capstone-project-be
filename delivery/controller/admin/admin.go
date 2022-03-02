@@ -151,7 +151,7 @@ func (ac AdminController) ManagerGetAllBorrow() echo.HandlerFunc {
 
 		// default value for status
 		if status == "" {
-			status = "all"
+			status = "ALL"
 		}
 
 		// to prevent sql injection
@@ -237,18 +237,18 @@ func (ac AdminController) ManagerGetAllProcure() echo.HandlerFunc {
 
 		// default value for status
 		if status == "" {
-			status = "all"
+			status = "ALL"
 		}
 
 		// to prevent sql injection
 		if strings.ContainsAny(status, ";") {
-			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request"))
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request1"))
 		}
 
 		allstatus := map[string]string{"ALL": "all", "WAITING-APPROVAL": "Waiting Approval", "APPROVED": "Approved", "REJECTED": "Rejected", "REQUEST-TO-RETURN": "Request to Return"}
 
 		if _, exist := allstatus[status]; !exist {
-			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request"))
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request2"))
 		}
 
 		status = allstatus[status]
@@ -260,7 +260,7 @@ func (ac AdminController) ManagerGetAllProcure() echo.HandlerFunc {
 
 		// to prevent sql injection
 		if strings.ContainsAny(category, ";") {
-			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request"))
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request3"))
 		}
 
 		// default value for category
@@ -271,7 +271,7 @@ func (ac AdminController) ManagerGetAllProcure() echo.HandlerFunc {
 		categories := map[string]string{"ALL": "all", "COMPUTER": "Computer", "COMPUTER-ACCESSORIES": "Computer Accessories", "NETWORKING": "Networking", "UPS": "UPS", "PRINTER-AND-SCANNER": "Printer and Scanner", "ELECTRONICS": "Electronics", "OTHERS": "Others"}
 
 		if _, exist := categories[category]; !exist {
-			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request"))
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request4"))
 		}
 		category = categories[category]
 
