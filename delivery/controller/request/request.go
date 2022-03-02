@@ -94,7 +94,7 @@ func (rc RequestController) Borrow() echo.HandlerFunc {
 
 			return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "success create request"))
 		default:
-			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusOK, "only admin/employee can make request"))
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "only admin/employee can make request"))
 		}
 	}
 }
@@ -405,7 +405,7 @@ func (rc RequestController) AdminReturn() echo.HandlerFunc {
 
 		// check role of currently logged in user
 		if role := _midware.ExtractRole(c); role != "Administrator" {
-			return c.JSON(http.StatusForbidden, _common.NoDataResponse(http.StatusForbidden, "not allowed to update request status"))
+			return c.JSON(http.StatusForbidden, _common.NoDataResponse(http.StatusForbidden, "not allowed to update request activity"))
 		}
 
 		act := _entity.ActivityReturn{}
