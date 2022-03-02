@@ -466,6 +466,7 @@ func TestBorrowSuccess(t *testing.T) {
 		assert.Equal(t, expected, actual)
 	})
 }
+  
 func TestProcureSuccess(t *testing.T) {
 	t.Run("TestProcureAdministratorSuccess", func(t *testing.T) {
 		token, _, _ := _midware.CreateToken(1, "Administrator")
@@ -503,6 +504,7 @@ func TestProcureSuccess(t *testing.T) {
 		assert.Equal(t, expected, actual)
 	})
 }
+  
 func TestGetBorrowById(t *testing.T) {
 	t.Run("TestGetBorrowByIdSuccess", func(t *testing.T) {
 		token, _, _ := _midware.CreateToken(1, "Administrator")
@@ -574,6 +576,7 @@ func TestGetBorrowById(t *testing.T) {
 		assert.Equal(t, expected, actual)
 	})
 }
+  
 func TestGetProcureById(t *testing.T) {
 	t.Run("TestGetProcureByIdSuccess", func(t *testing.T) {
 		token, _, _ := _midware.CreateToken(1, "Manager")
@@ -633,6 +636,7 @@ func TestGetProcureById(t *testing.T) {
 		assert.Equal(t, expected, actual)
 	})
 }
+  
 func TestUpdateBorrowSuccess(t *testing.T) {
 	t.Run("TestUpdateBorrowEmployeeAdminSuccess", func(t *testing.T) {
 		token, _, _ := _midware.CreateToken(1, "Administrator")
@@ -705,6 +709,7 @@ func TestUpdateBorrowSuccess(t *testing.T) {
 		assert.Equal(t, expected, actual)
 	})
 }
+  
 func TestUpdateProcureSuccess(t *testing.T) {
 	t.Run("TestUpdateProcureSuccess", func(t *testing.T) {
 		token, _, _ := _midware.CreateToken(1, "Manager")
@@ -742,6 +747,7 @@ func TestUpdateProcureSuccess(t *testing.T) {
 		assert.Equal(t, expected, actual)
 	})
 }
+  
 func TestReturnAdminSuccess(t *testing.T) {
 	t.Run("TestReturnAdminSuccess", func(t *testing.T) {
 		token, _, _ := _midware.CreateToken(1, "Administrator")
@@ -853,6 +859,7 @@ func TestBindingBorrow(t *testing.T) {
 		assert.Equal(t, expected, actual)
 	})
 }
+  
 func TestBindingProcure(t *testing.T) {
 	t.Run("TestBindingProcureAdministrator", func(t *testing.T) {
 		token, _, _ := _midware.CreateToken(1, "Administrator")
@@ -890,6 +897,7 @@ func TestBindingProcure(t *testing.T) {
 		assert.Equal(t, expected, actual)
 	})
 }
+  
 func TestParsingGetBorrowById(t *testing.T) {
 	t.Run("TestParsingGetBorrowById", func(t *testing.T) {
 		token, _, _ := _midware.CreateToken(1, "Administrator")
@@ -923,6 +931,7 @@ func TestParsingGetBorrowById(t *testing.T) {
 		assert.Equal(t, expected, actual)
 	})
 }
+  
 func TestParsingGetProcureById(t *testing.T) {
 	t.Run("TestParsingGetProcureById", func(t *testing.T) {
 		token, _, _ := _midware.CreateToken(1, "Manager")
@@ -956,6 +965,7 @@ func TestParsingGetProcureById(t *testing.T) {
 		assert.Equal(t, expected, actual)
 	})
 }
+  
 func TestBindingUpdateBorrow(t *testing.T) {
 	t.Run("TestBindingUpdateBorrowEmployeeAdmin", func(t *testing.T) {
 		token, _, _ := _midware.CreateToken(1, "Administrator")
@@ -1098,6 +1108,7 @@ func TestBindingUpdateBorrow(t *testing.T) {
 		assert.Equal(t, expected, actual)
 	})
 }
+  
 func TestBindingUpdateProcure(t *testing.T) {
 	t.Run("TestBindingUpdateProcure", func(t *testing.T) {
 		token, _, _ := _midware.CreateToken(1, "Manager")
@@ -1170,6 +1181,7 @@ func TestBindingUpdateProcure(t *testing.T) {
 		assert.Equal(t, expected, actual)
 	})
 }
+  
 func TestBindingReturnAdmin(t *testing.T) {
 	t.Run("TestBindingReturnAdmin", func(t *testing.T) {
 		token, _, _ := _midware.CreateToken(1, "Administrator")
@@ -1280,6 +1292,7 @@ func TestRoleBorrow(t *testing.T) {
 		assert.Equal(t, expected, actual)
 	})
 }
+  
 func TestRoleProcure(t *testing.T) {
 	t.Run("TestRoleProcureAdministrator", func(t *testing.T) {
 		token, _, _ := _midware.CreateToken(1, "Employee")
@@ -1317,6 +1330,7 @@ func TestRoleProcure(t *testing.T) {
 		assert.Equal(t, expected, actual)
 	})
 }
+  
 func TestRoleGetBorrowById(t *testing.T) {
 	t.Run("TestRoleGetBorrowById", func(t *testing.T) {
 		token, _, _ := _midware.CreateToken(1, "Employee")
@@ -1350,6 +1364,7 @@ func TestRoleGetBorrowById(t *testing.T) {
 		assert.Equal(t, expected, actual)
 	})
 }
+  
 func TestRoleGetProcureById(t *testing.T) {
 	t.Run("TestRoleGetProcureById", func(t *testing.T) {
 		token, _, _ := _midware.CreateToken(1, "Employee")
@@ -1383,6 +1398,7 @@ func TestRoleGetProcureById(t *testing.T) {
 		assert.Equal(t, expected, actual)
 	})
 }
+  
 func TestRoleUpdateBorrow(t *testing.T) {
 	t.Run("TestRoleUpdateBorrowEmployeeAdmin", func(t *testing.T) {
 		token, _, _ := _midware.CreateToken(1, "Employee")
@@ -1420,6 +1436,7 @@ func TestRoleUpdateBorrow(t *testing.T) {
 		assert.Equal(t, expected, actual)
 	})
 }
+  
 func TestRoleUpdateProcure(t *testing.T) {
 	t.Run("TestRoleUpdateProcure", func(t *testing.T) {
 		token, _, _ := _midware.CreateToken(1, "Administrator")
@@ -1457,6 +1474,7 @@ func TestRoleUpdateProcure(t *testing.T) {
 		assert.Equal(t, expected, actual)
 	})
 }
+  
 func TestRoleReturnAdmin(t *testing.T) {
 	t.Run("TestRoleReturnAdmin", func(t *testing.T) {
 		token, _, _ := _midware.CreateToken(1, "Manager")
@@ -1568,6 +1586,7 @@ func TestEmptyBorrow(t *testing.T) {
 		assert.Equal(t, expected, actual)
 	})
 }
+  
 func TestEmptyProcure(t *testing.T) {
 	t.Run("TestProcureAdministrator", func(t *testing.T) {
 		token, _, _ := _midware.CreateToken(1, "Administrator")
@@ -1605,6 +1624,7 @@ func TestEmptyProcure(t *testing.T) {
 		assert.Equal(t, expected, actual)
 	})
 }
+
 func TestFalseUpdateBorrowSuccess(t *testing.T) {
 	t.Run("TestUpdateBorrowEmployeeAdminSuccess", func(t *testing.T) {
 		token, _, _ := _midware.CreateToken(1, "Administrator")
@@ -1677,6 +1697,7 @@ func TestFalseUpdateBorrowSuccess(t *testing.T) {
 		assert.Equal(t, expected, actual)
 	})
 }
+  
 func TestFalseUpdateProcureSuccess(t *testing.T) {
 	t.Run("TestUpdateProcureSuccess", func(t *testing.T) {
 		token, _, _ := _midware.CreateToken(1, "Manager")
@@ -1707,13 +1728,14 @@ func TestFalseUpdateProcureSuccess(t *testing.T) {
 		json.Unmarshal([]byte(body), &actual)
 
 		expected := map[string]interface{}{
-			"code":    float64(http.StatusOK),
-			"message": "success update request",
+			"code":    float64(http.StatusForbidden),
+			"message": "cannot approve/reject this request",
 		}
 
 		assert.Equal(t, expected, actual)
 	})
 }
+  
 func TestFalseReturnAdminSuccess(t *testing.T) {
 	t.Run("TestReturnAdminSuccess", func(t *testing.T) {
 		token, _, _ := _midware.CreateToken(1, "Administrator")
