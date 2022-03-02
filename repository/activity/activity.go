@@ -60,7 +60,9 @@ func (ar ActivityRepository) GetAllActivityOfUser(user_id int) (activities []_en
 			return activities, code, err
 		}
 
-		if activity.ActivityType != "Return" && activity.Status != "Waiting approval from Admin" {
+		if activity.ActivityType == "Return" && activity.Status == "Approved by Admin" {
+			continue
+		} else {
 			activity.AssetImage = fmt.Sprintf("https://capstone-group3.s3.ap-southeast-1.amazonaws.com/%s", activity.AssetImage)
 
 			if activity.Status == "Waiting approval from Admin" || activity.Status == "Waiting approval from Manager" {
