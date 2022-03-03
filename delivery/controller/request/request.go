@@ -314,14 +314,23 @@ func (rc RequestController) UpdateBorrow() echo.HandlerFunc {
 			if request.Status == "Approved by Manager" {
 				if newStatus.Approved {
 					request.Status = "Approved by Admin"
+					request.RequestTime = time.Date(9999, 12, 31, 23, 59, 59, 0, time.UTC)
 				} else {
 					request.Status = "Rejected by Admin"
 				}
-			} else if request.Status == "Waiting approval from Admin" {
+			} else if request.Status == "Waiting approval from Admin" && request.Activity == "Borrow" {
 				if newStatus.Approved {
 					request.Status = "Waiting approval from Manager"
+					request.RequestTime = time.Date(9999, 12, 31, 23, 59, 59, 0, time.UTC)
 				} else {
 					return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "cannot reject request before forwarding to manager"))
+				}
+			} else if request.Status == "Waiting approval from Admin" && request.Activity == "Return" {
+				if newStatus.Approved {
+					request.Status = "Approved by Admin"
+					request.RequestTime = time.Now()
+				} else {
+					request.Status = "Rejected by Admin"
 				}
 			}
 

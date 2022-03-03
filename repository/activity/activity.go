@@ -197,13 +197,22 @@ func (ar ActivityRepository) CancelRequest(request_id int) (code int, err error)
 		return http.StatusInternalServerError, errors.New("internal server error")
 	}
 
+	if code, err = ar.setAvailable(request_id); err != nil {
+		return code, err
+	}
+
+	if err != nil {
+		log.Println(err)
+		return http.StatusInternalServerError, errors.New("internal server error")
+	}
+
 	return http.StatusOK, nil
 }
 
 func (ar ActivityRepository) ReturnRequest(request_id int) (code int, err error) {
 	stmt, err := ar.db.Prepare(`
 		UPDATE borrowORreturn_requests
-		SET activity = 'Return', status = 'Waiting approval', return_time = CURRENT_TIMESTAMP
+		SET activity = 'Return', status = 'Waiting approval from Admin', return_time = CURRENT_TIMESTAMP
 		WHERE deleted_at IS NULL AND id = ?
 	`)
 
@@ -320,4 +329,66 @@ func (ar *ActivityRepository) getAssetStock(short_name string) (stock int, err e
 	}
 
 	return stock, nil
+}
+
+func (ar *ActivityRepository) setAvailable(request_id int) (code int, err error) {
+	stmt, err := ar.db.Prepare(`
+		SELECT asset_id
+		FROM borrowORreturn_requests
+		WHERE deleted_at IS NULL
+		  AND id = ?
+	`)
+
+	if err != nil {
+		log.Println(err)
+		code, err = http.StatusInternalServerError, errors.New("internal server error")
+		return code, err
+	}
+
+	defer stmt.Close()
+
+	res, err := stmt.Query(request_id)
+
+	if err != nil {
+		log.Println(err)
+		code, err = http.StatusInternalServerError, errors.New("internal server error")
+		return code, err
+	}
+
+	defer res.Close()
+
+	asset_id := 0
+
+	if res.Next() {
+		if err = res.Scan(&asset_id); err != nil {
+			log.Println(err)
+			code, err = http.StatusInternalServerError, errors.New("internal server error")
+			return code, err
+		}
+	}
+
+	stmt, err = ar.db.Prepare(`
+		UPDATE assets
+		SET status = 'Available', updated_at = CURRENT_TIMESTAMP
+		WHERE deleted_at IS NULL
+		  AND id = ?
+	`)
+
+	if err != nil {
+		log.Println(err)
+		code, err = http.StatusInternalServerError, errors.New("internal server error")
+		return code, err
+	}
+
+	defer stmt.Close()
+
+	_, err = stmt.Exec(asset_id)
+
+	if err != nil {
+		log.Println(err)
+		code, err = http.StatusInternalServerError, errors.New("internal server error")
+		return code, err
+	}
+
+	return http.StatusOK, nil
 }

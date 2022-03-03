@@ -384,6 +384,368 @@ func TestRoleGetAllBorrow(t *testing.T) {
 	})
 }
 
+// failed because of query param
+func TestQueryParamAdminGetAll(t *testing.T) {
+	t.Run("TestPageAdminGetAllFailed", func(t *testing.T) {
+		token, _, _ := _midware.CreateToken(1, "Administrator")
+
+		request := httptest.NewRequest(http.MethodGet, "/?p=a", nil)
+		request.Header.Set("Content-Type", "application/json")
+		request.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", token))
+		request.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+
+		response := httptest.NewRecorder()
+
+		e := echo.New()
+
+		context := e.NewContext(request, response)
+		context.SetPath("/requests/admin")
+		context.QueryParam("p")
+		adminController := New(mockRepoSuccess{})
+		_midware.JWTMiddleWare()(adminController.AdminGetAll())(context)
+
+		actual := map[string]interface{}{}
+		body := response.Body.String()
+		json.Unmarshal([]byte(body), &actual)
+
+		expected := map[string]interface{}{
+			"code":    float64(http.StatusBadRequest),
+			"message": "Error parsing page",
+		}
+
+		assert.Equal(t, expected, actual)
+	})
+	t.Run("TestRecordOfPageAdminGetAllFailed", func(t *testing.T) {
+		token, _, _ := _midware.CreateToken(1, "Administrator")
+
+		request := httptest.NewRequest(http.MethodGet, "/?rp=a", nil)
+		request.Header.Set("Content-Type", "application/json")
+		request.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", token))
+		request.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+
+		response := httptest.NewRecorder()
+
+		e := echo.New()
+
+		context := e.NewContext(request, response)
+		context.SetPath("/requests/admin")
+		context.QueryParam("rp")
+		adminController := New(mockRepoSuccess{})
+		_midware.JWTMiddleWare()(adminController.AdminGetAll())(context)
+
+		actual := map[string]interface{}{}
+		body := response.Body.String()
+		json.Unmarshal([]byte(body), &actual)
+
+		expected := map[string]interface{}{
+			"code":    float64(http.StatusBadRequest),
+			"message": "Error parsing record of page",
+		}
+
+		assert.Equal(t, expected, actual)
+	})
+	t.Run("TestStatusAdminGetAllFailed", func(t *testing.T) {
+		token, _, _ := _midware.CreateToken(1, "Administrator")
+
+		request := httptest.NewRequest(http.MethodGet, "/?s=uhuy", nil)
+		request.Header.Set("Content-Type", "application/json")
+		request.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", token))
+		request.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+
+		response := httptest.NewRecorder()
+
+		e := echo.New()
+
+		context := e.NewContext(request, response)
+		context.SetPath("/requests/admin")
+		context.QueryParam("s")
+		adminController := New(mockRepoSuccess{})
+		_midware.JWTMiddleWare()(adminController.AdminGetAll())(context)
+
+		actual := map[string]interface{}{}
+		body := response.Body.String()
+		json.Unmarshal([]byte(body), &actual)
+
+		expected := map[string]interface{}{
+			"code":    float64(http.StatusBadRequest),
+			"message": "Bad request",
+		}
+
+		assert.Equal(t, expected, actual)
+	})
+	t.Run("TestCategoryAdminGetAllFailed", func(t *testing.T) {
+		token, _, _ := _midware.CreateToken(1, "Administrator")
+
+		request := httptest.NewRequest(http.MethodGet, "/?c=uhuy", nil)
+		request.Header.Set("Content-Type", "application/json")
+		request.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", token))
+		request.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+
+		response := httptest.NewRecorder()
+
+		e := echo.New()
+
+		context := e.NewContext(request, response)
+		context.SetPath("/requests/admin")
+		context.QueryParam("c")
+		adminController := New(mockRepoSuccess{})
+		_midware.JWTMiddleWare()(adminController.AdminGetAll())(context)
+
+		actual := map[string]interface{}{}
+		body := response.Body.String()
+		json.Unmarshal([]byte(body), &actual)
+
+		expected := map[string]interface{}{
+			"code":    float64(http.StatusBadRequest),
+			"message": "Bad request",
+		}
+
+		assert.Equal(t, expected, actual)
+	})
+}
+
+func TestQueryParamGetAllProcure(t *testing.T) {
+	t.Run("TestPageGetAllProcureFailed", func(t *testing.T) {
+		token, _, _ := _midware.CreateToken(1, "Manager")
+
+		request := httptest.NewRequest(http.MethodGet, "/?p=a", nil)
+		request.Header.Set("Content-Type", "application/json")
+		request.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", token))
+		request.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+
+		response := httptest.NewRecorder()
+
+		e := echo.New()
+
+		context := e.NewContext(request, response)
+		context.SetPath("/requests/manager/procure")
+		context.QueryParam("p")
+
+		adminController := New(mockRepoSuccess{})
+		_midware.JWTMiddleWare()(adminController.ManagerGetAllProcure())(context)
+
+		actual := map[string]interface{}{}
+		body := response.Body.String()
+		json.Unmarshal([]byte(body), &actual)
+
+		expected := map[string]interface{}{
+			"code":    float64(http.StatusBadRequest),
+			"message": "Error parsing page",
+		}
+
+		assert.Equal(t, expected, actual)
+	})
+	t.Run("TestRecordOfPageGetAllProcureFailed", func(t *testing.T) {
+		token, _, _ := _midware.CreateToken(1, "Manager")
+
+		request := httptest.NewRequest(http.MethodGet, "/?rp=a", nil)
+		request.Header.Set("Content-Type", "application/json")
+		request.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", token))
+		request.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+
+		response := httptest.NewRecorder()
+
+		e := echo.New()
+
+		context := e.NewContext(request, response)
+		context.SetPath("/requests/manager/procure")
+		context.QueryParam("rp")
+
+		adminController := New(mockRepoSuccess{})
+		_midware.JWTMiddleWare()(adminController.ManagerGetAllProcure())(context)
+
+		actual := map[string]interface{}{}
+		body := response.Body.String()
+		json.Unmarshal([]byte(body), &actual)
+
+		expected := map[string]interface{}{
+			"code":    float64(http.StatusBadRequest),
+			"message": "Error parsing record of page",
+		}
+
+		assert.Equal(t, expected, actual)
+	})
+	t.Run("TestStatusGetAllProcureFailed", func(t *testing.T) {
+		token, _, _ := _midware.CreateToken(1, "Manager")
+
+		request := httptest.NewRequest(http.MethodGet, "/?s=uhuy", nil)
+		request.Header.Set("Content-Type", "application/json")
+		request.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", token))
+		request.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+
+		response := httptest.NewRecorder()
+
+		e := echo.New()
+
+		context := e.NewContext(request, response)
+		context.SetPath("/requests/manager/procure")
+		context.QueryParam("s")
+
+		adminController := New(mockRepoSuccess{})
+		_midware.JWTMiddleWare()(adminController.ManagerGetAllProcure())(context)
+
+		actual := map[string]interface{}{}
+		body := response.Body.String()
+		json.Unmarshal([]byte(body), &actual)
+
+		expected := map[string]interface{}{
+			"code":    float64(http.StatusBadRequest),
+			"message": "Bad request",
+		}
+
+		assert.Equal(t, expected, actual)
+	})
+	t.Run("TestCategoryGetAllProcureFailed", func(t *testing.T) {
+		token, _, _ := _midware.CreateToken(1, "Manager")
+
+		request := httptest.NewRequest(http.MethodGet, "/?c=uhuy", nil)
+		request.Header.Set("Content-Type", "application/json")
+		request.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", token))
+		request.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+
+		response := httptest.NewRecorder()
+
+		e := echo.New()
+
+		context := e.NewContext(request, response)
+		context.SetPath("/requests/manager/procure")
+		context.QueryParam("c")
+
+		adminController := New(mockRepoSuccess{})
+		_midware.JWTMiddleWare()(adminController.ManagerGetAllProcure())(context)
+
+		actual := map[string]interface{}{}
+		body := response.Body.String()
+		json.Unmarshal([]byte(body), &actual)
+
+		expected := map[string]interface{}{
+			"code":    float64(http.StatusBadRequest),
+			"message": "Bad request",
+		}
+
+		assert.Equal(t, expected, actual)
+	})
+}
+
+func TestQueryParamGetAllBorrow(t *testing.T) {
+	t.Run("TestPageGetAllBorrowFailed", func(t *testing.T) {
+		token, _, _ := _midware.CreateToken(1, "Manager")
+
+		request := httptest.NewRequest(http.MethodGet, "/?p=a", nil)
+		request.Header.Set("Content-Type", "application/json")
+		request.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", token))
+		request.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+
+		response := httptest.NewRecorder()
+
+		e := echo.New()
+
+		context := e.NewContext(request, response)
+		context.SetPath("/requests/manager/borrow")
+		context.QueryParam("p")
+		adminController := New(mockRepoSuccess{})
+		_midware.JWTMiddleWare()(adminController.ManagerGetAllBorrow())(context)
+
+		actual := map[string]interface{}{}
+		body := response.Body.String()
+		json.Unmarshal([]byte(body), &actual)
+
+		expected := map[string]interface{}{
+			"code":    float64(http.StatusBadRequest),
+			"message": "Error parsing page",
+		}
+
+		assert.Equal(t, expected, actual)
+	})
+	t.Run("TestRecordOfPageGetAllBorrowFailed", func(t *testing.T) {
+		token, _, _ := _midware.CreateToken(1, "Manager")
+
+		request := httptest.NewRequest(http.MethodGet, "/?rp=a", nil)
+		request.Header.Set("Content-Type", "application/json")
+		request.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", token))
+		request.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+
+		response := httptest.NewRecorder()
+
+		e := echo.New()
+
+		context := e.NewContext(request, response)
+		context.SetPath("/requests/manager/borrow")
+		context.QueryParam("rp")
+		adminController := New(mockRepoSuccess{})
+		_midware.JWTMiddleWare()(adminController.ManagerGetAllBorrow())(context)
+
+		actual := map[string]interface{}{}
+		body := response.Body.String()
+		json.Unmarshal([]byte(body), &actual)
+
+		expected := map[string]interface{}{
+			"code":    float64(http.StatusBadRequest),
+			"message": "Error parsing record of page",
+		}
+
+		assert.Equal(t, expected, actual)
+	})
+	t.Run("TestStatusGetAllBorrowFailed", func(t *testing.T) {
+		token, _, _ := _midware.CreateToken(1, "Manager")
+
+		request := httptest.NewRequest(http.MethodGet, "/?s=uhuy", nil)
+		request.Header.Set("Content-Type", "application/json")
+		request.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", token))
+		request.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+
+		response := httptest.NewRecorder()
+
+		e := echo.New()
+
+		context := e.NewContext(request, response)
+		context.SetPath("/requests/manager/borrow")
+		context.QueryParam("s")
+		adminController := New(mockRepoSuccess{})
+		_midware.JWTMiddleWare()(adminController.ManagerGetAllBorrow())(context)
+
+		actual := map[string]interface{}{}
+		body := response.Body.String()
+		json.Unmarshal([]byte(body), &actual)
+
+		expected := map[string]interface{}{
+			"code":    float64(http.StatusBadRequest),
+			"message": "Bad request",
+		}
+
+		assert.Equal(t, expected, actual)
+	})
+	t.Run("TestCategoryGetAllBorrowFailed", func(t *testing.T) {
+		token, _, _ := _midware.CreateToken(1, "Manager")
+
+		request := httptest.NewRequest(http.MethodGet, "/?c=uhuy", nil)
+		request.Header.Set("Content-Type", "application/json")
+		request.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", token))
+		request.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+
+		response := httptest.NewRecorder()
+
+		e := echo.New()
+
+		context := e.NewContext(request, response)
+		context.SetPath("/requests/manager/borrow")
+		context.QueryParam("c")
+		adminController := New(mockRepoSuccess{})
+		_midware.JWTMiddleWare()(adminController.ManagerGetAllBorrow())(context)
+
+		actual := map[string]interface{}{}
+		body := response.Body.String()
+		json.Unmarshal([]byte(body), &actual)
+
+		expected := map[string]interface{}{
+			"code":    float64(http.StatusBadRequest),
+			"message": "Bad request",
+		}
+
+		assert.Equal(t, expected, actual)
+	})
+}
+
 // failed because of Repo
 type mockRepoFail struct{}
 
