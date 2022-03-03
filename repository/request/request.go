@@ -403,7 +403,7 @@ func (rr *RequestRepository) GetUserDivision(id int) (divId int, code int, err e
 func (rr *RequestRepository) UpdateBorrow(reqData _entity.Borrow) (updatedReq _entity.Borrow, code int, err error) {
 	stmt, err := rr.db.Prepare(`
 		UPDATE borrowORreturn_requests
-		SET status = ?, updated_at = CURRENT_TIMESTAMP
+		SET status = ?, return_time= ?, updated_at = CURRENT_TIMESTAMP
 		WHERE deleted_at IS NULL
 		  AND id = ?
 	`)
@@ -416,7 +416,7 @@ func (rr *RequestRepository) UpdateBorrow(reqData _entity.Borrow) (updatedReq _e
 
 	defer stmt.Close()
 
-	_, err = stmt.Exec(reqData.Status, reqData.Id)
+	_, err = stmt.Exec(reqData.Status, reqData.ReturnTime, reqData.Id)
 
 	if err != nil {
 		log.Println(err)
