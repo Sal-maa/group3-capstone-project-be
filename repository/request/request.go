@@ -425,8 +425,10 @@ func (rr *RequestRepository) UpdateBorrow(reqData _entity.Borrow) (updatedReq _e
 		return updatedReq, code, err
 	}
 
-	if code, err = rr.setAvailable(reqData.Asset.Id); err != nil {
-		return updatedReq, code, err
+	if reqData.Activity == "Return" && reqData.Status == "Approved by Admin" {
+		if code, err = rr.setAvailable(reqData.Asset.Id); err != nil {
+			return updatedReq, code, err
+		}
 	}
 
 	return reqData, http.StatusOK, nil
