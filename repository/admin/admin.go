@@ -18,14 +18,16 @@ func New(db *sql.DB) *AdminRepository {
 
 func (ar *AdminRepository) GetAllAdmin(limit, offset int, status, category, date string) (requests []_entity.RequestResponse, total int, err error) {
 	query := ""
+	if category == "all" {
+		category = ""
+	}
+
 	if status == "all" {
 		status = "%%"
 	} else {
 		status = "%" + status + "%"
 	}
-	if category == "all" {
-		category = ""
-	}
+
 	query = `
 	SELECT 
 		b.id, b.user_id, u.name, u.role, d.name, a.id, a.name, a.image, c.name, b.activity, b.request_time, b.return_time, b.status, b.description
@@ -80,13 +82,14 @@ func (ar *AdminRepository) GetAllAdmin(limit, offset int, status, category, date
 func (ar *AdminRepository) GetAllManager(divLogin, limit, offset int, status, category, date string) (requests []_entity.RequestResponse, total int, err error) {
 	query := ""
 	if status == "all" {
-		status = "%Manager"
-	} else {
-		status = status + "%Manager"
+		status = ""
 	}
+	status = status + "%Manager"
+
 	if category == "all" {
 		category = ""
 	}
+
 	query = `
 			SELECT 
 				b.id, b.user_id, u.name, u.role, d.name,a.id, a.name, a.image, c.name, b.activity, b.request_time, b.return_time, b.status, b.description
@@ -150,14 +153,14 @@ func (ar *AdminRepository) GetAllProcureManager(limit, offset int, status, categ
 	}
 	query = `
 			SELECT 
-				p.id, p.user_id, u.name, u.role, d.name c.name, p.image, p.activity, p.request_time, p.status, p.description
+				p.id, p.user_id, u.name, u.role, d.name, c.name, p.image, p.activity, p.request_time, p.status, p.description
 			FROM procurement_requests p
 			JOIN users u 
 				ON p.user_id = u.id 
 			JOIN categories c
 				ON p.category_id = c.id
 			JOIN divisions d
-				ON d.id = u. user_id
+				ON d.id = u. division_id
 			WHERE p.status LIKE ? AND c.name LIKE ? AND p.request_time LIKE ?
 			ORDER BY p.request_time DESC
 			LIMIT ? OFFSET ?`
