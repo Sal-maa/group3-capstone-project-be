@@ -16,6 +16,62 @@ func New(db *sql.DB) *AdminRepository {
 	return &AdminRepository{db: db}
 }
 
+func (ar *AdminRepository) GetAllAdminWaitingApproval(limit, offset int, status, category, date string) (requests []_entity.RequestResponse, total int, err error) {
+	if category == "all" {
+		category = ""
+	}
+
+	query := `
+	SELECT 
+		b.id, b.user_id, u.name, u.role, d.name, a.id, a.name, a.image, c.name, b.activity, b.request_time, b.return_time, b.status, b.description
+	FROM borrowORreturn_requests b
+	JOIN users u 
+		ON b.user_id = u.id
+	JOIN assets a
+		ON b.asset_id = a.id
+	JOIN categories c
+		ON a.category_id = c.id
+	JOIN divisions d
+		ON d.id = u.division_id
+	WHERE  b.status = 'Approved by Manager' OR b.status LIKE 'Waiting approval%' AND c.name LIKE ? AND b.request_time LIKE ?
+	ORDER BY b.updated_at DESC
+	LIMIT ? OFFSET ?`
+	stmt, err := ar.db.Prepare(query)
+
+	if err != nil {
+		log.Println(err)
+		return requests, 0, err
+	}
+
+	defer stmt.Close()
+
+	res, err := stmt.Query("%"+category+"%", "%"+date+"%", limit, offset)
+
+	if err != nil {
+		log.Println(err)
+		return requests, 0, err
+	}
+
+	defer res.Close()
+
+	for res.Next() {
+		request := _entity.RequestResponse{}
+		if err := res.Scan(&request.Id, &request.User.Id, &request.User.Name, &request.User.Role, &request.User.Division, &request.Asset.Id, &request.Asset.Name, &request.Asset.Image, &request.Asset.CategoryName, &request.Activity, &request.RequestTime, &request.ReturnTime, &request.Status, &request.Description); err != nil {
+			log.Println(err)
+			return requests, 0, err
+		}
+
+		requests = append(requests, request)
+	}
+
+	total, err = ar.countRecordWaitingApproval()
+	if err != nil {
+		return requests, total, err
+	}
+
+	return requests, total, nil
+}
+
 func (ar *AdminRepository) GetAllAdmin(limit, offset int, status, category, date string) (requests []_entity.RequestResponse, total int, err error) {
 	query := ""
 	if category == "all" {
@@ -24,6 +80,8 @@ func (ar *AdminRepository) GetAllAdmin(limit, offset int, status, category, date
 
 	if status == "all" {
 		status = "%%"
+	} else if status == "Approved" {
+		status = "Approved by Admin"
 	} else {
 		status = "%" + status + "%"
 	}
@@ -52,7 +110,7 @@ func (ar *AdminRepository) GetAllAdmin(limit, offset int, status, category, date
 
 	defer stmt.Close()
 
-	res, err := stmt.Query(status, "%"+category+"%", "%"+date+"%", limit, offset-1)
+	res, err := stmt.Query(status, "%"+category+"%", "%"+date+"%", limit, offset)
 
 	if err != nil {
 		log.Println(err)
@@ -115,7 +173,7 @@ func (ar *AdminRepository) GetAllManager(divLogin, limit, offset int, status, ca
 
 	defer stmt.Close()
 
-	res, err := stmt.Query(divLogin, status, "%"+category+"%", "%"+date+"%", limit, offset-1)
+	res, err := stmt.Query(divLogin, status, "%"+category+"%", "%"+date+"%", limit, offset)
 
 	if err != nil {
 		log.Println(err)
@@ -174,7 +232,7 @@ func (ar *AdminRepository) GetAllProcureManager(limit, offset int, status, categ
 
 	defer stmt.Close()
 
-	res, err := stmt.Query("%"+status+"%", "%"+category+"%", "%"+date+"%", limit, offset-1)
+	res, err := stmt.Query("%"+status+"%", "%"+category+"%", "%"+date+"%", limit, offset)
 
 	if err != nil {
 		log.Println(err)
@@ -258,6 +316,39 @@ func (ar *AdminRepository) countRecordBorrow(status string) (total int, err erro
 	defer stmt.Close()
 
 	res, err := stmt.Query(status)
+
+	if err != nil {
+		log.Println(err)
+		return total, err
+	}
+
+	defer res.Close()
+
+	if res.Next() {
+		if err := res.Scan(&total); err != nil {
+			log.Println(err)
+			return total, err
+		}
+	}
+
+	return total, nil
+}
+
+func (ar *AdminRepository) countRecordWaitingApproval() (total int, err error) {
+	stmt, err := ar.db.Prepare(`
+	SELECT COUNT(status) 
+	FROM borrowORreturn_requests
+	WHERE status LIKE 'Waiting approval%' OR status = 'Approved by Manager' 
+	`)
+
+	if err != nil {
+		log.Println(err)
+		return total, err
+	}
+
+	defer stmt.Close()
+
+	res, err := stmt.Query()
 
 	if err != nil {
 		log.Println(err)
