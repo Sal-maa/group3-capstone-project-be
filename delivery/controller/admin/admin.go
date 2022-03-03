@@ -2,6 +2,7 @@ package admin
 
 import (
 	_common "capstone/be/delivery/common"
+	_entity "capstone/be/entity"
 	"log"
 	"strconv"
 	"strings"
@@ -36,7 +37,7 @@ func (ac AdminController) AdminGetAll() echo.HandlerFunc {
 			p = "1"
 		}
 
-		offset, err := strconv.Atoi(p)
+		page, err := strconv.Atoi(p)
 
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Error parsing page"))
@@ -51,6 +52,7 @@ func (ac AdminController) AdminGetAll() echo.HandlerFunc {
 
 		limit, err := strconv.Atoi(rp)
 
+		offset := (page - 1) * limit
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Error parsing record of page"))
 		}
@@ -97,10 +99,22 @@ func (ac AdminController) AdminGetAll() echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request"))
 		}
 		category = categories[category]
-		requests, total, err := ac.adminRepository.GetAllAdmin(limit, offset, status, category, date)
-		if err != nil {
-			log.Println(err)
-			return c.JSON(http.StatusInternalServerError, _common.NoDataResponse(http.StatusInternalServerError, "Failed to read data"))
+
+		var requests []_entity.RequestResponse
+		var total int
+
+		if status == "Waiting Approval" {
+			requests, total, err = ac.adminRepository.GetAllAdminWaitingApproval(limit, offset, status, category, date)
+			if err != nil {
+				log.Println(err)
+				return c.JSON(http.StatusInternalServerError, _common.NoDataResponse(http.StatusInternalServerError, "Failed to read data"))
+			}
+		} else {
+			requests, total, err = ac.adminRepository.GetAllAdmin(limit, offset, status, category, date)
+			if err != nil {
+				log.Println(err)
+				return c.JSON(http.StatusInternalServerError, _common.NoDataResponse(http.StatusInternalServerError, "Failed to read data"))
+			}
 		}
 
 		return c.JSON(http.StatusOK, _common.GetAllRequestResponse(requests, total))
@@ -127,7 +141,7 @@ func (ac AdminController) ManagerGetAllBorrow() echo.HandlerFunc {
 			p = "1"
 		}
 
-		offset, err := strconv.Atoi(p)
+		page, err := strconv.Atoi(p)
 
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Error parsing page"))
@@ -141,7 +155,7 @@ func (ac AdminController) ManagerGetAllBorrow() echo.HandlerFunc {
 		}
 
 		limit, err := strconv.Atoi(rp)
-
+		offset := (page - 1) * limit
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Error parsing record of page"))
 		}
@@ -213,7 +227,7 @@ func (ac AdminController) ManagerGetAllProcure() echo.HandlerFunc {
 			p = "1"
 		}
 
-		offset, err := strconv.Atoi(p)
+		page, err := strconv.Atoi(p)
 
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Error parsing page"))
@@ -227,7 +241,7 @@ func (ac AdminController) ManagerGetAllProcure() echo.HandlerFunc {
 		}
 
 		limit, err := strconv.Atoi(rp)
-
+		offset := (page - 1) * limit
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Error parsing record of page"))
 		}
