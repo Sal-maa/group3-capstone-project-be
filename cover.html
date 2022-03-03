@@ -55,13 +55,13 @@
 				
 				<option value="file0" selected="selected">capstone/be/delivery/controller/activity/activity.go (76.5%)</option>
 				
-				<option value="file1">capstone/be/delivery/controller/admin/admin.go (84.8%)</option>
+				<option value="file1">capstone/be/delivery/controller/admin/admin.go (0.0%)</option>
 				
 				<option value="file2">capstone/be/delivery/controller/asset/asset.go (75.0%)</option>
 				
 				<option value="file3">capstone/be/delivery/controller/history/history.go (94.4%)</option>
 				
-				<option value="file4">capstone/be/delivery/controller/request/request.go (86.7%)</option>
+				<option value="file4">capstone/be/delivery/controller/request/request.go (84.0%)</option>
 				
 				<option value="file5">capstone/be/delivery/controller/user/user.go (84.3%)</option>
 				
@@ -205,7 +205,7 @@ func (ac ActivityController) UpdateRequestStatus() echo.HandlerFunc <span class=
                                 return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "request already cancelled"))
                         }</span> else<span class="cov8" title="1"> if updateActivityData.ActivityType == "Return" </span><span class="cov0" title="0">{
                                 return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "asset already in return process"))
-                        }</span> else<span class="cov8" title="1"> if updateActivityData.Status != "Waiting Approval" &amp;&amp; updateActivityData.Status != "Approved by Manager" </span><span class="cov0" title="0">{
+                        }</span> else<span class="cov8" title="1"> if updateActivityData.Status != "Waiting approval" </span><span class="cov0" title="0">{
                                 return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "request cannot be cancelled"))
                         }</span>
 
@@ -250,6 +250,7 @@ func (ac ActivityController) UpdateRequestStatus() echo.HandlerFunc <span class=
 
 import (
         _common "capstone/be/delivery/common"
+        _entity "capstone/be/entity"
         "log"
         "strconv"
         "strings"
@@ -266,63 +267,64 @@ type AdminController struct {
         adminRepository _adminRepo.Admin
 }
 
-func New(admin _adminRepo.Admin) *AdminController <span class="cov8" title="1">{
+func New(admin _adminRepo.Admin) *AdminController <span class="cov0" title="0">{
         return &amp;AdminController{adminRepository: admin}
 }</span>
 
-func (ac AdminController) AdminGetAll() echo.HandlerFunc <span class="cov8" title="1">{
-        return func(c echo.Context) error </span><span class="cov8" title="1">{
+func (ac AdminController) AdminGetAll() echo.HandlerFunc <span class="cov0" title="0">{
+        return func(c echo.Context) error </span><span class="cov0" title="0">{
                 role := _midware.ExtractRole(c)
-                if role != "Administrator" </span><span class="cov8" title="1">{
+                if role != "Administrator" </span><span class="cov0" title="0">{
                         return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "You don't have permission"))
                 }</span>
 
                 // filter by page number
-                <span class="cov8" title="1">p := c.QueryParam("p")
+                <span class="cov0" title="0">p := c.QueryParam("p")
                 // default value for page
-                if p == "" </span><span class="cov8" title="1">{
+                if p == "" </span><span class="cov0" title="0">{
                         p = "1"
                 }</span>
 
-                <span class="cov8" title="1">offset, err := strconv.Atoi(p)
+                <span class="cov0" title="0">page, err := strconv.Atoi(p)
 
                 if err != nil </span><span class="cov0" title="0">{
                         return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Error parsing page"))
                 }</span>
 
                 // filter by records per page
-                <span class="cov8" title="1">rp := c.QueryParam("rp")
+                <span class="cov0" title="0">rp := c.QueryParam("rp")
                 // default value for page
-                if rp == "" </span><span class="cov8" title="1">{
+                if rp == "" </span><span class="cov0" title="0">{
                         rp = "5"
                 }</span>
 
-                <span class="cov8" title="1">limit, err := strconv.Atoi(rp)
+                <span class="cov0" title="0">limit, err := strconv.Atoi(rp)
 
+                offset := (page - 1) * limit
                 if err != nil </span><span class="cov0" title="0">{
                         return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Error parsing record of page"))
                 }</span>
 
                 // filter by status
 
-                <span class="cov8" title="1">status := strings.ToUpper(c.QueryParam("s"))
+                <span class="cov0" title="0">status := strings.ToUpper(c.QueryParam("s"))
                 // default value for status
-                if status == "" </span><span class="cov8" title="1">{
+                if status == "" </span><span class="cov0" title="0">{
                         status = "ALL"
                 }</span>
 
                 // to prevent sql injection
-                <span class="cov8" title="1">if strings.ContainsAny(status, ";") </span><span class="cov0" title="0">{
+                <span class="cov0" title="0">if strings.ContainsAny(status, ";") </span><span class="cov0" title="0">{
                         return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request"))
                 }</span>
 
-                <span class="cov8" title="1">allstatus := map[string]string{"ALL": "all", "WAITING-APPROVAL": "Waiting Approval", "APPROVED": "Approved", "REJECTED": "Rejected", "REQUEST-TO-RETURN": "Request to Return"}
+                <span class="cov0" title="0">allstatus := map[string]string{"ALL": "all", "WAITING-APPROVAL": "Waiting Approval", "APPROVED": "Approved", "REJECTED": "Rejected", "REQUEST-TO-RETURN": "Request to Return"}
 
                 if _, exist := allstatus[status]; !exist </span><span class="cov0" title="0">{
                         return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request"))
                 }</span>
 
-                <span class="cov8" title="1">status = allstatus[status]
+                <span class="cov0" title="0">status = allstatus[status]
                 // filter by date
                 date := c.QueryParam("d")
 
@@ -335,85 +337,97 @@ func (ac AdminController) AdminGetAll() echo.HandlerFunc <span class="cov8" titl
                 }</span>
 
                 // default value for category
-                <span class="cov8" title="1">if category == "" </span><span class="cov8" title="1">{
+                <span class="cov0" title="0">if category == "" </span><span class="cov0" title="0">{
                         category = "ALL"
                 }</span>
 
-                <span class="cov8" title="1">categories := map[string]string{"ALL": "all", "COMPUTER": "Computer", "COMPUTER-ACCESSORIES": "Computer Accessories", "NETWORKING": "Networking", "UPS": "UPS", "PRINTER-AND-SCANNER": "Printer and Scanner", "ELECTRONICS": "Electronics", "OTHERS": "Others"}
+                <span class="cov0" title="0">categories := map[string]string{"ALL": "all", "COMPUTER": "Computer", "COMPUTER-ACCESSORIES": "Computer Accessories", "NETWORKING": "Networking", "UPS": "UPS", "PRINTER-AND-SCANNER": "Printer and Scanner", "ELECTRONICS": "Electronics", "OTHERS": "Others"}
 
                 if _, exist := categories[category]; !exist </span><span class="cov0" title="0">{
                         return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request"))
                 }</span>
-                <span class="cov8" title="1">category = categories[category]
-                requests, total, err := ac.adminRepository.GetAllAdmin(limit, offset, status, category, date)
-                if err != nil </span><span class="cov8" title="1">{
-                        log.Println(err)
-                        return c.JSON(http.StatusInternalServerError, _common.NoDataResponse(http.StatusInternalServerError, "Failed to read data"))
-                }</span>
+                <span class="cov0" title="0">category = categories[category]
 
-                <span class="cov8" title="1">return c.JSON(http.StatusOK, _common.GetAllRequestResponse(requests, total))</span>
+                var requests []_entity.RequestResponse
+                var total int
+
+                if status == "Waiting Approval" </span><span class="cov0" title="0">{
+                        requests, total, err = ac.adminRepository.GetAllAdminWaitingApproval(limit, offset, status, category, date)
+                        if err != nil </span><span class="cov0" title="0">{
+                                log.Println(err)
+                                return c.JSON(http.StatusInternalServerError, _common.NoDataResponse(http.StatusInternalServerError, "Failed to read data"))
+                        }</span>
+                } else<span class="cov0" title="0"> {
+                        requests, total, err = ac.adminRepository.GetAllAdmin(limit, offset, status, category, date)
+                        if err != nil </span><span class="cov0" title="0">{
+                                log.Println(err)
+                                return c.JSON(http.StatusInternalServerError, _common.NoDataResponse(http.StatusInternalServerError, "Failed to read data"))
+                        }</span>
+                }
+
+                <span class="cov0" title="0">return c.JSON(http.StatusOK, _common.GetAllRequestResponse(requests, total))</span>
         }
 }
 
-func (ac AdminController) ManagerGetAllBorrow() echo.HandlerFunc <span class="cov8" title="1">{
-        return func(c echo.Context) error </span><span class="cov8" title="1">{
+func (ac AdminController) ManagerGetAllBorrow() echo.HandlerFunc <span class="cov0" title="0">{
+        return func(c echo.Context) error </span><span class="cov0" title="0">{
                 role := _midware.ExtractRole(c)
-                if role != "Manager" </span><span class="cov8" title="1">{
+                if role != "Manager" </span><span class="cov0" title="0">{
                         return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "You don't have permission"))
                 }</span>
 
-                <span class="cov8" title="1">idLogin := _midware.ExtractId(c)
+                <span class="cov0" title="0">idLogin := _midware.ExtractId(c)
                 divLogin, _, err := ac.adminRepository.GetUserDivision(idLogin)
                 if err != nil </span><span class="cov0" title="0">{
                         return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed get division id user"))
                 }</span>
 
                 // filter by page number
-                <span class="cov8" title="1">p := c.QueryParam("p")
+                <span class="cov0" title="0">p := c.QueryParam("p")
                 // default value for page
-                if p == "" </span><span class="cov8" title="1">{
+                if p == "" </span><span class="cov0" title="0">{
                         p = "1"
                 }</span>
 
-                <span class="cov8" title="1">offset, err := strconv.Atoi(p)
+                <span class="cov0" title="0">page, err := strconv.Atoi(p)
 
                 if err != nil </span><span class="cov0" title="0">{
                         return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Error parsing page"))
                 }</span>
 
                 // filter by records per page
-                <span class="cov8" title="1">rp := c.QueryParam("rp")
+                <span class="cov0" title="0">rp := c.QueryParam("rp")
                 // default value for page
-                if rp == "" </span><span class="cov8" title="1">{
+                if rp == "" </span><span class="cov0" title="0">{
                         rp = "5"
                 }</span>
 
-                <span class="cov8" title="1">limit, err := strconv.Atoi(rp)
-
+                <span class="cov0" title="0">limit, err := strconv.Atoi(rp)
+                offset := (page - 1) * limit
                 if err != nil </span><span class="cov0" title="0">{
                         return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Error parsing record of page"))
                 }</span>
 
                 // filter by status
-                <span class="cov8" title="1">status := c.QueryParam("s")
+                <span class="cov0" title="0">status := c.QueryParam("s")
 
                 // default value for status
-                if status == "" </span><span class="cov8" title="1">{
+                if status == "" </span><span class="cov0" title="0">{
                         status = "ALL"
                 }</span>
 
                 // to prevent sql injection
-                <span class="cov8" title="1">if strings.ContainsAny(status, ";") </span><span class="cov0" title="0">{
+                <span class="cov0" title="0">if strings.ContainsAny(status, ";") </span><span class="cov0" title="0">{
                         return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request"))
                 }</span>
 
-                <span class="cov8" title="1">allstatus := map[string]string{"ALL": "all", "WAITING-APPROVAL": "Waiting Approval", "APPROVED": "Approved", "REJECTED": "Rejected", "REQUEST-TO-RETURN": "Request to Return"}
+                <span class="cov0" title="0">allstatus := map[string]string{"ALL": "all", "WAITING-APPROVAL": "Waiting Approval", "APPROVED": "Approved", "REJECTED": "Rejected", "REQUEST-TO-RETURN": "Request to Return"}
 
                 if _, exist := allstatus[status]; !exist </span><span class="cov0" title="0">{
                         return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request"))
                 }</span>
 
-                <span class="cov8" title="1">status = allstatus[status]
+                <span class="cov0" title="0">status = allstatus[status]
                 // filter by date
                 date := c.QueryParam("d")
 
@@ -426,80 +440,80 @@ func (ac AdminController) ManagerGetAllBorrow() echo.HandlerFunc <span class="co
                 }</span>
 
                 // default value for category
-                <span class="cov8" title="1">if category == "" </span><span class="cov8" title="1">{
+                <span class="cov0" title="0">if category == "" </span><span class="cov0" title="0">{
                         category = "ALL"
                 }</span>
 
-                <span class="cov8" title="1">categories := map[string]string{"ALL": "all", "COMPUTER": "Computer", "COMPUTER-ACCESSORIES": "Computer Accessories", "NETWORKING": "Networking", "UPS": "UPS", "PRINTER-AND-SCANNER": "Printer and Scanner", "ELECTRONICS": "Electronics", "OTHERS": "Others"}
+                <span class="cov0" title="0">categories := map[string]string{"ALL": "all", "COMPUTER": "Computer", "COMPUTER-ACCESSORIES": "Computer Accessories", "NETWORKING": "Networking", "UPS": "UPS", "PRINTER-AND-SCANNER": "Printer and Scanner", "ELECTRONICS": "Electronics", "OTHERS": "Others"}
 
                 if _, exist := categories[category]; !exist </span><span class="cov0" title="0">{
                         return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request"))
                 }</span>
-                <span class="cov8" title="1">category = categories[category]
+                <span class="cov0" title="0">category = categories[category]
 
                 requests, total, err := ac.adminRepository.GetAllManager(divLogin, limit, offset, status, category, date)
-                if err != nil </span><span class="cov8" title="1">{
+                if err != nil </span><span class="cov0" title="0">{
                         log.Println(err)
                         return c.JSON(http.StatusInternalServerError, _common.NoDataResponse(http.StatusInternalServerError, "Failed to read data"))
                 }</span>
 
-                <span class="cov8" title="1">return c.JSON(http.StatusOK, _common.GetAllRequestResponse(requests, total))</span>
+                <span class="cov0" title="0">return c.JSON(http.StatusOK, _common.GetAllRequestResponse(requests, total))</span>
         }
 }
 
-func (ac AdminController) ManagerGetAllProcure() echo.HandlerFunc <span class="cov8" title="1">{
-        return func(c echo.Context) error </span><span class="cov8" title="1">{
+func (ac AdminController) ManagerGetAllProcure() echo.HandlerFunc <span class="cov0" title="0">{
+        return func(c echo.Context) error </span><span class="cov0" title="0">{
                 role := _midware.ExtractRole(c)
-                if role != "Manager" </span><span class="cov8" title="1">{
+                if role != "Manager" </span><span class="cov0" title="0">{
                         return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "You don't have permission"))
                 }</span>
 
                 // filter by page number
-                <span class="cov8" title="1">p := c.QueryParam("p")
+                <span class="cov0" title="0">p := c.QueryParam("p")
                 // default value for page
-                if p == "" </span><span class="cov8" title="1">{
+                if p == "" </span><span class="cov0" title="0">{
                         p = "1"
                 }</span>
 
-                <span class="cov8" title="1">offset, err := strconv.Atoi(p)
+                <span class="cov0" title="0">page, err := strconv.Atoi(p)
 
                 if err != nil </span><span class="cov0" title="0">{
                         return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Error parsing page"))
                 }</span>
 
                 // filter by records per page
-                <span class="cov8" title="1">rp := c.QueryParam("rp")
+                <span class="cov0" title="0">rp := c.QueryParam("rp")
                 // default value for page
-                if rp == "" </span><span class="cov8" title="1">{
+                if rp == "" </span><span class="cov0" title="0">{
                         rp = "5"
                 }</span>
 
-                <span class="cov8" title="1">limit, err := strconv.Atoi(rp)
-
+                <span class="cov0" title="0">limit, err := strconv.Atoi(rp)
+                offset := (page - 1) * limit
                 if err != nil </span><span class="cov0" title="0">{
                         return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Error parsing record of page"))
                 }</span>
 
                 // filter by status
-                <span class="cov8" title="1">status := c.QueryParam("s")
+                <span class="cov0" title="0">status := c.QueryParam("s")
 
                 // default value for status
-                if status == "" </span><span class="cov8" title="1">{
+                if status == "" </span><span class="cov0" title="0">{
                         status = "ALL"
                 }</span>
 
                 // to prevent sql injection
-                <span class="cov8" title="1">if strings.ContainsAny(status, ";") </span><span class="cov0" title="0">{
-                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request1"))
+                <span class="cov0" title="0">if strings.ContainsAny(status, ";") </span><span class="cov0" title="0">{
+                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request"))
                 }</span>
 
-                <span class="cov8" title="1">allstatus := map[string]string{"ALL": "all", "WAITING-APPROVAL": "Waiting Approval", "APPROVED": "Approved", "REJECTED": "Rejected", "REQUEST-TO-RETURN": "Request to Return"}
+                <span class="cov0" title="0">allstatus := map[string]string{"ALL": "all", "WAITING-APPROVAL": "Waiting Approval", "APPROVED": "Approved", "REJECTED": "Rejected", "REQUEST-TO-RETURN": "Request to Return"}
 
                 if _, exist := allstatus[status]; !exist </span><span class="cov0" title="0">{
-                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request2"))
+                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request"))
                 }</span>
 
-                <span class="cov8" title="1">status = allstatus[status]
+                <span class="cov0" title="0">status = allstatus[status]
                 // filter by date
                 date := c.QueryParam("d")
 
@@ -508,28 +522,28 @@ func (ac AdminController) ManagerGetAllProcure() echo.HandlerFunc <span class="c
 
                 // to prevent sql injection
                 if strings.ContainsAny(category, ";") </span><span class="cov0" title="0">{
-                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request3"))
+                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request"))
                 }</span>
 
                 // default value for category
-                <span class="cov8" title="1">if category == "" </span><span class="cov8" title="1">{
+                <span class="cov0" title="0">if category == "" </span><span class="cov0" title="0">{
                         category = "ALL"
                 }</span>
 
-                <span class="cov8" title="1">categories := map[string]string{"ALL": "all", "COMPUTER": "Computer", "COMPUTER-ACCESSORIES": "Computer Accessories", "NETWORKING": "Networking", "UPS": "UPS", "PRINTER-AND-SCANNER": "Printer and Scanner", "ELECTRONICS": "Electronics", "OTHERS": "Others"}
+                <span class="cov0" title="0">categories := map[string]string{"ALL": "all", "COMPUTER": "Computer", "COMPUTER-ACCESSORIES": "Computer Accessories", "NETWORKING": "Networking", "UPS": "UPS", "PRINTER-AND-SCANNER": "Printer and Scanner", "ELECTRONICS": "Electronics", "OTHERS": "Others"}
 
                 if _, exist := categories[category]; !exist </span><span class="cov0" title="0">{
-                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request4"))
+                        return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request"))
                 }</span>
-                <span class="cov8" title="1">category = categories[category]
+                <span class="cov0" title="0">category = categories[category]
 
                 requests, total, err := ac.adminRepository.GetAllProcureManager(limit, offset, status, category, date)
-                if err != nil </span><span class="cov8" title="1">{
+                if err != nil </span><span class="cov0" title="0">{
                         log.Println(err)
                         return c.JSON(http.StatusInternalServerError, _common.NoDataResponse(http.StatusInternalServerError, "Failed to read data"))
                 }</span>
 
-                <span class="cov8" title="1">return c.JSON(http.StatusOK, _common.GetAllProcureRequestResponse(requests, total))</span>
+                <span class="cov0" title="0">return c.JSON(http.StatusOK, _common.GetAllProcureRequestResponse(requests, total))</span>
         }
 }
 </pre>
@@ -1206,14 +1220,23 @@ func (rc RequestController) UpdateBorrow() echo.HandlerFunc <span class="cov8" t
                         <span class="cov8" title="1">if request.Status == "Approved by Manager" </span><span class="cov0" title="0">{
                                 if newStatus.Approved </span><span class="cov0" title="0">{
                                         request.Status = "Approved by Admin"
+                                        request.ReturnTime = time.Date(9999, 12, 31, 23, 59, 59, 0, time.UTC)
                                 }</span> else<span class="cov0" title="0"> {
                                         request.Status = "Rejected by Admin"
                                 }</span>
-                        } else<span class="cov8" title="1"> if request.Status == "Waiting approval from Admin" </span><span class="cov8" title="1">{
+                        } else<span class="cov8" title="1"> if request.Status == "Waiting approval from Admin" &amp;&amp; request.Activity == "Borrow" </span><span class="cov8" title="1">{
                                 if newStatus.Approved </span><span class="cov8" title="1">{
                                         request.Status = "Waiting approval from Manager"
+                                        request.ReturnTime = time.Date(9999, 12, 31, 23, 59, 59, 0, time.UTC)
                                 }</span> else<span class="cov8" title="1"> {
                                         return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "cannot reject request before forwarding to manager"))
+                                }</span>
+                        } else<span class="cov0" title="0"> if request.Status == "Waiting approval from Admin" &amp;&amp; request.Activity == "Return" </span><span class="cov0" title="0">{
+                                if newStatus.Approved </span><span class="cov0" title="0">{
+                                        request.Status = "Approved by Admin"
+                                        request.ReturnTime = time.Now()
+                                }</span> else<span class="cov0" title="0"> {
+                                        request.Status = "Rejected by Admin"
                                 }</span>
                         }
 

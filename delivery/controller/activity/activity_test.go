@@ -26,7 +26,7 @@ func (m mockRepoSuccess) GetAllActivityOfUser(int) ([]_entity.ActivitySimplified
 			AssetImage:   "test",
 			AssetName:    "test",
 			ActivityType: "test",
-			Status:       "Waiting Approval",
+			Status:       "Waiting approval",
 			RequestDate:  time.Time{},
 		},
 	}, http.StatusOK, nil
@@ -40,7 +40,7 @@ func (m mockRepoSuccess) GetDetailActivityByRequestId(int) (_entity.Activity, in
 		StockLeft:    1,
 		UserName:     "test",
 		ActivityType: "test",
-		Status:       "Waiting Approval",
+		Status:       "Waiting approval",
 		Description:  "test",
 		RequestDate:  time.Time{},
 		ReturnDate:   time.Time{},
@@ -87,7 +87,7 @@ func TestGetAllActivityOfUser(t *testing.T) {
 				"asset_name":    "test",
 				"id":            float64(1),
 				"request_date":  "0001-01-01T00:00:00Z",
-				"status":        "Waiting Approval"}},
+				"status":        "Waiting approval"}},
 		}
 		assert.Equal(t, expected, actual)
 	})
@@ -128,7 +128,7 @@ func TestGetDetailActivityByRequestId(t *testing.T) {
 				"id":           float64(1),
 				"request_date": "0001-01-01T00:00:00Z",
 				"return_date":  "0001-01-01T00:00:00Z",
-				"status":       "Waiting Approval",
+				"status":       "Waiting approval",
 				"stock_left":   float64(1),
 				"user_name":    "test",
 			},
