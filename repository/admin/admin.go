@@ -150,14 +150,14 @@ func (ar *AdminRepository) GetAllProcureManager(limit, offset int, status, categ
 	}
 	query = `
 			SELECT 
-				p.id, p.user_id, u.name, u.role, d.name c.name, p.image, p.activity, p.request_time, p.status, p.description
+				p.id, p.user_id, u.name, u.role, d.name, c.name, p.image, p.activity, p.request_time, p.status, p.description
 			FROM procurement_requests p
 			JOIN users u 
 				ON p.user_id = u.id 
 			JOIN categories c
 				ON p.category_id = c.id
 			JOIN divisions d
-				ON d.id = u. user_id
+				ON d.id = u.user_id
 			WHERE p.status LIKE ? AND c.name LIKE ? AND p.request_time LIKE ?
 			ORDER BY p.request_time DESC
 			LIMIT ? OFFSET ?`
