@@ -167,7 +167,7 @@ func (hr *HistoryRepository) GetAllUsageHistoryOfAsset(short_name string) (asset
 		ON b.asset_id = a.id
 		WHERE b.deleted_at IS NULL
 		  AND b.status = 'Approved by Admin'
-		  AND a.shor_name = ?
+		  AND a.short_name = ?
 	`)
 
 	if err != nil {
