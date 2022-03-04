@@ -167,7 +167,7 @@ func (ac AdminController) ManagerGetAllBorrow() echo.HandlerFunc {
 		}
 
 		// filter by status
-		status := c.QueryParam("s")
+		status := strings.ToUpper(c.QueryParam("s"))
 
 		// default value for status
 		if status == "" {
@@ -262,7 +262,7 @@ func (ac AdminController) ManagerGetAllProcure() echo.HandlerFunc {
 		}
 
 		// filter by status
-		status := c.QueryParam("s")
+		status := strings.ToUpper(c.QueryParam("s"))
 
 		// default value for status
 		if status == "" {
