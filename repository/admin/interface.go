@@ -5,7 +5,11 @@ import (
 )
 
 type Admin interface {
-	GetAllAdmin(limit, offset int, status, category, date string) (requests []_entity.RequestResponse, err error)
-	GetAllManager(divLogin, limit, offset int, status, category, date string) (requests []_entity.RequestResponse, err error)
-	GetAllProcureManager(limit, offset int, status, category, date string) (requests []_entity.Procure, err error)
+	GetAllAdminWaitingApproval(limit, offset int, category, date string) (requests []_entity.RequestResponse, total int, err error)
+	GetAllAdminReturned(limit, offset int, category, date string) (requests []_entity.RequestResponse, total int, err error)
+	GetAllAdmin(limit, offset int, status, category, date string) (requests []_entity.RequestResponse, total int, err error)
+	GetAllManagerReturned(divLogin, limit, offset int, category, date string) (requests []_entity.RequestResponse, total int, err error)
+	GetAllManager(divLogin, limit, offset int, status, category, date string) (requests []_entity.RequestResponse, total int, err error)
+	GetAllProcureManager(limit, offset int, status, category, date string) (requests []_entity.Procure, total int, err error)
+	GetUserDivision(id int) (divId int, code int, err error)
 }

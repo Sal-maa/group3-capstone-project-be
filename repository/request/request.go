@@ -6,6 +6,7 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"strings"
 )
 
 type RequestRepository struct {
@@ -72,8 +73,8 @@ func (rr *RequestRepository) Procure(reqData _entity.Procure) (code int, err err
 	}
 
 	stmt, err := rr.db.Prepare(`
-		INSERT INTO procurement_requests (updated_at, user_id, category_id, image, request_time, status, description)
-		VALUES (CURRENT_TIMESTAMP, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?)
+		INSERT INTO procurement_requests (updated_at, user_id, category_id, activity, image, request_time, status, description)
+		VALUES (CURRENT_TIMESTAMP, ?, ?,?, ?, CURRENT_TIMESTAMP, ?, ?)
 	`)
 
 	if err != nil {
@@ -84,7 +85,7 @@ func (rr *RequestRepository) Procure(reqData _entity.Procure) (code int, err err
 
 	defer stmt.Close()
 
-	_, err = stmt.Exec(reqData.User.Id, categoryId, reqData.Image, reqData.Status, reqData.Description)
+	_, err = stmt.Exec(reqData.User.Id, categoryId, reqData.Activity, reqData.Image, reqData.Status, reqData.Description)
 
 	if err != nil {
 		log.Println(err)
@@ -248,7 +249,7 @@ func (rr *RequestRepository) getCategoryId(category string) (categoryId int, cod
 	stmt, err := rr.db.Prepare(`
 		SELECT id 
 		FROM categories 
-		WHERE name = ?
+		WHERE UPPER(name) = ?
 	`)
 
 	if err != nil {
@@ -259,7 +260,7 @@ func (rr *RequestRepository) getCategoryId(category string) (categoryId int, cod
 
 	defer stmt.Close()
 
-	res, err := stmt.Query(category)
+	res, err := stmt.Query(strings.ToUpper(category))
 
 	if err != nil {
 		log.Println(err)
@@ -403,7 +404,7 @@ func (rr *RequestRepository) GetUserDivision(id int) (divId int, code int, err e
 func (rr *RequestRepository) UpdateBorrow(reqData _entity.Borrow) (updatedReq _entity.Borrow, code int, err error) {
 	stmt, err := rr.db.Prepare(`
 		UPDATE borrowORreturn_requests
-		SET status = ?, updated_at = CURRENT_TIMESTAMP
+		SET status = ?, return_time = ?, updated_at = CURRENT_TIMESTAMP
 		WHERE deleted_at IS NULL
 		  AND id = ?
 	`)
@@ -416,7 +417,7 @@ func (rr *RequestRepository) UpdateBorrow(reqData _entity.Borrow) (updatedReq _e
 
 	defer stmt.Close()
 
-	_, err = stmt.Exec(reqData.Status, reqData.Id)
+	_, err = stmt.Exec(reqData.Status, reqData.RequestTime, reqData.Id)
 
 	if err != nil {
 		log.Println(err)
@@ -424,8 +425,10 @@ func (rr *RequestRepository) UpdateBorrow(reqData _entity.Borrow) (updatedReq _e
 		return updatedReq, code, err
 	}
 
-	if code, err = rr.setAvailable(reqData.Asset.Id); err != nil {
-		return updatedReq, code, err
+	if reqData.Activity == "Return" && reqData.Status == "Approved by Admin" {
+		if code, err = rr.setAvailable(reqData.Asset.Id); err != nil {
+			return updatedReq, code, err
+		}
 	}
 
 	return reqData, http.StatusOK, nil
@@ -433,7 +436,7 @@ func (rr *RequestRepository) UpdateBorrow(reqData _entity.Borrow) (updatedReq _e
 
 func (rr *RequestRepository) GetProcureById(id int) (req _entity.Procure, code int, err error) {
 	stmt, err := rr.db.Prepare(`
-		SELECT p.id, p.user_id, c.name, p.image, p.request_time, p.status, p.description 
+		SELECT p.id, p.user_id, c.name, p.activity, p.image, p.request_time, p.status, p.description 
 		FROM procurement_requests p
 		JOIN categories c
 		ON p.category_id = c.id
@@ -460,7 +463,7 @@ func (rr *RequestRepository) GetProcureById(id int) (req _entity.Procure, code i
 	defer res.Close()
 
 	if res.Next() {
-		if err := res.Scan(&req.Id, &req.User.Id, &req.Category, &req.Image, &req.RequestTime, &req.Status, &req.Description); err != nil {
+		if err := res.Scan(&req.Id, &req.User.Id, &req.Category, &req.Activity, &req.Image, &req.RequestTime, &req.Status, &req.Description); err != nil {
 			log.Println(err)
 			code, err = http.StatusInternalServerError, errors.New("internal server error")
 			return req, code, err
@@ -569,7 +572,7 @@ func (rr *RequestRepository) UpdateProcureByAdmin(reqData _entity.Procure) (_ent
 func (rr *RequestRepository) ReturnAdmin(reqData _entity.Borrow) (updatedReq _entity.Borrow, code int, err error) {
 	stmt, err := rr.db.Prepare(`
 		UPDATE borrowORreturn_requests
-		SET activity = ?, status = ?, updated_at = CURRENT_TIMESTAMP
+		SET activity = ?, updated_at = CURRENT_TIMESTAMP
 		WHERE deleted_at IS NULL
 		  AND id = ?
 	`)
@@ -582,7 +585,7 @@ func (rr *RequestRepository) ReturnAdmin(reqData _entity.Borrow) (updatedReq _en
 
 	defer stmt.Close()
 
-	_, err = stmt.Exec(reqData.Activity, reqData.Status, reqData.Id)
+	_, err = stmt.Exec(reqData.Activity, reqData.Id)
 
 	if err != nil {
 		log.Println(err)

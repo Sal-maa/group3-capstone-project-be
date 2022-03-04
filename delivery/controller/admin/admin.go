@@ -2,29 +2,25 @@ package admin
 
 import (
 	_common "capstone/be/delivery/common"
+	_entity "capstone/be/entity"
 	"log"
 	"strconv"
 	"strings"
 
-	// _helper "capstone/be/delivery/helper"
 	_midware "capstone/be/delivery/middleware"
 	"net/http"
 
 	_adminRepo "capstone/be/repository/admin"
-	_requestRepo "capstone/be/repository/request"
 
 	"github.com/labstack/echo/v4"
 )
 
-// "github.com/labstack/echo/v4"
-
 type AdminController struct {
 	adminRepository _adminRepo.Admin
-	reqRepository   _requestRepo.Request
 }
 
-func New(admin _adminRepo.Admin, request _requestRepo.Request) *AdminController {
-	return &AdminController{adminRepository: admin, reqRepository: request}
+func New(admin _adminRepo.Admin) *AdminController {
+	return &AdminController{adminRepository: admin}
 }
 
 func (ac AdminController) AdminGetAll() echo.HandlerFunc {
@@ -41,7 +37,7 @@ func (ac AdminController) AdminGetAll() echo.HandlerFunc {
 			p = "1"
 		}
 
-		limit, err := strconv.Atoi(p)
+		page, err := strconv.Atoi(p)
 
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Error parsing page"))
@@ -49,19 +45,24 @@ func (ac AdminController) AdminGetAll() echo.HandlerFunc {
 
 		// filter by records per page
 		rp := c.QueryParam("rp")
+		// default value for page
+		if rp == "" {
+			rp = "5"
+		}
 
-		offset, err := strconv.Atoi(rp)
+		limit, err := strconv.Atoi(rp)
 
+		offset := (page - 1) * limit
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Error parsing record of page"))
 		}
 
 		// filter by status
-		status := c.QueryParam("s")
 
+		status := strings.ToUpper(c.QueryParam("s"))
 		// default value for status
 		if status == "" {
-			status = "all"
+			status = "ALL"
 		}
 
 		// to prevent sql injection
@@ -69,17 +70,18 @@ func (ac AdminController) AdminGetAll() echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request"))
 		}
 
-		allstatus := map[string]int{"all": 1, "Waiting Approval": 1, "Approved": 1, "Rejected": 1, "Request to Return": 1}
+		allstatus := map[string]string{"ALL": "all", "WAITING-APPROVAL": "Waiting Approval", "APPROVED": "Approved", "REJECTED": "Rejected", "RETURNED": "Returned"}
 
 		if _, exist := allstatus[status]; !exist {
 			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request"))
 		}
 
+		status = allstatus[status]
 		// filter by date
 		date := c.QueryParam("d")
 
 		// filter by category
-		category := c.QueryParam("c")
+		category := strings.ToUpper(c.QueryParam("c"))
 
 		// to prevent sql injection
 		if strings.ContainsAny(category, ";") {
@@ -88,22 +90,40 @@ func (ac AdminController) AdminGetAll() echo.HandlerFunc {
 
 		// default value for category
 		if category == "" {
-			category = "all"
+			category = "ALL"
 		}
 
-		categories := map[string]int{"all": 1, "Computer": 1, "Computer Accessories": 1, "Networking": 1, "UPS": 1, "Printer and Scanner": 1, "Electronics": 1, "Others": 1}
+		categories := map[string]string{"ALL": "all", "COMPUTER": "Computer", "COMPUTER-ACCESSORIES": "Computer Accessories", "NETWORKING": "Networking", "UPS": "UPS", "PRINTER-AND-SCANNER": "Printer and Scanner", "ELECTRONICS": "Electronics", "OTHERS": "Others"}
 
 		if _, exist := categories[category]; !exist {
 			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request"))
 		}
+		category = categories[category]
 
-		requests, err := ac.adminRepository.GetAllAdmin(limit, offset, status, category, date)
-		if err != nil {
-			log.Println(err)
-			return c.JSON(http.StatusInternalServerError, _common.NoDataResponse(http.StatusInternalServerError, "Failed to read data"))
+		var requests []_entity.RequestResponse
+		var total int
+
+		if status == "Waiting Approval" {
+			requests, total, err = ac.adminRepository.GetAllAdminWaitingApproval(limit, offset, category, date)
+			if err != nil {
+				log.Println(err)
+				return c.JSON(http.StatusInternalServerError, _common.NoDataResponse(http.StatusInternalServerError, "Failed to read data"))
+			}
+		} else if status == "Returned" {
+			requests, total, err = ac.adminRepository.GetAllAdminReturned(limit, offset, category, date)
+			if err != nil {
+				log.Println(err)
+				return c.JSON(http.StatusInternalServerError, _common.NoDataResponse(http.StatusInternalServerError, "Failed to read data"))
+			}
+		} else {
+			requests, total, err = ac.adminRepository.GetAllAdmin(limit, offset, status, category, date)
+			if err != nil {
+				log.Println(err)
+				return c.JSON(http.StatusInternalServerError, _common.NoDataResponse(http.StatusInternalServerError, "Failed to read data"))
+			}
 		}
 
-		return c.JSON(http.StatusOK, _common.GetAllRequestResponse(requests))
+		return c.JSON(http.StatusOK, _common.GetAllRequestResponse(requests, total))
 	}
 }
 
@@ -115,7 +135,7 @@ func (ac AdminController) ManagerGetAllBorrow() echo.HandlerFunc {
 		}
 
 		idLogin := _midware.ExtractId(c)
-		divLogin, _, err := ac.reqRepository.GetUserDivision(idLogin)
+		divLogin, _, err := ac.adminRepository.GetUserDivision(idLogin)
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed get division id user"))
 		}
@@ -127,7 +147,7 @@ func (ac AdminController) ManagerGetAllBorrow() echo.HandlerFunc {
 			p = "1"
 		}
 
-		limit, err := strconv.Atoi(p)
+		page, err := strconv.Atoi(p)
 
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Error parsing page"))
@@ -135,19 +155,23 @@ func (ac AdminController) ManagerGetAllBorrow() echo.HandlerFunc {
 
 		// filter by records per page
 		rp := c.QueryParam("rp")
+		// default value for page
+		if rp == "" {
+			rp = "5"
+		}
 
-		offset, err := strconv.Atoi(rp)
-
+		limit, err := strconv.Atoi(rp)
+		offset := (page - 1) * limit
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Error parsing record of page"))
 		}
 
 		// filter by status
-		status := c.QueryParam("s")
+		status := strings.ToUpper(c.QueryParam("s"))
 
 		// default value for status
 		if status == "" {
-			status = "all"
+			status = "ALL"
 		}
 
 		// to prevent sql injection
@@ -155,16 +179,18 @@ func (ac AdminController) ManagerGetAllBorrow() echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request"))
 		}
 
-		allstatus := map[string]int{"all": 1, "Waiting Approval": 1, "Approved": 1, "Rejected": 1, "Request to Return": 1}
+		allstatus := map[string]string{"ALL": "all", "WAITING-APPROVAL": "Waiting Approval", "APPROVED": "Approved", "REJECTED": "Rejected", "RETURNED": "Returned"}
 
 		if _, exist := allstatus[status]; !exist {
 			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request"))
 		}
+
+		status = allstatus[status]
 		// filter by date
 		date := c.QueryParam("d")
 
 		// filter by category
-		category := c.QueryParam("c")
+		category := strings.ToUpper(c.QueryParam("c"))
 
 		// to prevent sql injection
 		if strings.ContainsAny(category, ";") {
@@ -173,22 +199,32 @@ func (ac AdminController) ManagerGetAllBorrow() echo.HandlerFunc {
 
 		// default value for category
 		if category == "" {
-			category = "all"
+			category = "ALL"
 		}
 
-		categories := map[string]int{"all": 1, "Computer": 1, "Computer Accessories": 1, "Networking": 1, "UPS": 1, "Printer and Scanner": 1, "Electronics": 1, "Others": 1}
+		categories := map[string]string{"ALL": "all", "COMPUTER": "Computer", "COMPUTER-ACCESSORIES": "Computer Accessories", "NETWORKING": "Networking", "UPS": "UPS", "PRINTER-AND-SCANNER": "Printer and Scanner", "ELECTRONICS": "Electronics", "OTHERS": "Others"}
 
 		if _, exist := categories[category]; !exist {
 			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request"))
 		}
+		category = categories[category]
 
-		requests, err := ac.adminRepository.GetAllManager(divLogin, limit, offset, status, category, date)
+		var requests []_entity.RequestResponse
+		var total int
+		if status == "Returned" {
+			requests, total, err = ac.adminRepository.GetAllManagerReturned(divLogin, limit, offset, category, date)
+			if err != nil {
+				log.Println(err)
+				return c.JSON(http.StatusInternalServerError, _common.NoDataResponse(http.StatusInternalServerError, "Failed to read data"))
+			}
+		}
+		requests, total, err = ac.adminRepository.GetAllManager(divLogin, limit, offset, status, category, date)
 		if err != nil {
 			log.Println(err)
 			return c.JSON(http.StatusInternalServerError, _common.NoDataResponse(http.StatusInternalServerError, "Failed to read data"))
 		}
 
-		return c.JSON(http.StatusOK, _common.GetAllRequestResponse(requests))
+		return c.JSON(http.StatusOK, _common.GetAllRequestResponse(requests, total))
 	}
 }
 
@@ -199,12 +235,6 @@ func (ac AdminController) ManagerGetAllProcure() echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "You don't have permission"))
 		}
 
-		// idLogin := _midware.ExtractId(c)
-		// divLogin, _, err := ac.reqRepository.GetUserDivision(idLogin)
-		// if err != nil {
-		// 	return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "failed get division id user"))
-		// }
-
 		// filter by page number
 		p := c.QueryParam("p")
 		// default value for page
@@ -212,7 +242,7 @@ func (ac AdminController) ManagerGetAllProcure() echo.HandlerFunc {
 			p = "1"
 		}
 
-		limit, err := strconv.Atoi(p)
+		page, err := strconv.Atoi(p)
 
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Error parsing page"))
@@ -220,19 +250,23 @@ func (ac AdminController) ManagerGetAllProcure() echo.HandlerFunc {
 
 		// filter by records per page
 		rp := c.QueryParam("rp")
+		// default value for page
+		if rp == "" {
+			rp = "5"
+		}
 
-		offset, err := strconv.Atoi(rp)
-
+		limit, err := strconv.Atoi(rp)
+		offset := (page - 1) * limit
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Error parsing record of page"))
 		}
 
 		// filter by status
-		status := c.QueryParam("s")
+		status := strings.ToUpper(c.QueryParam("s"))
 
 		// default value for status
 		if status == "" {
-			status = "all"
+			status = "ALL"
 		}
 
 		// to prevent sql injection
@@ -240,16 +274,18 @@ func (ac AdminController) ManagerGetAllProcure() echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request"))
 		}
 
-		allstatus := map[string]int{"all": 1, "Waiting Approval": 1, "Approved": 1, "Rejected": 1}
+		allstatus := map[string]string{"ALL": "all", "WAITING-APPROVAL": "Waiting Approval", "APPROVED": "Approved", "REJECTED": "Rejected", "REQUEST-TO-RETURN": "Request to Return"}
 
 		if _, exist := allstatus[status]; !exist {
 			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request"))
 		}
+
+		status = allstatus[status]
 		// filter by date
 		date := c.QueryParam("d")
 
 		// filter by category
-		category := c.QueryParam("c")
+		category := strings.ToUpper(c.QueryParam("c"))
 
 		// to prevent sql injection
 		if strings.ContainsAny(category, ";") {
@@ -258,21 +294,22 @@ func (ac AdminController) ManagerGetAllProcure() echo.HandlerFunc {
 
 		// default value for category
 		if category == "" {
-			category = "all"
+			category = "ALL"
 		}
 
-		categories := map[string]int{"all": 1, "Computer": 1, "Computer Accessories": 1, "Networking": 1, "UPS": 1, "Printer and Scanner": 1, "Electronics": 1, "Others": 1}
+		categories := map[string]string{"ALL": "all", "COMPUTER": "Computer", "COMPUTER-ACCESSORIES": "Computer Accessories", "NETWORKING": "Networking", "UPS": "UPS", "PRINTER-AND-SCANNER": "Printer and Scanner", "ELECTRONICS": "Electronics", "OTHERS": "Others"}
 
 		if _, exist := categories[category]; !exist {
 			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request"))
 		}
+		category = categories[category]
 
-		requests, err := ac.adminRepository.GetAllProcureManager(limit, offset, status, category, date)
+		requests, total, err := ac.adminRepository.GetAllProcureManager(limit, offset, status, category, date)
 		if err != nil {
 			log.Println(err)
 			return c.JSON(http.StatusInternalServerError, _common.NoDataResponse(http.StatusInternalServerError, "Failed to read data"))
 		}
 
-		return c.JSON(http.StatusOK, _common.GetAllProcureRequestResponse(requests))
+		return c.JSON(http.StatusOK, _common.GetAllProcureRequestResponse(requests, total))
 	}
 }

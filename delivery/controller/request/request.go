@@ -94,7 +94,7 @@ func (rc RequestController) Borrow() echo.HandlerFunc {
 
 			return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "success create request"))
 		default:
-			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusOK, "only admin/employee can make request"))
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "only admin/employee can make request"))
 		}
 	}
 }
@@ -167,7 +167,7 @@ func (rc RequestController) Procure() echo.HandlerFunc {
 
 		reqData.User.Id = _midware.ExtractId(c)
 		reqData.Description = newReq.Description
-		reqData.Status = "Waiting approval from manager"
+		reqData.Status = "Waiting approval from Manager"
 
 		// calling repository
 		code, err := rc.repository.Procure(reqData)
@@ -178,6 +178,52 @@ func (rc RequestController) Procure() echo.HandlerFunc {
 		}
 
 		return c.JSON(http.StatusOK, _common.NoDataResponse(http.StatusOK, "success create request"))
+	}
+}
+
+func (rc RequestController) GetBorrowById() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		role := _midware.ExtractRole(c)
+		if role == "Employee" {
+			return c.JSON(http.StatusUnauthorized, _common.NoDataResponse(http.StatusUnauthorized, "You don't have permission"))
+		}
+
+		idReq, err := strconv.Atoi(c.Param("id"))
+
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "invalid request id"))
+		}
+
+		// get existing borrow request by id
+		request, code, err := rc.repository.GetBorrowById(idReq)
+
+		if err != nil {
+			return c.JSON(code, _common.NoDataResponse(code, err.Error()))
+		}
+		return c.JSON(http.StatusOK, _common.GetBorrowRequestResponse(request))
+	}
+}
+
+func (rc RequestController) GetProcureById() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		role := _midware.ExtractRole(c)
+		if role == "Employee" {
+			return c.JSON(http.StatusUnauthorized, _common.NoDataResponse(http.StatusUnauthorized, "You don't have permission"))
+		}
+
+		idReq, err := strconv.Atoi(c.Param("id"))
+
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "invalid request id"))
+		}
+
+		// get existing Procure request by id
+		request, code, err := rc.repository.GetProcureById(idReq)
+
+		if err != nil {
+			return c.JSON(code, _common.NoDataResponse(code, err.Error()))
+		}
+		return c.JSON(http.StatusOK, _common.GetProcureRequestResponse(request))
 	}
 }
 
@@ -268,20 +314,24 @@ func (rc RequestController) UpdateBorrow() echo.HandlerFunc {
 			if request.Status == "Approved by Manager" {
 				if newStatus.Approved {
 					request.Status = "Approved by Admin"
+					request.ReturnTime = time.Date(9999, 12, 31, 23, 59, 59, 0, time.UTC)
 				} else {
 					request.Status = "Rejected by Admin"
 				}
-			} else if request.Status == "Waiting approval from Admin" {
+			} else if request.Status == "Waiting approval from Admin" && request.Activity == "Borrow" {
 				if newStatus.Approved {
 					request.Status = "Waiting approval from Manager"
+					request.ReturnTime = time.Date(9999, 12, 31, 23, 59, 59, 0, time.UTC)
 				} else {
 					return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "cannot reject request before forwarding to manager"))
 				}
-			}
-
-			// check request status
-			if request.Status == "Approved by Manager" {
-				return c.JSON(http.StatusForbidden, _common.NoDataResponse(http.StatusForbidden, "cannot approve/reject this request"))
+			} else if request.Status == "Waiting approval from Admin" && request.Activity == "Return" {
+				if newStatus.Approved {
+					request.Status = "Approved by Admin"
+					request.ReturnTime = time.Now()
+				} else {
+					request.Status = "Rejected by Admin"
+				}
 			}
 
 			// calling repository
@@ -330,7 +380,7 @@ func (rc RequestController) UpdateProcure() echo.HandlerFunc {
 		}
 
 		// check request status
-		if request.Status != "Waiting approval from manager" {
+		if request.Status != "Waiting approval from Manager" {
 			return c.JSON(http.StatusForbidden, _common.NoDataResponse(http.StatusForbidden, "cannot approve/reject this request"))
 		}
 
@@ -364,7 +414,7 @@ func (rc RequestController) AdminReturn() echo.HandlerFunc {
 
 		// check role of currently logged in user
 		if role := _midware.ExtractRole(c); role != "Administrator" {
-			return c.JSON(http.StatusForbidden, _common.NoDataResponse(http.StatusForbidden, "not allowed to update request status"))
+			return c.JSON(http.StatusForbidden, _common.NoDataResponse(http.StatusForbidden, "not allowed to update request activity"))
 		}
 
 		act := _entity.ActivityReturn{}
@@ -386,7 +436,6 @@ func (rc RequestController) AdminReturn() echo.HandlerFunc {
 			// set request status
 			if act.AskingReturn {
 				request.Activity = "Request to Return"
-				request.Status = "Waiting Approval from Admin"
 			} else {
 				return c.JSON(http.StatusForbidden, _common.NoDataResponse(http.StatusForbidden, "you are not asking for a return"))
 			}

@@ -55,11 +55,11 @@ paths:
           content:
             application/json:
               examples:
-                failed binding:
+                error parsing record of page:
                   value:
                     code: 400
-                    message: failed to bind data
-                empty string in input:
+                    message: error parsing record of page
+                bad request:
                   value:
                     code: 400
                     message: input cannot be empty
@@ -101,6 +101,53 @@ paths:
                   value:
                     code: 500
                     message: internal server error
+  /users:
+    get:
+      tags:
+        - User
+      summary: How to get all users information
+      security:
+        - JWTAuth: []
+      responses:
+        '200':
+          description: Response for get all users information successful
+          content:
+            application/json:
+              example:
+                code: 200
+                message: successful
+                data:
+                - id: 1
+                  user: Bagus Brahmantya - Manager (Legal)
+                - id: 2
+                  user: Salmaa - Manager (Human Capital)
+        '400':
+          description: Response for get all assets failed (bad request)
+          content:
+            application/json:
+              example:
+                code: 400
+                message: invalid or expired jwt
+        '401':
+          description: Response for get all assets failed (unauthorized)
+          content:
+            application/json:
+              examples:
+                missing or malformed jwt:
+                  value:
+                    code: 400
+                    message: missing or malformed jwt
+                unauthorized (access by non-Administrator):
+                  value:
+                    code: 400
+                    message: unauthorized
+        '500':
+          description: Response for get all user information failed (internal server error)
+          content:
+            application/json:
+              example:
+                code: 500
+                message: internal server error
   /users/{id}:
     get:
       tags:
@@ -879,37 +926,30 @@ paths:
           'application/json':
             schema:
               properties:
-                category:
+                short_name:
                   type: string
-                asset_name:
-                  type: string
-                employee_name:
-                  type: string
-                activity:
-                  type: string
+                employee_id:
+                  type: integer
                 description:
                   type: string
                 return_time:
                   type: string
               required:
-                - category
-                - asset_name
-                - employee_name
-                - activity
+                - short_name
+                - employee_id
                 - description
+                - return_time
             examples:
-              login as employee:
+              borrow/return by employee:
                 value:
-                  asset_name: "Dell Latitude 3420 (i7-1165G7, 8GB, 512GB)"
-                  activity: "Peminjaman Aset"
+                  short_name: "asset-1645748000"
                   description: "Pinjam laptop karena laptop pribadi rusak"
-              Login as Admin:
+              borrow by admin:
                 value:
-                  category: "Computer"
-                  asset_name: "Dell Latitude 3420 (i7-1165G7, 8GB, 512GB)"
-                  employee_name: "Tahir"
+                  short_name: "asset-1645748000"
+                  employee_id: 1
                   description: "Laptop Tahir butuh spek yang lebih tinggi"
-                  return_time: "2022-12-12"
+                  return_time: "2018–09–22T12:42:31+07:00"
         required: true
       responses:
         '200':
@@ -921,10 +961,6 @@ paths:
                   value:
                     code: 200
                     message: Success Create Request
-                Invalid User Login:
-                  value:
-                    code: 200
-                    message: Invalid User Login
         '400':
           description: Response Failed Create Request (bad request)
           content:
@@ -934,64 +970,39 @@ paths:
                   value:
                     code: 400
                     message: failed to bind data
-                asset isn't in database:
+                input empty:
                   value:
                     code: 400
-                    message: Asset Not Found
-                failed create request:
+                    message: input cannot be empty
+                user not found:
                   value:
                     code: 400
-                    message: failed create request
-                failed update asset status:
+                    message: user not found
+                asset not found:
                   value:
                     code: 400
-                    message: failed update asset status
-                category not found:
+                    message: asset not found
+                asset not available:
                   value:
                     code: 400
-                    message: category not found
-                employee not found:
+                    message: asset not available
+                check input:
                   value:
                     code: 400
-                    message: employee not found
-        '403':
-          description: Response for forbidden request (forbidden)
-          content:
-            application/json:
-              examples:
-                asset and category not match:
+                    message: s:("error message")
+                login as not admin/employee:
                   value:
-                    code: 403
-                    message: asset isn't in this category
-                asset under maintenace:
-                  value:
-                    code: 403
-                    message: sorry, asset is under maintenance
+                    code: 400
+                    message: only admin/employee can make request
         '500':
           description: Response for create request failed (internal server error)
           content:
             application/json:
               examples:
-                failed to get category id:
+                internal server error:
                   value:
                     code: 500
-                    message: failed to get cetegory id
-                failed to check asset id:
-                  value:
-                    code: 500
-                    message: failed to check asset id
-                failed to check category id asset:
-                  value:
-                    code: 500
-                    message: failed to check category id asset
-                failed to check asset status:
-                  value:
-                    code: 500
-                    message: failed to check asset status
-                failed to get employee id:
-                  value:
-                    code: 500
-                    message: failed to get employee id
+                    message: internal server error            
   /request/procure:
     post:
       tags:
@@ -1001,29 +1012,20 @@ paths:
       summary: Create New Request for Procurement by Admin
       requestBody:
         content:
-          'application/json':
+          'multipart/form-data':
             schema:
+              type: object
               properties:
-                image:
-                  type: string
                 category:
                   type: string
                 description:
                   type: string
-                activity:
+                image:
                   type: string
-              required:
-                - image
-                - category
-                - description
-                - activity
-            examples:
-              Login as Admin:
-                value:
-                  image: "gambar.jpg"
-                  category: "Computer"
-                  activity: "Peminjaman Aset"
-                  description: "Perlu macbook air untuk kebutuhan BE"
+                  format: base64
+            encoding:
+              image:
+                contentType: image/png, image/jpeg, image/jpg
         required: true
       responses:
         '200':
@@ -1044,19 +1046,26 @@ paths:
                   value:
                     code: 400
                     message: failed to bind data
+                input empty:
+                  value:
+                    code: 400
+                    message: input cannot be empty
+                failed upload image:
+                  value:
+                    code: 400
+                    message: failed to upload image
+                admin not found:
+                  value:
+                    code: 400
+                    message: admin not found
                 category not found:
                   value:
                     code: 400
                     message: category not found
-                failed to upload image:
+                check input:
                   value:
                     code: 400
-                    message: failed to upload image
-                failed create request:
-                  value:
-                    code: 400
-                    message: failed create request
-
+                    message: s:("error message")
         '403':
           description: Response for forbidden request (forbidden)
           content:
@@ -1071,11 +1080,80 @@ paths:
           content:
             application/json:
               examples:
-                failed to get category id:
+                internal server error:
                   value:
                     code: 500
-                    message: failed to get cetegory id
+                    message: internal server error
   /request/borrow/{request_id}:
+    get:
+      tags:
+        - Request
+      security:
+        - JWTAuth: []
+      summary: get borrow request by id for admin and manager
+      parameters:
+        - in: path
+          name: request_id
+          schema:
+            type: integer
+          required: true
+          description: Numeric id of existing request
+      responses:
+        '200':
+          description: Response get request successful
+          content:
+            application/json:
+              examples:
+                success update request:
+                  value:
+                    code: 200
+                    data:
+                      id: 1
+                      User:
+                        id: 1
+                        name: Chairul Tanjung
+                      asset:
+                        id: 1
+                        name: Dell Latitude 3420 (i7-1165G7, 8GB, 512GB)
+                        category: Computer
+                        image: https://capstone-group3.s3.ap-southeast-1.amazonaws.com/asset-6-1645748000.png
+                      activity: Borrow
+                      request_time: 2022-02-26T14:35:05Z
+                      return_time: 9999-12-31T23:59:59Z
+                      status: Waiting approval from Admin
+                      description: ini deskripsi/alasan peminjaman
+                    message: success get request
+        '400':
+          description: Response Failed Get Request (bad request)
+          content:
+            application/json:
+              examples:
+                invalid request id:
+                  value:
+                    code: 400
+                    message: invalid request id
+                request not found:
+                  value:
+                    code: 400
+                    message: request not found 
+        '401':
+          description: Response Failed Get Request (unauthorized)
+          content:
+            application/json:
+              examples:
+                login as employee:
+                  value:
+                    code: 401
+                    message: You don't have permission
+        '500':
+          description: Response for get request failed (internal server error)
+          content:
+            application/json:
+              examples:
+                internal server error:
+                  value:
+                    code: 500
+                    message: internal server error
     put:
       tags:
         - Request
@@ -1094,17 +1172,17 @@ paths:
           'application/json':
             schema:
               properties:
-                status:
-                  type: string
+                approved:
+                  type: boolean
               required:
-                - status
+                - approved
             examples:
               login as admin:
                 value:
-                  status: "Waiting Aprroval from Manager"
+                  approved: true
               login as manager:
                 value:
-                  status: "Approved by Manager"
+                  approved: true
         required: true
       responses:
         '200':
@@ -1116,14 +1194,6 @@ paths:
                   value:
                     code: 200
                     message: success update request
-                invalid input request:
-                  value:
-                    code: 200
-                    message: invalid input request
-                manager rejected:
-                  value:
-                    code: 200
-                    message: admin no need any update
         '400':
           description: Response Failed Update Request (bad request)
           content:
@@ -1137,10 +1207,10 @@ paths:
                   value:
                     code: 400
                     message: failed to bind data 
-                failed update request:
+                request not found:
                   value:
                     code: 400
-                    message: failed update request
+                    message: request not found
         '403':
           description: Response for forbidden update request (forbidden)
           content:
@@ -1153,25 +1223,178 @@ paths:
                 request status is not "Waiting Approval from Manager":
                   value:
                     code: 403
-                    message: update by manager only
+                    message: cannot approve/reject this request
+                request status is not "Waiting Approval from Admin":
+                  value:
+                    code: 403
+                    message: cannot approve/reject this request
+                login as employee:
+                  value:
+                    code: 403
+                    message: not allowed to update request status
         '500':
           description: Response for create request failed (internal server error)
           content:
             application/json:
               examples:
-                failed get request by id:
+                internal server error:
                   value:
                     code: 500
-                    message: failed get request by id
-                failed get division id user login:
+                    message: internal server error
+                admin try to update without manager:
                   value:
                     code: 500
-                    message: failed get division id user login
-                failed get division id user request:
+                    message: cannot reject request before forwarding to manager
+  /request/return/{request_id}:
+    put:
+      tags:
+        - Request
+      security:
+        - JWTAuth: []
+      summary: Update activity borrow request by Admin
+      parameters:
+        - in: path
+          name: request_id
+          schema:
+            type: integer
+          required: true
+          description: Numeric id of existing request
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              properties:
+                askingreturn:
+                  type: boolean
+              required:
+                - askingreturn
+            examples:
+              login as admin:
+                value:
+                  askingreturn: true
+        required: true
+      responses:
+        '200':
+          description: Response updating request successful
+          content:
+            application/json:
+              examples:
+                success update request:
+                  value:
+                    code: 200
+                    message: success asking return
+        '400':
+          description: Response Failed Update Request (bad request)
+          content:
+            application/json:
+              examples:
+                invalid request id:
+                  value:
+                    code: 400
+                    message: invalid request id
+                failed binding:
+                  value:
+                    code: 400
+                    message: failed to bind data 
+                request not found:
+                  value:
+                    code: 400
+                    message: request not found
+        '403':
+          description: Response for forbidden update request (forbidden)
+          content:
+            application/json:
+              examples:
+                askingreturn "false":
+                  value:
+                    code: 403
+                    message: you are not asking for a return
+                request status is not "Approved by Admin" and request activity not "Borrow":
+                  value:
+                    code: 403
+                    message: no need to apply for a return
+                login as not admin:
+                  value:
+                    code: 403
+                    message: not allowed to update request status
+        '500':
+          description: Response for create request failed (internal server error)
+          content:
+            application/json:
+              examples:
+                internal server error:
                   value:
                     code: 500
-                    message: failed get division id user request
+                    message: internal server error
+                admin try to update without manager:
+                  value:
+                    code: 500
+                    message: cannot reject request before forwarding to manager
   /request/procure/{request_id}:
+    get:
+      tags:
+        - Request
+      security:
+        - JWTAuth: []
+      summary: get procure request by id for admin and manager
+      parameters:
+        - in: path
+          name: request_id
+          schema:
+            type: integer
+          required: true
+          description: Numeric id of existing request
+      responses:
+        '200':
+          description: Response get request successful
+          content:
+            application/json:
+              examples:
+                success update request:
+                  value:
+                    code: 200
+                    data:
+                      id: 1
+                      User:
+                        id: 1
+                      category: Computer
+                      activity: Procure
+                      status: Waiting approval from Manager
+                      request_time: 2022-02-26T14:35:05Z
+                      image: https://capstone-group3.s3.ap-southeast-1.amazonaws.com/procure-6-1645748000.png
+                      description: ini deskripsi/alasan pengajuan
+                    message: success get request
+        '400':
+          description: Response Failed Get Request (bad request)
+          content:
+            application/json:
+              examples:
+                invalid request id:
+                  value:
+                    code: 400
+                    message: invalid request id
+                request not found:
+                  value:
+                    code: 400
+                    message: request not found 
+        '401':
+          description: Response Failed Get Request (unauthorized)
+          content:
+            application/json:
+              examples:
+                login as employee:
+                  value:
+                    code: 401
+                    message: You don't have permission
+        '500':
+          description: Response for get request failed (internal server error)
+          content:
+            application/json:
+              examples:
+                internal server error:
+                  value:
+                    code: 500
+                    message: internal server error
     put:
       tags:
         - Request
@@ -1190,14 +1413,14 @@ paths:
           'application/json':
             schema:
               properties:
-                status:
-                  type: string
+                approved:
+                  type: boolean
               required:
-                - status
+                - approved
             examples:
               login as manager:
                 value:
-                  status: "Approved by Manager"
+                  approved: true
         required: true
       responses:
         '200':
@@ -1234,32 +1457,295 @@ paths:
                 login as not manager:
                   value:
                     code: 403
-                    message: only manager can do approval
-                manager and user request got different division:
-                  value:
-                    code: 403
-                    message: you're not in the same division
+                    message: not allowed to update request status
                 request status is not "Waiting Approval from Manager":
                   value:
                     code: 403
-                    message: update by manager only
+                    message: cannot approve/reject this request
         '500':
           description: Response for create request failed (internal server error)
           content:
             application/json:
               examples:
-                failed get request by id:
+                internal server error:
                   value:
                     code: 500
-                    message: failed get request by id
-                failed get division id user login:
+                    message: internal server error
+  /request/admin:
+    get:
+      tags:
+        - Request
+      security:
+        - JWTAuth: []
+      summary: Get all request in admin page
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: string
+          required: false
+          description: Filter by request page
+        - in: query
+          name: record of page
+          schema:
+            type: string
+          required: false
+          description: Filter by request record of page
+        - in: query
+          name: date
+          schema:
+            type: string
+          required: false
+          description: Filter by request date
+        - in: query
+          name: category
+          schema:
+            type: string
+          required: false
+          description: Filter by request category
+      responses:
+        '200':
+          description: Response get all request successful
+          content:
+            application/json:
+              example:
+                code: 200
+                data:
+                - id: 1
+                  User:
+                    id: 1
+                    name: Chairul Tanjung
+                  asset:
+                    id: 1
+                    name: Dell Latitude 3420 (i7-1165G7, 8GB, 512GB)
+                    category: Computer
+                    image: https://capstone-group3.s3.ap-southeast-1.amazonaws.com/asset-6-1645748000.png
+                  activity: Borrow
+                  request_time: 2022-02-26T14:35:05Z
+                  return_time: 9999-12-31T23:59:59Z
+                  status: Waiting approval from Admin
+                  description: ini deskripsi/alasan peminjaman
+                - id: 2
+                  User:
+                    id: 1,
+                    name: Siska Kohl
+                  asset:
+                    id: 1,
+                    name: Dell Latitude 3420 (i7-1165G7, 8GB, 512GB)
+                    category: Computer
+                    image: https://capstone-group3.s3.ap-southeast-1.amazonaws.com/asset-6-1645748000.png
+                  activity: Return
+                  request_time: 2022-02-26T14:35:05Z
+                  return_time: 9999-12-31T23:59:59Z
+                  status: Waiting approval from Admin
+                  description: ini deskripsi/alasan peminjaman
+                message: success get all requests
+        '400':
+          description: Response Failed Get All Request (bad request)
+          content:
+            application/json:
+              examples:
+                error parsing page:
+                  value:
+                    code: 400
+                    message: error parsing page
+                error parsing record of page:
+                  value:
+                    code: 400
+                    message: error parsing record of page 
+                bad request:
+                  value:
+                    code: 400
+                    message: bad request
+        '500':
+          description: Response get all request failed (internal server error)
+          content:
+            application/json:
+              examples:
+                failed read data:
                   value:
                     code: 500
-                    message: failed get division id user login
-                failed get division id user request:
+                    message: failed to read data
+  /request/borrow/manager:
+    get:
+      tags:
+        - Request
+      security:
+        - JWTAuth: []
+      summary: Get all borrow/return request in manager page
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: string
+          required: false
+          description: Filter by request page
+        - in: query
+          name: record of page
+          schema:
+            type: string
+          required: false
+          description: Filter by request record of page
+        - in: query
+          name: date
+          schema:
+            type: string
+          required: false
+          description: Filter by request date
+        - in: query
+          name: category
+          schema:
+            type: string
+          required: false
+          description: Filter by request category
+      responses:
+        '200':
+          description: Response get all borrow/return request successful
+          content:
+            application/json:
+              example:
+                code: 200
+                data:
+                - id: 1
+                  User:
+                    id: 1,
+                    name: Chairul Tanjung
+                  asset:
+                    id: 1,
+                    name: Dell Latitude 3420 (i7-1165G7, 8GB, 512GB)
+                    category: Computer
+                    image: https://capstone-group3.s3.ap-southeast-1.amazonaws.com/asset-6-1645748000.png
+                  activity: Borrow
+                  request_time: 2022-02-26T14:35:05Z
+                  return_time: 9999-12-31T23:59:59Z
+                  status: Waiting approval from Admin
+                  description: ini deskripsi/alasan peminjaman
+                - id: 2
+                  User:
+                    id: 1,
+                    name: Siska Kohl
+                  asset:
+                    id: 1,
+                    name: Dell Latitude 3420 (i7-1165G7, 8GB, 512GB)
+                    category: Computer
+                    image: https://capstone-group3.s3.ap-southeast-1.amazonaws.com/asset-6-1645748000.png
+                  activity: Return
+                  request_time: 2022-02-26T14:35:05Z
+                  return_time: 9999-12-31T23:59:59Z
+                  status: Waiting approval from Admin
+                  description: ini deskripsi/alasan peminjaman
+                message: success get all requests
+        '400':
+          description: Response Failed Get All Borrow/Return Request (bad request)
+          content:
+            application/json:
+              examples:
+                error parsing page:
+                  value:
+                    code: 400
+                    message: error parsing page
+                error parsing record of page:
+                  value:
+                    code: 400
+                    message: error parsing record of page 
+                bad request:
+                  value:
+                    code: 400
+                    message: bad request
+        '500':
+          description: Response get all borrow/return request failed (internal server error)
+          content:
+            application/json:
+              examples:
+                failed read data:
                   value:
                     code: 500
-                    message: failed get division id user request
+                    message: failed to read data
+  /request/procure/manager:
+    get:
+      tags:
+        - Request
+      security:
+        - JWTAuth: []
+      summary: Get all procure request in manager page
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: string
+          required: false
+          description: Filter by request page
+        - in: query
+          name: record of page
+          schema:
+            type: string
+          required: false
+          description: Filter by request record of page
+        - in: query
+          name: date
+          schema:
+            type: string
+          required: false
+          description: Filter by request date
+        - in: query
+          name: category
+          schema:
+            type: string
+          required: false
+          description: Filter by request category
+      responses:
+        '200':
+          description: Response get all procure request successful
+          content:
+            application/json:
+              example:
+                code: 200
+                data:
+                - id: 1
+                  User:
+                    id: 1
+                  category: Computer
+                  activity: Procure
+                  status: Waiting approval from Manager
+                  request_time: 2022-02-26T14:35:05Z
+                  image: https://capstone-group3.s3.ap-southeast-1.amazonaws.com/procure-6-1645748000.png
+                  description: ini deskripsi/alasan pengajuan
+                - id: 2
+                  User:
+                    id: 2
+                  category: Computer
+                  activity: Procure
+                  status: Waiting approval from Manager
+                  request_time: 2022-02-26T14:35:05Z
+                  image: https://capstone-group3.s3.ap-southeast-1.amazonaws.com/procure-6-1645748000.png
+                  description: ini deskripsi/alasan pengajuan
+                message: success get all requests
+        '400':
+          description: Response Failed Get All procure Request (bad request)
+          content:
+            application/json:
+              examples:
+                error parsing page:
+                  value:
+                    code: 400
+                    message: error parsing page
+                error parsing record of page:
+                  value:
+                    code: 400
+                    message: error parsing record of page 
+                bad request:
+                  value:
+                    code: 400
+                    message: bad request
+        '500':
+          description: Response get all procure request failed (internal server error)
+          content:
+            application/json:
+              examples:
+                failed read data:
+                  value:
+                    code: 500
+                    message: failed to read data
   /histories/users/{user_id}:
     get:
       tags:

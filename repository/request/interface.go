@@ -13,6 +13,6 @@ type Request interface {
 	GetProcureById(id int) (req _entity.Procure, code int, err error)
 	UpdateProcure(reqData _entity.Procure) (req _entity.Procure, code int, err error)
 	UpdateBorrowByAdmin(reqData _entity.Borrow) (_entity.Borrow, error)
-	UpdateProcureByAdmin(reqData _entity.Procure) (_entity.Procure, error)
+	// UpdateProcureByAdmin(reqData _entity.Procure) (_entity.Procure, error)
 	ReturnAdmin(reqData _entity.Borrow) (updatedReq _entity.Borrow, code int, err error)
 }

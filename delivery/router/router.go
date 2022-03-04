@@ -33,6 +33,7 @@ func RegisterPath(
 	e.POST("/login", userController.Login())
 
 	// User
+	e.GET("/users", userController.GetAll(), _midware.JWTMiddleWare())
 	e.GET("/users/:id", userController.GetById(), _midware.JWTMiddleWare())
 	e.PUT("/users/:id", userController.Update(), _midware.JWTMiddleWare())
 
@@ -51,16 +52,18 @@ func RegisterPath(
 	// Request by Employee
 	e.POST("/requests/borrow", requestController.Borrow(), _midware.JWTMiddleWare())
 	e.POST("/requests/procure", requestController.Procure(), _midware.JWTMiddleWare())
+	e.GET("/requests/borrow/:id", requestController.GetBorrowById(), _midware.JWTMiddleWare())
+	e.GET("/requests/procure/:id", requestController.GetProcureById(), _midware.JWTMiddleWare())
 
 	// Update by Manager and Admin
 	e.PUT("/requests/borrow/:id", requestController.UpdateBorrow(), _midware.JWTMiddleWare())
 	e.PUT("/requests/procure/:id", requestController.UpdateProcure(), _midware.JWTMiddleWare())
-	e.PUT("/requests/admin/:id", requestController.AdminReturn(), _midware.JWTMiddleWare())
+	e.PUT("/requests/return/:id", requestController.AdminReturn(), _midware.JWTMiddleWare())
 
 	// Admin & Manager Page
 	e.GET("/requests/admin", adminController.AdminGetAll(), _midware.JWTMiddleWare())
-	e.GET("/requests/borrow/manager", adminController.ManagerGetAllBorrow(), _midware.JWTMiddleWare())
-	e.GET("/requests/procure/manager", adminController.ManagerGetAllProcure(), _midware.JWTMiddleWare())
+	e.GET("/requests/manager/borrow", adminController.ManagerGetAllBorrow(), _midware.JWTMiddleWare())
+	e.GET("/requests/manager/procure", adminController.ManagerGetAllProcure(), _midware.JWTMiddleWare())
 
 	// Activity
 	e.GET("/activities/:user_id", activityController.GetAllActivityOfUser(), _midware.JWTMiddleWare())

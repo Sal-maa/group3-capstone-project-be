@@ -95,6 +95,25 @@ func (uc UserController) Login() echo.HandlerFunc {
 	}
 }
 
+func (uc UserController) GetAll() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// check authorization
+		if _midware.ExtractRole(c) != "Administrator" {
+			return c.JSON(http.StatusUnauthorized, _common.NoDataResponse(http.StatusUnauthorized, "unauthorized"))
+		}
+
+		// calling repository
+		users, code, err := uc.repository.GetAll()
+
+		// detect failure in repository
+		if err != nil {
+			return c.JSON(code, _common.NoDataResponse(code, err.Error()))
+		}
+
+		return c.JSON(http.StatusOK, _common.GetAllUsersResponse(users))
+	}
+}
+
 func (uc UserController) GetById() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		id, err := strconv.Atoi(c.Param("id"))
@@ -102,6 +121,11 @@ func (uc UserController) GetById() echo.HandlerFunc {
 		// detect invalid parameter
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "invalid user id"))
+		}
+
+		// check authorization
+		if id != _midware.ExtractId(c) {
+			return c.JSON(http.StatusUnauthorized, _common.NoDataResponse(http.StatusUnauthorized, "unauthorized"))
 		}
 
 		// calling repository
@@ -232,6 +256,10 @@ func (uc UserController) Update() echo.HandlerFunc {
 			// check malicious character in input
 			if err := _helper.CheckStringInput(gender); err != nil {
 				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, gender+": "+err.Error()))
+			}
+
+			if gender != "Male" && gender != "Female" {
+				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "invalid input"))
 			}
 
 			updateUserData.Gender = gender

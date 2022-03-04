@@ -126,7 +126,7 @@ func (ac ActivityController) UpdateRequestStatus() echo.HandlerFunc {
 				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "request already cancelled"))
 			} else if updateActivityData.ActivityType == "Return" {
 				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "asset already in return process"))
-			} else if updateActivityData.Status != "Waiting Approval" && updateActivityData.Status != "Approved by Manager" {
+			} else if updateActivityData.Status != "Waiting approval" {
 				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "request cannot be cancelled"))
 			}
 

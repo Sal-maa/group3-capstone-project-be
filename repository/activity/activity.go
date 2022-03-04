@@ -29,9 +29,8 @@ func (ar ActivityRepository) GetAllActivityOfUser(user_id int) (activities []_en
 		JOIN assets a
 		ON b.asset_id = a.id
 		WHERE b.deleted_at IS NULL
-		  AND b.activity <> "Return"
-		  AND b.status <> "Approved by Admin"
 		  AND b.user_id = ?
+		ORDER BY b.updated_at DESC
 	`)
 
 	if err != nil {
@@ -61,13 +60,17 @@ func (ar ActivityRepository) GetAllActivityOfUser(user_id int) (activities []_en
 			return activities, code, err
 		}
 
-		activity.AssetImage = fmt.Sprintf("https://capstone-group3.s3.ap-southeast-1.amazonaws.com/%s", activity.AssetImage)
+		if activity.ActivityType == "Return" && activity.Status == "Approved by Admin" {
+			continue
+		} else {
+			activity.AssetImage = fmt.Sprintf("https://capstone-group3.s3.ap-southeast-1.amazonaws.com/%s", activity.AssetImage)
 
-		if activity.Status == "Waiting approval from Admin" || activity.Status == "Waiting approval from Manager" {
-			activity.Status = "Waiting approval"
+			if activity.Status == "Waiting approval from Admin" || activity.Status == "Waiting approval from Manager" {
+				activity.Status = "Waiting approval"
+			}
+
+			activities = append(activities, activity)
 		}
-
-		activities = append(activities, activity)
 	}
 
 	return activities, http.StatusOK, nil
@@ -75,7 +78,7 @@ func (ar ActivityRepository) GetAllActivityOfUser(user_id int) (activities []_en
 
 func (ar ActivityRepository) GetDetailActivityByRequestId(request_id int) (activity _entity.Activity, code int, err error) {
 	stmt, err := ar.db.Prepare(`
-		SELECT c.name, a.name, a.image, u.name, b.request_time, b.return_time, b.description, b.activity, b.status, b.short_name
+		SELECT c.name, a.name, a.image, u.name, b.request_time, b.return_time, b.description, b.activity, b.status, a.short_name
 		FROM borrowORreturn_requests b
 		JOIN assets a
 		ON b.asset_id = a.id
@@ -108,7 +111,7 @@ func (ar ActivityRepository) GetDetailActivityByRequestId(request_id int) (activ
 	short_name := ""
 
 	if res.Next() {
-		if err := res.Scan(&activity.Category, &activity.AssetName, &activity.AssetImage, &activity.UserName, &activity.RequestDate, &activity.ReturnDate, &activity.Description, &activity.ActivityType, &activity.Status, short_name); err != nil {
+		if err := res.Scan(&activity.Category, &activity.AssetName, &activity.AssetImage, &activity.UserName, &activity.RequestDate, &activity.ReturnDate, &activity.Description, &activity.ActivityType, &activity.Status, &short_name); err != nil {
 			log.Println(err)
 			code, err = http.StatusInternalServerError, errors.New("internal server error")
 			return activity, code, err
@@ -194,13 +197,22 @@ func (ar ActivityRepository) CancelRequest(request_id int) (code int, err error)
 		return http.StatusInternalServerError, errors.New("internal server error")
 	}
 
+	if code, err = ar.setAvailable(request_id); err != nil {
+		return code, err
+	}
+
+	if err != nil {
+		log.Println(err)
+		return http.StatusInternalServerError, errors.New("internal server error")
+	}
+
 	return http.StatusOK, nil
 }
 
 func (ar ActivityRepository) ReturnRequest(request_id int) (code int, err error) {
 	stmt, err := ar.db.Prepare(`
 		UPDATE borrowORreturn_requests
-		SET activity = 'Return', status = 'Waiting approval', return_time = CURRENT_TIMESTAMP
+		SET activity = 'Return', status = 'Waiting approval from Admin', return_time = CURRENT_TIMESTAMP
 		WHERE deleted_at IS NULL AND id = ?
 	`)
 
@@ -317,4 +329,66 @@ func (ar *ActivityRepository) getAssetStock(short_name string) (stock int, err e
 	}
 
 	return stock, nil
+}
+
+func (ar *ActivityRepository) setAvailable(request_id int) (code int, err error) {
+	stmt, err := ar.db.Prepare(`
+		SELECT asset_id
+		FROM borrowORreturn_requests
+		WHERE deleted_at IS NULL
+		  AND id = ?
+	`)
+
+	if err != nil {
+		log.Println(err)
+		code, err = http.StatusInternalServerError, errors.New("internal server error")
+		return code, err
+	}
+
+	defer stmt.Close()
+
+	res, err := stmt.Query(request_id)
+
+	if err != nil {
+		log.Println(err)
+		code, err = http.StatusInternalServerError, errors.New("internal server error")
+		return code, err
+	}
+
+	defer res.Close()
+
+	asset_id := 0
+
+	if res.Next() {
+		if err = res.Scan(&asset_id); err != nil {
+			log.Println(err)
+			code, err = http.StatusInternalServerError, errors.New("internal server error")
+			return code, err
+		}
+	}
+
+	stmt, err = ar.db.Prepare(`
+		UPDATE assets
+		SET status = 'Available', updated_at = CURRENT_TIMESTAMP
+		WHERE deleted_at IS NULL
+		  AND id = ?
+	`)
+
+	if err != nil {
+		log.Println(err)
+		code, err = http.StatusInternalServerError, errors.New("internal server error")
+		return code, err
+	}
+
+	defer stmt.Close()
+
+	_, err = stmt.Exec(asset_id)
+
+	if err != nil {
+		log.Println(err)
+		code, err = http.StatusInternalServerError, errors.New("internal server error")
+		return code, err
+	}
+
+	return http.StatusOK, nil
 }
