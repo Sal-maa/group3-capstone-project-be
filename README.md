@@ -18,6 +18,49 @@ See open API documentation [here](https://app.swaggerhub.com/apis-docs/bagusbpg6
 ![Docker](https://img.shields.io/badge/-Docker-05122A?style=flat&logo=docker)&nbsp;
 ![Ubuntu](https://img.shields.io/badge/-Ubuntu-05122A?style=flat&logo=ubuntu)&nbsp;
 
+## How to Run
+
+Clone the project
+
+```bash
+  git clone https://github.com/bagusbpg/group3-capstone-project-be.git
+```
+
+Go to the project directory
+
+```bash
+  cd group3-capstone-project-be
+```
+
+Install dependencie
+
+```bash
+  go mod tidy
+```
+
+Required .env file
+
+```
+PORT=
+JWT_SECRET=
+DB_DRIVER=mysql
+DB_HOST=
+DB_PORT=
+DB_USERNAME=
+DB_PASSWORD=
+DB_NAME=
+AWS_ACCESSKEYID=
+AWS_SECRETKEY=
+AWS_REGION=
+AWS_BUCKET=
+```
+
+Start the server
+
+```bash
+  go run app/main.go
+```
+
 <!-- CONTACT -->
 ### 📭 &nbsp;Contact
 
