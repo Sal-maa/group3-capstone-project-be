@@ -6,7 +6,6 @@ import (
 	_midware "capstone/be/delivery/middleware"
 	_entity "capstone/be/entity"
 	_userRepo "capstone/be/repository/user"
-	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -110,8 +109,6 @@ func (uc UserController) GetAll() echo.HandlerFunc {
 		if err != nil {
 			return c.JSON(code, _common.NoDataResponse(code, err.Error()))
 		}
-
-		fmt.Println(users)
 
 		return c.JSON(http.StatusOK, _common.GetAllUsersResponse(users))
 	}
@@ -259,6 +256,10 @@ func (uc UserController) Update() echo.HandlerFunc {
 			// check malicious character in input
 			if err := _helper.CheckStringInput(gender); err != nil {
 				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, gender+": "+err.Error()))
+			}
+
+			if gender != "Male" && gender != "Female" {
+				return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "invalid input"))
 			}
 
 			updateUserData.Gender = gender
