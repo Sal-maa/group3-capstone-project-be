@@ -591,7 +591,7 @@ func (ar *AdminRepository) countRecordAdminReturned() (total int, err error) {
 	stmt, err := ar.db.Prepare(`
 	SELECT COUNT(status) 
 	FROM borrowORreturn_requests
-	WHERE status = 'Approved by Admin' by Admin' AND activity = 'Return' 
+	WHERE status = 'Approved by Admin' AND activity = 'Return' 
 	`)
 
 	if err != nil {
