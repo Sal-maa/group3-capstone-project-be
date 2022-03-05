@@ -43,13 +43,15 @@ func (ar AssetRepository) Create(assetData _entity.Asset) (code int, err error) 
 	return http.StatusOK, nil
 }
 
-func (ar *AssetRepository) GetAll() (assets []_entity.AssetSimplified, code int, err error) {
+func (ar *AssetRepository) GetAll(category string, status string) (assets []_entity.AssetSimplified, code int, err error) {
 	stmt, err := ar.db.Prepare(`
 		SELECT DISTINCT c.name, a.name, a.short_name, a.image, a.description
 		FROM assets a
 		JOIN categories c
 		ON a.category_id = c.id
 		WHERE a.deleted_at IS NULL
+		  AND c.name LIKE ?
+		  AND a.status LIKE ?
 	`)
 
 	if err != nil {
@@ -60,62 +62,7 @@ func (ar *AssetRepository) GetAll() (assets []_entity.AssetSimplified, code int,
 
 	defer stmt.Close()
 
-	res, err := stmt.Query()
-
-	if err != nil {
-		log.Println(err)
-		code, err = http.StatusInternalServerError, errors.New("internal server error")
-		return assets, code, err
-	}
-
-	defer res.Close()
-
-	for res.Next() {
-		asset := _entity.AssetSimplified{}
-
-		if err := res.Scan(&asset.Category, &asset.Name, &asset.ShortName, &asset.Image, &asset.Description); err != nil {
-			log.Println(err)
-			code, err = http.StatusInternalServerError, errors.New("internal server error")
-			return assets, code, err
-		}
-
-		users, available, err := ar.getStatsByShortName(asset.ShortName)
-
-		if err != nil {
-			log.Println(err)
-			code, err = http.StatusInternalServerError, errors.New("internal server error")
-			return assets, code, err
-		}
-
-		asset.UserCount = users
-		asset.StockAvailable = available
-		asset.Image = fmt.Sprintf("https://capstone-group3.s3.ap-southeast-1.amazonaws.com/%s", asset.Image)
-
-		assets = append(assets, asset)
-	}
-
-	return assets, http.StatusOK, nil
-}
-
-func (ar *AssetRepository) GetAssetsByCategory(category_id int) (assets []_entity.AssetSimplified, code int, err error) {
-	stmt, err := ar.db.Prepare(`
-		SELECT DISTINCT c.name, a.name, a.short_name, a.image, a.description
-		FROM assets a
-		JOIN categories c
-		ON a.category_id = c.id
-		WHERE a.deleted_at IS NULL
-		  AND a.category_id = ?
-	`)
-
-	if err != nil {
-		log.Println(err)
-		code, err = http.StatusInternalServerError, errors.New("internal server error")
-		return assets, code, err
-	}
-
-	defer stmt.Close()
-
-	res, err := stmt.Query(category_id)
+	res, err := stmt.Query(category, status)
 
 	if err != nil {
 		log.Println(err)

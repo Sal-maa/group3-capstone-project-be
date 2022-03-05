@@ -163,9 +163,11 @@ func (hr *HistoryRepository) GetAllUsageHistoryOfAsset(short_name string) (asset
 		FROM borrowORreturn_requests b
 		JOIN users u
 		ON b.user_id = u.id
+		JOIN assets a
+		ON b.asset_id = a.id
 		WHERE b.deleted_at IS NULL
 		  AND b.status = 'Approved by Admin'
-		  AND b.short_name = ?
+		  AND a.short_name = ?
 	`)
 
 	if err != nil {

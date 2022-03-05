@@ -139,30 +139,36 @@ func (ac AssetController) Create() echo.HandlerFunc {
 func (ac AssetController) GetAll() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		// filter by category
-		category := strings.Title(strings.TrimSpace(c.QueryParam("category")))
+		category := strings.ToUpper(strings.TrimSpace(c.QueryParam("category")))
 
-		if category != "" {
-			// get category id via repository
-			id, code, err := ac.repository.GetCategoryId(category)
-
-			// detect failure in repository
-			if err != nil {
-				return c.JSON(code, _common.NoDataResponse(code, err.Error()))
-			}
-
-			// calling repository
-			assets, code, err := ac.repository.GetAssetsByCategory(id)
-
-			// detect failure in repository
-			if err != nil {
-				return c.JSON(code, _common.NoDataResponse(code, err.Error()))
-			}
-
-			return c.JSON(http.StatusOK, _common.GetAllAssetsResponse(assets))
+		if category == "" {
+			category = "ALL"
 		}
 
+		category_list := map[string]string{"ALL": "%%", "COMPUTER": "Computer", "COMPUTER-ACCESSORIES": "Computer Accessories", "NETWORKING": "Networking", "UPS": "UPS", "PRINTER-SCANNER": "Printer and Scanner", "ELECTRONICS": "Electronics", "OTHERS": "Others"}
+
+		if _, exist := category_list[category]; !exist {
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "category invalid"))
+		}
+
+		category = category_list[category]
+
+		status := strings.ToUpper(strings.TrimSpace(c.QueryParam("status")))
+
+		if status == "" {
+			status = "ALL"
+		}
+
+		status_list := map[string]string{"ALL": "%%", "AVAILABLE": "Available"}
+
+		if _, exist := status_list[status]; !exist {
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "status invalid"))
+		}
+
+		status = status_list[status]
+
 		// calling repository
-		assets, code, err := ac.repository.GetAll()
+		assets, code, err := ac.repository.GetAll(category, status)
 
 		// detect failure in repository
 		if err != nil {
