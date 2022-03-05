@@ -914,7 +914,7 @@ paths:
                       activity: Borrow
                       status: Cancelled
                     message: success cancel request
-  /request/borrow:
+  /requests/borrow:
     post:
       tags:
         - Request
@@ -1003,7 +1003,7 @@ paths:
                   value:
                     code: 500
                     message: internal server error            
-  /request/procure:
+  /requests/procure:
     post:
       tags:
         - Request
@@ -1084,7 +1084,7 @@ paths:
                   value:
                     code: 500
                     message: internal server error
-  /request/borrow/{request_id}:
+  /requests/borrow/{request_id}:
     get:
       tags:
         - Request
@@ -1245,7 +1245,7 @@ paths:
                   value:
                     code: 500
                     message: cannot reject request before forwarding to manager
-  /request/return/{request_id}:
+  /requests/return/{request_id}:
     put:
       tags:
         - Request
@@ -1330,7 +1330,7 @@ paths:
                   value:
                     code: 500
                     message: cannot reject request before forwarding to manager
-  /request/procure/{request_id}:
+  /requests/procure/{request_id}:
     get:
       tags:
         - Request
@@ -1471,7 +1471,7 @@ paths:
                   value:
                     code: 500
                     message: internal server error
-  /request/admin:
+  /requests/admin:
     get:
       tags:
         - Request
@@ -1480,29 +1480,35 @@ paths:
       summary: Get all request in admin page
       parameters:
         - in: query
-          name: page
+          name: p
           schema:
             type: string
           required: false
           description: Filter by request page
         - in: query
-          name: record of page
+          name: rp
           schema:
             type: string
           required: false
           description: Filter by request record of page
         - in: query
-          name: date
+          name: d
           schema:
             type: string
           required: false
           description: Filter by request date
         - in: query
-          name: category
+          name: c
           schema:
             type: string
           required: false
           description: Filter by request category
+        - in: query
+          name: o
+          schema:
+            type: string
+          required: false
+          description: Filter by request order (recent/old)
       responses:
         '200':
           description: Response get all request successful
@@ -1566,7 +1572,7 @@ paths:
                   value:
                     code: 500
                     message: failed to read data
-  /request/borrow/manager:
+  /requests/borrow/manager:
     get:
       tags:
         - Request
@@ -1575,29 +1581,35 @@ paths:
       summary: Get all borrow/return request in manager page
       parameters:
         - in: query
-          name: page
+          name: p
           schema:
             type: string
           required: false
           description: Filter by request page
         - in: query
-          name: record of page
+          name: rp
           schema:
             type: string
           required: false
           description: Filter by request record of page
         - in: query
-          name: date
+          name: d
           schema:
             type: string
           required: false
           description: Filter by request date
         - in: query
-          name: category
+          name: c
           schema:
             type: string
           required: false
           description: Filter by request category
+        - in: query
+          name: o
+          schema:
+            type: string
+          required: false
+          description: Filter by request order (recent/old)
       responses:
         '200':
           description: Response get all borrow/return request successful
@@ -1661,7 +1673,7 @@ paths:
                   value:
                     code: 500
                     message: failed to read data
-  /request/procure/manager:
+  /requests/procure/manager:
     get:
       tags:
         - Request
@@ -1670,29 +1682,35 @@ paths:
       summary: Get all procure request in manager page
       parameters:
         - in: query
-          name: page
+          name: p
           schema:
             type: string
           required: false
           description: Filter by request page
         - in: query
-          name: record of page
+          name: rp
           schema:
             type: string
           required: false
           description: Filter by request record of page
         - in: query
-          name: date
+          name: d
           schema:
             type: string
           required: false
           description: Filter by request date
         - in: query
-          name: category
+          name: c
           schema:
             type: string
           required: false
           description: Filter by request category
+        - in: query
+          name: o
+          schema:
+            type: string
+          required: false
+          description: Filter by request order (recent/old)
       responses:
         '200':
           description: Response get all procure request successful
