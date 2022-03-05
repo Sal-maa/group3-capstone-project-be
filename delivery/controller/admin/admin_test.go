@@ -17,7 +17,7 @@ import (
 
 type mockRepoSuccess struct{}
 
-func (m mockRepoSuccess) GetAllAdminWaitingApproval(limit, offset int, category, date string) (requests []_entity.RequestResponse, total int, err error) {
+func (m mockRepoSuccess) GetAllAdminWaitingApproval(limit, offset int, category, date, order string) (requests []_entity.RequestResponse, total int, err error) {
 	return []_entity.RequestResponse{
 		{
 			Id: 1,
@@ -41,7 +41,7 @@ func (m mockRepoSuccess) GetAllAdminWaitingApproval(limit, offset int, category,
 	}, 1, nil
 }
 
-func (m mockRepoSuccess) GetAllAdminReturned(limit, offset int, category, date string) (requests []_entity.RequestResponse, total int, err error) {
+func (m mockRepoSuccess) GetAllAdminReturned(limit, offset int, category, date, order string) (requests []_entity.RequestResponse, total int, err error) {
 	return []_entity.RequestResponse{
 		{
 			Id: 1,
@@ -65,7 +65,7 @@ func (m mockRepoSuccess) GetAllAdminReturned(limit, offset int, category, date s
 	}, 1, nil
 }
 
-func (m mockRepoSuccess) GetAllAdmin(limit, offset int, status, category, date string) (requests []_entity.RequestResponse, total int, err error) {
+func (m mockRepoSuccess) GetAllAdmin(limit, offset int, status, category, date, order string) (requests []_entity.RequestResponse, total int, err error) {
 	return []_entity.RequestResponse{
 		{
 			Id: 1,
@@ -89,7 +89,7 @@ func (m mockRepoSuccess) GetAllAdmin(limit, offset int, status, category, date s
 	}, 1, nil
 }
 
-func (m mockRepoSuccess) GetAllManagerReturned(divLogin, limit, offset int, category, date string) (requests []_entity.RequestResponse, total int, err error) {
+func (m mockRepoSuccess) GetAllManagerReturned(divLogin, limit, offset int, category, date, order string) (requests []_entity.RequestResponse, total int, err error) {
 	return []_entity.RequestResponse{
 		{
 			Id: 1,
@@ -113,7 +113,7 @@ func (m mockRepoSuccess) GetAllManagerReturned(divLogin, limit, offset int, cate
 	}, 1, nil
 }
 
-func (m mockRepoSuccess) GetAllManager(divLogin, limit, offset int, status, category, date string) (requests []_entity.RequestResponse, total int, err error) {
+func (m mockRepoSuccess) GetAllManager(divLogin, limit, offset int, status, category, date, order string) (requests []_entity.RequestResponse, total int, err error) {
 	return []_entity.RequestResponse{
 		{
 			Id: 1,
@@ -137,7 +137,7 @@ func (m mockRepoSuccess) GetAllManager(divLogin, limit, offset int, status, cate
 	}, 1, nil
 }
 
-func (m mockRepoSuccess) GetAllProcureManager(limit, offset int, status, category, date string) (requests []_entity.Procure, total int, err error) {
+func (m mockRepoSuccess) GetAllProcureManager(limit, offset int, status, category, date, order string) (requests []_entity.Procure, total int, err error) {
 	return []_entity.Procure{
 		{
 			Id: 1,
@@ -772,6 +772,35 @@ func TestQueryParamAdminGetAll(t *testing.T) {
 
 		assert.Equal(t, expected, actual)
 	})
+	t.Run("TestOrderAdminGetAllFailed", func(t *testing.T) {
+		token, _, _ := _midware.CreateToken(1, "Administrator")
+
+		request := httptest.NewRequest(http.MethodGet, "/?o=uhuy", nil)
+		request.Header.Set("Content-Type", "application/json")
+		request.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", token))
+		request.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+
+		response := httptest.NewRecorder()
+
+		e := echo.New()
+
+		context := e.NewContext(request, response)
+		context.SetPath("/requests/admin")
+		context.QueryParam("o")
+		adminController := New(mockRepoSuccess{})
+		_midware.JWTMiddleWare()(adminController.AdminGetAll())(context)
+
+		actual := map[string]interface{}{}
+		body := response.Body.String()
+		json.Unmarshal([]byte(body), &actual)
+
+		expected := map[string]interface{}{
+			"code":    float64(http.StatusBadRequest),
+			"message": "Bad request",
+		}
+
+		assert.Equal(t, expected, actual)
+	})
 }
 
 func TestQueryParamGetAllProcure(t *testing.T) {
@@ -880,6 +909,36 @@ func TestQueryParamGetAllProcure(t *testing.T) {
 		context := e.NewContext(request, response)
 		context.SetPath("/requests/manager/procure")
 		context.QueryParam("c")
+
+		adminController := New(mockRepoSuccess{})
+		_midware.JWTMiddleWare()(adminController.ManagerGetAllProcure())(context)
+
+		actual := map[string]interface{}{}
+		body := response.Body.String()
+		json.Unmarshal([]byte(body), &actual)
+
+		expected := map[string]interface{}{
+			"code":    float64(http.StatusBadRequest),
+			"message": "Bad request",
+		}
+
+		assert.Equal(t, expected, actual)
+	})
+	t.Run("TestOrderGetAllProcureFailed", func(t *testing.T) {
+		token, _, _ := _midware.CreateToken(1, "Manager")
+
+		request := httptest.NewRequest(http.MethodGet, "/?o=uhuy", nil)
+		request.Header.Set("Content-Type", "application/json")
+		request.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", token))
+		request.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+
+		response := httptest.NewRecorder()
+
+		e := echo.New()
+
+		context := e.NewContext(request, response)
+		context.SetPath("/requests/manager/procure")
+		context.QueryParam("o")
 
 		adminController := New(mockRepoSuccess{})
 		_midware.JWTMiddleWare()(adminController.ManagerGetAllProcure())(context)
@@ -1014,31 +1073,60 @@ func TestQueryParamGetAllBorrow(t *testing.T) {
 
 		assert.Equal(t, expected, actual)
 	})
+	t.Run("TestOrderGetAllBorrowFailed", func(t *testing.T) {
+		token, _, _ := _midware.CreateToken(1, "Manager")
+
+		request := httptest.NewRequest(http.MethodGet, "/?o=uhuy", nil)
+		request.Header.Set("Content-Type", "application/json")
+		request.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", token))
+		request.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+
+		response := httptest.NewRecorder()
+
+		e := echo.New()
+
+		context := e.NewContext(request, response)
+		context.SetPath("/requests/manager/borrow")
+		context.QueryParam("o")
+		adminController := New(mockRepoSuccess{})
+		_midware.JWTMiddleWare()(adminController.ManagerGetAllBorrow())(context)
+
+		actual := map[string]interface{}{}
+		body := response.Body.String()
+		json.Unmarshal([]byte(body), &actual)
+
+		expected := map[string]interface{}{
+			"code":    float64(http.StatusBadRequest),
+			"message": "Bad request",
+		}
+
+		assert.Equal(t, expected, actual)
+	})
 }
 
 // failed because of Repo
 type mockRepoFail struct{}
 
-func (m mockRepoFail) GetAllAdminWaitingApproval(limit, offset int, category, date string) (requests []_entity.RequestResponse, total int, err error) {
+func (m mockRepoFail) GetAllAdminWaitingApproval(limit, offset int, category, date, order string) (requests []_entity.RequestResponse, total int, err error) {
 	return []_entity.RequestResponse{}, 0, errors.New("Failed to read data")
 }
 
-func (m mockRepoFail) GetAllAdminReturned(limit, offset int, category, date string) (requests []_entity.RequestResponse, total int, err error) {
+func (m mockRepoFail) GetAllAdminReturned(limit, offset int, category, date, order string) (requests []_entity.RequestResponse, total int, err error) {
 	return []_entity.RequestResponse{}, 0, errors.New("Failed to read data")
 }
 
-func (m mockRepoFail) GetAllAdmin(limit, offset int, status, category, date string) (requests []_entity.RequestResponse, total int, err error) {
+func (m mockRepoFail) GetAllAdmin(limit, offset int, status, category, date, order string) (requests []_entity.RequestResponse, total int, err error) {
 	return []_entity.RequestResponse{}, 0, errors.New("Failed to read data")
 }
 
-func (m mockRepoFail) GetAllManagerReturned(divLogin, limit, offset int, category, date string) (requests []_entity.RequestResponse, total int, err error) {
+func (m mockRepoFail) GetAllManagerReturned(divLogin, limit, offset int, category, date, order string) (requests []_entity.RequestResponse, total int, err error) {
 	return []_entity.RequestResponse{}, 0, errors.New("Failed to read data")
 }
-func (m mockRepoFail) GetAllManager(divLogin, limit, offset int, status, category, date string) (requests []_entity.RequestResponse, total int, err error) {
+func (m mockRepoFail) GetAllManager(divLogin, limit, offset int, status, category, date, order string) (requests []_entity.RequestResponse, total int, err error) {
 	return []_entity.RequestResponse{}, 0, errors.New("Failed to read data")
 }
 
-func (m mockRepoFail) GetAllProcureManager(limit, offset int, status, category, date string) (requests []_entity.Procure, total int, err error) {
+func (m mockRepoFail) GetAllProcureManager(limit, offset int, status, category, date, order string) (requests []_entity.Procure, total int, err error) {
 	return []_entity.Procure{}, 0, errors.New("Failed to read data")
 }
 
