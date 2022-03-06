@@ -4,6 +4,7 @@ import (
 	_entity "capstone/be/entity"
 	"database/sql"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 )
@@ -241,7 +242,7 @@ func (ar *AdminRepository) GetAllAdmin(limit, offset int, activity, status, cate
 		requests = append(requests, request)
 	}
 
-	total, err = ar.countRecordBorrow(activity, status, category)
+	total, err = ar.countRecordBorrow("(1,2,3,4,5)", activity, status, category)
 	if err != nil {
 		return requests, total, err
 	}
@@ -321,7 +322,7 @@ func (ar *AdminRepository) GetAllManager(divLogin, limit, offset int, status, ca
 
 		requests = append(requests, request)
 	}
-	total, err = ar.countRecordBorrow("Borrow", status, category)
+	total, err = ar.countRecordBorrow(fmt.Sprintf("(%d)", divLogin), "Borrow", status, category)
 	if err != nil {
 		return requests, total, err
 	}
@@ -521,7 +522,7 @@ func (rr *AdminRepository) GetUserDivision(id int) (divId int, code int, err err
 	return divId, http.StatusOK, nil
 }
 
-func (ar *AdminRepository) countRecordBorrow(activity, status, category string) (total int, err error) {
+func (ar *AdminRepository) countRecordBorrow(division, activity, status, category string) (total int, err error) {
 	stmt, err := ar.db.Prepare(`
 	SELECT COUNT(b.id) 
 	FROM borrowORreturn_requests b
@@ -529,9 +530,12 @@ func (ar *AdminRepository) countRecordBorrow(activity, status, category string) 
 	ON b.asset_id = a.id
 	JOIN categories c
 	ON a.category_id = c.id
+	JOIN users u
+	ON b.user_id = u.id
 	WHERE b.activity LIKE ?
 	  AND b.status LIKE ?
 	  AND c.name LIKE ?
+	  AND u.division_id IN ?
 	`)
 
 	if err != nil {
@@ -541,7 +545,7 @@ func (ar *AdminRepository) countRecordBorrow(activity, status, category string) 
 
 	defer stmt.Close()
 
-	res, err := stmt.Query(activity, status, "%"+category+"%")
+	res, err := stmt.Query(division, activity, status, "%"+category+"%", division)
 
 	if err != nil {
 		log.Println(err)
