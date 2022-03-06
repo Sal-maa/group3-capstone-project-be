@@ -23,7 +23,7 @@ func New(admin _adminRepo.Admin) *AdminController {
 	return &AdminController{adminRepository: admin}
 }
 
-func (ac AdminController) AdminGetAll() echo.HandlerFunc {
+func (ac AdminController) AdminGetAllBorrow() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		role := _midware.ExtractRole(c)
 		if role != "Administrator" {
@@ -65,11 +65,6 @@ func (ac AdminController) AdminGetAll() echo.HandlerFunc {
 			status = "ALL"
 		}
 
-		// to prevent sql injection
-		if strings.ContainsAny(status, ";") {
-			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request"))
-		}
-
 		allstatus := map[string]string{"ALL": "all", "WAITING-APPROVAL": "Waiting Approval", "APPROVED": "Approved", "REJECTED": "Rejected", "RETURNED": "Returned"}
 
 		if _, exist := allstatus[status]; !exist {
@@ -77,16 +72,25 @@ func (ac AdminController) AdminGetAll() echo.HandlerFunc {
 		}
 
 		status = allstatus[status]
+
+		activity := strings.ToUpper(c.QueryParam("a"))
+		// default value for activity
+		if activity == "" {
+			activity = "BORROW"
+		}
+
+		allactivity := map[string]string{"BORROW": "Borrow", "RETURN": "Return"}
+
+		if _, exist := allactivity[activity]; !exist {
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request"))
+		}
+
+		activity = allactivity[activity]
 		// filter by date
 		date := c.QueryParam("d")
 
 		// filter by category
 		category := strings.ToUpper(c.QueryParam("c"))
-
-		// to prevent sql injection
-		if strings.ContainsAny(category, ";") {
-			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request"))
-		}
 
 		// default value for category
 		if category == "" {
@@ -100,23 +104,37 @@ func (ac AdminController) AdminGetAll() echo.HandlerFunc {
 		}
 		category = categories[category]
 
+		order := strings.ToUpper(c.QueryParam("o"))
+
+		// default value for order
+		if order == "" {
+			order = "RECENT"
+		}
+
+		orders := map[string]string{"RECENT": "DESC", "OLD": "ASC"}
+
+		if _, exist := orders[order]; !exist {
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request"))
+		}
+		order = orders[order]
+
 		var requests []_entity.RequestResponse
 		var total int
 
 		if status == "Waiting Approval" {
-			requests, total, err = ac.adminRepository.GetAllAdminWaitingApproval(limit, offset, category, date)
+			requests, total, err = ac.adminRepository.GetAllAdminWaitingApproval(limit, offset, category, date, order)
 			if err != nil {
 				log.Println(err)
 				return c.JSON(http.StatusInternalServerError, _common.NoDataResponse(http.StatusInternalServerError, "Failed to read data"))
 			}
 		} else if status == "Returned" {
-			requests, total, err = ac.adminRepository.GetAllAdminReturned(limit, offset, category, date)
+			requests, total, err = ac.adminRepository.GetAllAdminReturned(limit, offset, category, date, order)
 			if err != nil {
 				log.Println(err)
 				return c.JSON(http.StatusInternalServerError, _common.NoDataResponse(http.StatusInternalServerError, "Failed to read data"))
 			}
 		} else {
-			requests, total, err = ac.adminRepository.GetAllAdmin(limit, offset, status, category, date)
+			requests, total, err = ac.adminRepository.GetAllAdmin(limit, offset, activity, status, category, date, order)
 			if err != nil {
 				log.Println(err)
 				return c.JSON(http.StatusInternalServerError, _common.NoDataResponse(http.StatusInternalServerError, "Failed to read data"))
@@ -174,11 +192,6 @@ func (ac AdminController) ManagerGetAllBorrow() echo.HandlerFunc {
 			status = "ALL"
 		}
 
-		// to prevent sql injection
-		if strings.ContainsAny(status, ";") {
-			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request"))
-		}
-
 		allstatus := map[string]string{"ALL": "all", "WAITING-APPROVAL": "Waiting Approval", "APPROVED": "Approved", "REJECTED": "Rejected", "RETURNED": "Returned"}
 
 		if _, exist := allstatus[status]; !exist {
@@ -192,11 +205,6 @@ func (ac AdminController) ManagerGetAllBorrow() echo.HandlerFunc {
 		// filter by category
 		category := strings.ToUpper(c.QueryParam("c"))
 
-		// to prevent sql injection
-		if strings.ContainsAny(category, ";") {
-			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request"))
-		}
-
 		// default value for category
 		if category == "" {
 			category = "ALL"
@@ -209,29 +217,44 @@ func (ac AdminController) ManagerGetAllBorrow() echo.HandlerFunc {
 		}
 		category = categories[category]
 
+		order := strings.ToUpper(c.QueryParam("o"))
+
+		// default value for order
+		if order == "" {
+			order = "RECENT"
+		}
+
+		orders := map[string]string{"RECENT": "DESC", "OLD": "ASC"}
+
+		if _, exist := orders[order]; !exist {
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request"))
+		}
+		order = orders[order]
+
 		var requests []_entity.RequestResponse
 		var total int
 		if status == "Returned" {
-			requests, total, err = ac.adminRepository.GetAllManagerReturned(divLogin, limit, offset, category, date)
+			requests, total, err = ac.adminRepository.GetAllManagerReturned(divLogin, limit, offset, category, date, order)
 			if err != nil {
 				log.Println(err)
 				return c.JSON(http.StatusInternalServerError, _common.NoDataResponse(http.StatusInternalServerError, "Failed to read data"))
 			}
-		}
-		requests, total, err = ac.adminRepository.GetAllManager(divLogin, limit, offset, status, category, date)
-		if err != nil {
-			log.Println(err)
-			return c.JSON(http.StatusInternalServerError, _common.NoDataResponse(http.StatusInternalServerError, "Failed to read data"))
+		} else {
+			requests, total, err = ac.adminRepository.GetAllManager(divLogin, limit, offset, status, category, date, order)
+			if err != nil {
+				log.Println(err)
+				return c.JSON(http.StatusInternalServerError, _common.NoDataResponse(http.StatusInternalServerError, "Failed to read data"))
+			}
 		}
 
 		return c.JSON(http.StatusOK, _common.GetAllRequestResponse(requests, total))
 	}
 }
 
-func (ac AdminController) ManagerGetAllProcure() echo.HandlerFunc {
+func (ac AdminController) GetAllProcure() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		role := _midware.ExtractRole(c)
-		if role != "Manager" {
+		if role == "Employee" {
 			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "You don't have permission"))
 		}
 
@@ -269,11 +292,6 @@ func (ac AdminController) ManagerGetAllProcure() echo.HandlerFunc {
 			status = "ALL"
 		}
 
-		// to prevent sql injection
-		if strings.ContainsAny(status, ";") {
-			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request"))
-		}
-
 		allstatus := map[string]string{"ALL": "all", "WAITING-APPROVAL": "Waiting Approval", "APPROVED": "Approved", "REJECTED": "Rejected", "REQUEST-TO-RETURN": "Request to Return"}
 
 		if _, exist := allstatus[status]; !exist {
@@ -287,11 +305,6 @@ func (ac AdminController) ManagerGetAllProcure() echo.HandlerFunc {
 		// filter by category
 		category := strings.ToUpper(c.QueryParam("c"))
 
-		// to prevent sql injection
-		if strings.ContainsAny(category, ";") {
-			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request"))
-		}
-
 		// default value for category
 		if category == "" {
 			category = "ALL"
@@ -304,7 +317,21 @@ func (ac AdminController) ManagerGetAllProcure() echo.HandlerFunc {
 		}
 		category = categories[category]
 
-		requests, total, err := ac.adminRepository.GetAllProcureManager(limit, offset, status, category, date)
+		order := strings.ToUpper(c.QueryParam("o"))
+
+		// default value for order
+		if order == "" {
+			order = "RECENT"
+		}
+
+		orders := map[string]string{"RECENT": "DESC", "OLD": "ASC"}
+
+		if _, exist := orders[order]; !exist {
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request"))
+		}
+		order = orders[order]
+
+		requests, total, err := ac.adminRepository.GetAllProcure(limit, offset, status, category, date, order)
 		if err != nil {
 			log.Println(err)
 			return c.JSON(http.StatusInternalServerError, _common.NoDataResponse(http.StatusInternalServerError, "Failed to read data"))

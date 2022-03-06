@@ -21,21 +21,7 @@ func (m mockRepoSuccess) Create(_entity.Asset) (int, error) {
 	return http.StatusOK, nil
 }
 
-func (m mockRepoSuccess) GetAll() ([]_entity.AssetSimplified, int, error) {
-	return []_entity.AssetSimplified{
-		{
-			Category:       "Computer",
-			Name:           "Dell Latitude 3420 (i7-1165G7, 8GB, 512GB)",
-			Image:          "https://capstone-group3.s3.ap-southeast-1.amazonaws.com/asset-6-1645748000.png",
-			ShortName:      "asset-1645748000",
-			Description:    "Processor : Intel Core i7-1165G7, RAM : 8GB DDR4, SSD : 512GB, VGA : Intel Iris Xe Graphics, Konektivitas : Wifi + Bluetooth, Ukuran Layar : 14 Inch FHD, Sistem Operasi : Windows 10 Home",
-			UserCount:      4,
-			StockAvailable: 20,
-		},
-	}, http.StatusOK, nil
-}
-
-func (m mockRepoSuccess) GetAssetsByCategory(int) ([]_entity.AssetSimplified, int, error) {
+func (m mockRepoSuccess) GetAll(category string, status string) ([]_entity.AssetSimplified, int, error) {
 	return []_entity.AssetSimplified{
 		{
 			Category:       "Computer",
@@ -574,11 +560,7 @@ func (m mockRepoFail) Create(_entity.Asset) (int, error) {
 	return http.StatusInternalServerError, errors.New("internal server error")
 }
 
-func (m mockRepoFail) GetAll() ([]_entity.AssetSimplified, int, error) {
-	return []_entity.AssetSimplified{}, http.StatusInternalServerError, errors.New("internal server error")
-}
-
-func (m mockRepoFail) GetAssetsByCategory(int) ([]_entity.AssetSimplified, int, error) {
+func (m mockRepoFail) GetAll(category string, status string) ([]_entity.AssetSimplified, int, error) {
 	return []_entity.AssetSimplified{}, http.StatusInternalServerError, errors.New("internal server error")
 }
 

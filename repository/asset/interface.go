@@ -6,8 +6,7 @@ import (
 
 type Asset interface {
 	Create(assetData _entity.Asset) (code int, err error)
-	GetAll() (assets []_entity.AssetSimplified, code int, err error)
-	GetAssetsByCategory(category_id int) (assets []_entity.AssetSimplified, code int, err error)
+	GetAll(category string, status string) (assets []_entity.AssetSimplified, code int, err error)
 	GetByShortName(short_name string) (total int, maintenance int, asset _entity.AssetSimplified, code int, err error)
 	SetMaintenance(short_name string) (code int, err error)
 	SetAvailable(short_name string) (code int, err error)

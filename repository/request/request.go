@@ -417,7 +417,7 @@ func (rr *RequestRepository) UpdateBorrow(reqData _entity.Borrow) (updatedReq _e
 
 	defer stmt.Close()
 
-	_, err = stmt.Exec(reqData.Status, reqData.RequestTime, reqData.Id)
+	_, err = stmt.Exec(reqData.Status, reqData.ReturnTime, reqData.Id)
 
 	if err != nil {
 		log.Println(err)

@@ -61,9 +61,10 @@ func RegisterPath(
 	e.PUT("/requests/return/:id", requestController.AdminReturn(), _midware.JWTMiddleWare())
 
 	// Admin & Manager Page
-	e.GET("/requests/admin", adminController.AdminGetAll(), _midware.JWTMiddleWare())
+	e.GET("/requests/admin/borrow", adminController.AdminGetAllBorrow(), _midware.JWTMiddleWare())
+	e.GET("/requests/admin/procure", adminController.GetAllProcure(), _midware.JWTMiddleWare())
 	e.GET("/requests/manager/borrow", adminController.ManagerGetAllBorrow(), _midware.JWTMiddleWare())
-	e.GET("/requests/manager/procure", adminController.ManagerGetAllProcure(), _midware.JWTMiddleWare())
+	e.GET("/requests/manager/procure", adminController.GetAllProcure(), _midware.JWTMiddleWare())
 
 	// Activity
 	e.GET("/activities/:user_id", activityController.GetAllActivityOfUser(), _midware.JWTMiddleWare())

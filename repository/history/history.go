@@ -81,7 +81,7 @@ func (hr *HistoryRepository) GetAllRequestHistoryOfUser(user_id int, page int) (
 
 func (hr *HistoryRepository) GetDetailRequestHistoryByRequestId(request_id int) (history _entity.UserRequestHistory, code int, err error) {
 	stmt, err := hr.db.Prepare(`
-		SELECT c.name, a.name, a.image, u.name, b.request_time, b.return_time, b.description, b.short_name
+		SELECT c.name, a.name, a.short_name, a.image, u.name, b.request_time, b.return_time, b.description
 		FROM borrowORreturn_requests b
 		JOIN assets a
 		ON b.asset_id = a.id
@@ -113,10 +113,8 @@ func (hr *HistoryRepository) GetDetailRequestHistoryByRequestId(request_id int) 
 
 	defer res.Close()
 
-	short_name := ""
-
 	if res.Next() {
-		if err := res.Scan(&history.Category, &history.AssetName, &history.AssetImage, &history.UserName, &history.RequestDate, &history.ReturnDate, &history.Description, &short_name); err != nil {
+		if err := res.Scan(&history.Category, &history.AssetName, &history.AssetShortName, &history.AssetImage, &history.UserName, &history.RequestDate, &history.ReturnDate, &history.Description); err != nil {
 			log.Println(err)
 			code, err = http.StatusInternalServerError, errors.New("internal server error")
 			return history, code, err
@@ -133,7 +131,7 @@ func (hr *HistoryRepository) GetDetailRequestHistoryByRequestId(request_id int) 
 	history.AssetImage = fmt.Sprintf("https://capstone-group3.s3.ap-southeast-1.amazonaws.com/%s", history.AssetImage)
 	history.Status = "Successfully returned"
 
-	stock, err := hr.getAssetStock(short_name)
+	stock, err := hr.getAssetStock(history.AssetShortName)
 
 	if err != nil {
 		log.Println(err)
@@ -163,9 +161,11 @@ func (hr *HistoryRepository) GetAllUsageHistoryOfAsset(short_name string) (asset
 		FROM borrowORreturn_requests b
 		JOIN users u
 		ON b.user_id = u.id
+		JOIN assets a
+		ON b.asset_id = a.id
 		WHERE b.deleted_at IS NULL
 		  AND b.status = 'Approved by Admin'
-		  AND b.asset_id = ?
+		  AND a.short_name = ?
 	`)
 
 	if err != nil {
