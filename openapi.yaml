@@ -1471,13 +1471,13 @@ paths:
                   value:
                     code: 500
                     message: internal server error
-  /requests/admin:
+  /requests/admin/borrow:
     get:
       tags:
         - Request
       security:
         - JWTAuth: []
-      summary: Get all request in admin page
+      summary: Get all borrow request in admin page
       parameters:
         - in: query
           name: p
@@ -1572,7 +1572,98 @@ paths:
                   value:
                     code: 500
                     message: failed to read data
-  /requests/borrow/manager:
+  /requests/admin/procure:
+    get:
+      tags:
+        - Request
+      security:
+        - JWTAuth: []
+      summary: Get all procure request in admin page
+      parameters:
+        - in: query
+          name: p
+          schema:
+            type: string
+          required: false
+          description: Filter by request page
+        - in: query
+          name: rp
+          schema:
+            type: string
+          required: false
+          description: Filter by request record of page
+        - in: query
+          name: d
+          schema:
+            type: string
+          required: false
+          description: Filter by request date
+        - in: query
+          name: c
+          schema:
+            type: string
+          required: false
+          description: Filter by request category
+        - in: query
+          name: o
+          schema:
+            type: string
+          required: false
+          description: Filter by request order (recent/old)
+      responses:
+        '200':
+          description: Response get all procure request successful
+          content:
+            application/json:
+              example:
+                code: 200
+                data:
+                - id: 1
+                  User:
+                    id: 1
+                  category: Computer
+                  activity: Procure
+                  status: Waiting approval from Manager
+                  request_time: 2022-02-26T14:35:05Z
+                  image: https://capstone-group3.s3.ap-southeast-1.amazonaws.com/procure-6-1645748000.png
+                  description: ini deskripsi/alasan pengajuan
+                - id: 2
+                  User:
+                    id: 2
+                  category: Computer
+                  activity: Procure
+                  status: Waiting approval from Manager
+                  request_time: 2022-02-26T14:35:05Z
+                  image: https://capstone-group3.s3.ap-southeast-1.amazonaws.com/procure-6-1645748000.png
+                  description: ini deskripsi/alasan pengajuan
+                message: success get all requests
+        '400':
+          description: Response Failed Get All procure Request (bad request)
+          content:
+            application/json:
+              examples:
+                error parsing page:
+                  value:
+                    code: 400
+                    message: error parsing page
+                error parsing record of page:
+                  value:
+                    code: 400
+                    message: error parsing record of page 
+                bad request:
+                  value:
+                    code: 400
+                    message: bad request
+        '500':
+          description: Response get all procure request failed (internal server error)
+          content:
+            application/json:
+              examples:
+                failed read data:
+                  value:
+                    code: 500
+                    message: failed to read data
+  /requests/manager/borrow:
     get:
       tags:
         - Request
@@ -1673,7 +1764,7 @@ paths:
                   value:
                     code: 500
                     message: failed to read data
-  /requests/procure/manager:
+  /requests/manager/procure:
     get:
       tags:
         - Request
