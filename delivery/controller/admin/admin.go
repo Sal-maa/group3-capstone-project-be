@@ -72,6 +72,20 @@ func (ac AdminController) AdminGetAllBorrow() echo.HandlerFunc {
 		}
 
 		status = allstatus[status]
+
+		activity := strings.ToUpper(c.QueryParam("a"))
+		// default value for activity
+		if activity == "" {
+			activity = "BORROW"
+		}
+
+		allactivity := map[string]string{"BORROW": "Borrow", "RETURN": "Return"}
+
+		if _, exist := allactivity[activity]; !exist {
+			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request"))
+		}
+
+		activity = allactivity[activity]
 		// filter by date
 		date := c.QueryParam("d")
 
@@ -120,7 +134,7 @@ func (ac AdminController) AdminGetAllBorrow() echo.HandlerFunc {
 				return c.JSON(http.StatusInternalServerError, _common.NoDataResponse(http.StatusInternalServerError, "Failed to read data"))
 			}
 		} else {
-			requests, total, err = ac.adminRepository.GetAllAdmin(limit, offset, status, category, date, order)
+			requests, total, err = ac.adminRepository.GetAllAdmin(limit, offset, activity, status, category, date, order)
 			if err != nil {
 				log.Println(err)
 				return c.JSON(http.StatusInternalServerError, _common.NoDataResponse(http.StatusInternalServerError, "Failed to read data"))

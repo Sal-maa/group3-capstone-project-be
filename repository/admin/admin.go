@@ -83,7 +83,7 @@ func (ar *AdminRepository) GetAllAdminWaitingApproval(limit, offset int, categor
 		requests = append(requests, request)
 	}
 
-	total, err = ar.countRecordWaitingApproval()
+	total, err = ar.countRecordWaitingApproval(category)
 	if err != nil {
 		return requests, total, err
 	}
@@ -158,7 +158,7 @@ func (ar *AdminRepository) GetAllAdminReturned(limit, offset int, category, date
 		requests = append(requests, request)
 	}
 
-	total, err = ar.countRecordAdminReturned()
+	total, err = ar.countRecordAdminReturned(category)
 	if err != nil {
 		return requests, total, err
 	}
@@ -166,7 +166,7 @@ func (ar *AdminRepository) GetAllAdminReturned(limit, offset int, category, date
 	return requests, total, nil
 }
 
-func (ar *AdminRepository) GetAllAdmin(limit, offset int, status, category, date, order string) (requests []_entity.RequestResponse, total int, err error) {
+func (ar *AdminRepository) GetAllAdmin(limit, offset int, activity, status, category, date, order string) (requests []_entity.RequestResponse, total int, err error) {
 	query := ""
 	if category == "all" {
 		category = ""
@@ -192,7 +192,7 @@ func (ar *AdminRepository) GetAllAdmin(limit, offset int, status, category, date
 					ON a.category_id = c.id
 				JOIN divisions d
 					ON d.id = u.division_id
-				WHERE b.status LIKE ? AND c.name LIKE ? AND b.request_time LIKE ?
+				WHERE b.activity LIKE ? AND b.status LIKE ? AND c.name LIKE ? AND b.request_time LIKE ?
 				ORDER BY b.request_time DESC
 				LIMIT ? OFFSET ?`
 	} else {
@@ -208,7 +208,7 @@ func (ar *AdminRepository) GetAllAdmin(limit, offset int, status, category, date
 					ON a.category_id = c.id
 				JOIN divisions d
 					ON d.id = u.division_id
-				WHERE b.status LIKE ? AND c.name LIKE ? AND b.request_time LIKE ?
+				WHERE b.activity LIKE ? AND b.status LIKE ? AND c.name LIKE ? AND b.request_time LIKE ?
 				ORDER BY b.request_time ASC
 				LIMIT ? OFFSET ?`
 	}
@@ -222,7 +222,7 @@ func (ar *AdminRepository) GetAllAdmin(limit, offset int, status, category, date
 
 	defer stmt.Close()
 
-	res, err := stmt.Query(status, "%"+category+"%", "%"+date+"%", limit, offset)
+	res, err := stmt.Query(activity, status, "%"+category+"%", "%"+date+"%", limit, offset)
 
 	if err != nil {
 		log.Println(err)
@@ -241,7 +241,7 @@ func (ar *AdminRepository) GetAllAdmin(limit, offset int, status, category, date
 		requests = append(requests, request)
 	}
 
-	total, err = ar.countRecordBorrow(status)
+	total, err = ar.countRecordBorrow(activity, status, category)
 	if err != nil {
 		return requests, total, err
 	}
@@ -321,7 +321,7 @@ func (ar *AdminRepository) GetAllManager(divLogin, limit, offset int, status, ca
 
 		requests = append(requests, request)
 	}
-	total, err = ar.countRecordBorrow(status)
+	total, err = ar.countRecordBorrow("Borrow", status, category)
 	if err != nil {
 		return requests, total, err
 	}
@@ -395,7 +395,7 @@ func (ar *AdminRepository) GetAllManagerReturned(divLogin, limit, offset int, ca
 		requests = append(requests, request)
 	}
 
-	total, err = ar.countRecordManagerReturned(divLogin)
+	total, err = ar.countRecordManagerReturned(divLogin, category)
 	if err != nil {
 		return requests, total, err
 	}
@@ -471,7 +471,7 @@ func (ar *AdminRepository) GetAllProcure(limit, offset int, status, category, da
 		requests = append(requests, request)
 	}
 
-	total, err = ar.countRecordProcure(status)
+	total, err = ar.countRecordProcure(status, category)
 	if err != nil {
 		return requests, total, err
 	}
@@ -521,11 +521,17 @@ func (rr *AdminRepository) GetUserDivision(id int) (divId int, code int, err err
 	return divId, http.StatusOK, nil
 }
 
-func (ar *AdminRepository) countRecordBorrow(status string) (total int, err error) {
+func (ar *AdminRepository) countRecordBorrow(activity, status, category string) (total int, err error) {
 	stmt, err := ar.db.Prepare(`
-	SELECT COUNT(status) 
-	FROM borrowORreturn_requests
-	WHERE status LIKE ? 
+	SELECT COUNT(b.id) 
+	FROM borrowORreturn_requests b
+	JOIN assets a
+	ON b.asset_id = a.id
+	JOIN categories c
+	ON a.category_id = c.id
+	WHERE b.activity LIKE ?
+	  AND b.status LIKE ?
+	  AND c.name LIKE ?
 	`)
 
 	if err != nil {
@@ -535,7 +541,7 @@ func (ar *AdminRepository) countRecordBorrow(status string) (total int, err erro
 
 	defer stmt.Close()
 
-	res, err := stmt.Query(status)
+	res, err := stmt.Query(activity, status, "%"+category+"%")
 
 	if err != nil {
 		log.Println(err)
@@ -554,11 +560,17 @@ func (ar *AdminRepository) countRecordBorrow(status string) (total int, err erro
 	return total, nil
 }
 
-func (ar *AdminRepository) countRecordWaitingApproval() (total int, err error) {
+func (ar *AdminRepository) countRecordWaitingApproval(category string) (total int, err error) {
 	stmt, err := ar.db.Prepare(`
-	SELECT COUNT(status) 
-	FROM borrowORreturn_requests
-	WHERE status LIKE 'Waiting approval%' OR status = 'Approved by Manager' 
+	SELECT COUNT(b.id) 
+	FROM borrowORreturn_requests b
+	JOIN assets a
+	ON a.id = b.asset_id
+	JOIN categories c
+	ON a.category_id = c.id
+	WHERE c.name LIKE ?
+	  AND b.status LIKE 'Waiting approval%'
+	   OR b.status = 'Approved by Manager' 
 	`)
 
 	if err != nil {
@@ -568,7 +580,7 @@ func (ar *AdminRepository) countRecordWaitingApproval() (total int, err error) {
 
 	defer stmt.Close()
 
-	res, err := stmt.Query()
+	res, err := stmt.Query("%" + category + "%")
 
 	if err != nil {
 		log.Println(err)
@@ -587,11 +599,17 @@ func (ar *AdminRepository) countRecordWaitingApproval() (total int, err error) {
 	return total, nil
 }
 
-func (ar *AdminRepository) countRecordAdminReturned() (total int, err error) {
+func (ar *AdminRepository) countRecordAdminReturned(category string) (total int, err error) {
 	stmt, err := ar.db.Prepare(`
-	SELECT COUNT(status) 
-	FROM borrowORreturn_requests
-	WHERE status = 'Approved by Admin' AND activity = 'Return' 
+	SELECT COUNT(b.id) 
+	FROM borrowORreturn_requests b
+	JOIN assets a
+	ON a.id = b.asset_id
+	JOIN categories c
+	ON a.category_id = c.id
+	WHERE c.name LIKE ?
+	  AND b.status = 'Approved by Admin'
+	  AND b.activity = 'Return' 
 	`)
 
 	if err != nil {
@@ -601,7 +619,7 @@ func (ar *AdminRepository) countRecordAdminReturned() (total int, err error) {
 
 	defer stmt.Close()
 
-	res, err := stmt.Query()
+	res, err := stmt.Query("%" + category + "%")
 
 	if err != nil {
 		log.Println(err)
@@ -620,13 +638,20 @@ func (ar *AdminRepository) countRecordAdminReturned() (total int, err error) {
 	return total, nil
 }
 
-func (ar *AdminRepository) countRecordManagerReturned(divLogin int) (total int, err error) {
+func (ar *AdminRepository) countRecordManagerReturned(divLogin int, category string) (total int, err error) {
 	stmt, err := ar.db.Prepare(`
-	SELECT COUNT(b.status) 
+	SELECT COUNT(b.id) 
 	FROM borrowORreturn_requests b
 	JOIN users u
 		ON u.id = b.user_id
-	WHERE  u.division_id = ? AND status = 'Approved by Admin' AND activity = 'Return' 
+	JOIN assets a
+		ON b.asset_id = a.id
+	JOIN categories c
+		ON a.category_id = c.id
+	WHERE c.name LIKE ?
+	  AND u.division_id = ?
+	  AND b.status = 'Approved by Admin'
+	  AND b.activity = 'Return' 
 	`)
 
 	if err != nil {
@@ -636,7 +661,7 @@ func (ar *AdminRepository) countRecordManagerReturned(divLogin int) (total int, 
 
 	defer stmt.Close()
 
-	res, err := stmt.Query(divLogin)
+	res, err := stmt.Query("%"+category+"%", divLogin)
 
 	if err != nil {
 		log.Println(err)
@@ -655,11 +680,14 @@ func (ar *AdminRepository) countRecordManagerReturned(divLogin int) (total int, 
 	return total, nil
 }
 
-func (ar *AdminRepository) countRecordProcure(status string) (total int, err error) {
+func (ar *AdminRepository) countRecordProcure(status, category string) (total int, err error) {
 	stmt, err := ar.db.Prepare(`
-	SELECT COUNT(status) 
-	FROM procurement_requests
-	WHERE status LIKE ? 
+	SELECT COUNT(p.id) 
+	FROM procurement_requests p
+	JOIN categories c
+	ON p.category_id = c.id
+	WHERE c.name LIKE ?
+	  AND p.status LIKE ? 
 	`)
 
 	if err != nil {
@@ -669,7 +697,7 @@ func (ar *AdminRepository) countRecordProcure(status string) (total int, err err
 
 	defer stmt.Close()
 
-	res, err := stmt.Query(status)
+	res, err := stmt.Query("%"+category+"%", status)
 
 	if err != nil {
 		log.Println(err)

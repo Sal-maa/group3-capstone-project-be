@@ -65,7 +65,7 @@ func (m mockRepoSuccess) GetAllAdminReturned(limit, offset int, category, date, 
 	}, 1, nil
 }
 
-func (m mockRepoSuccess) GetAllAdmin(limit, offset int, status, category, date, order string) (requests []_entity.RequestResponse, total int, err error) {
+func (m mockRepoSuccess) GetAllAdmin(limit, offset int, activity, status, category, date, order string) (requests []_entity.RequestResponse, total int, err error) {
 	return []_entity.RequestResponse{
 		{
 			Id: 1,
@@ -1115,7 +1115,7 @@ func (m mockRepoFail) GetAllAdminReturned(limit, offset int, category, date, ord
 	return []_entity.RequestResponse{}, 0, errors.New("Failed to read data")
 }
 
-func (m mockRepoFail) GetAllAdmin(limit, offset int, status, category, date, order string) (requests []_entity.RequestResponse, total int, err error) {
+func (m mockRepoFail) GetAllAdmin(limit, offset int, activity, status, category, date, order string) (requests []_entity.RequestResponse, total int, err error) {
 	return []_entity.RequestResponse{}, 0, errors.New("Failed to read data")
 }
 

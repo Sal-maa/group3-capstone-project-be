@@ -1504,6 +1504,18 @@ paths:
           required: false
           description: Filter by request category
         - in: query
+          name: s
+          schema:
+            type: string
+          required: false
+          description: Filter by request status
+        - in: query
+          name: a
+          schema:
+            type: string
+          required: false
+          description: Filter by request activity
+        - in: query
           name: o
           schema:
             type: string
@@ -1971,6 +1983,7 @@ paths:
                   category: Computer
                   asset_name: Dell Vostro 3490
                   asset_image: https://capstone-group3.s3.ap-southeast-1.amazonaws.com/asset-1-1645359981.png
+                  asset_short_name: asset-1645748000
                   stock_left: 20
                   user_name: Bagus Brahmantya
                   request_date: "2022-02-20 09:00:00.000"
