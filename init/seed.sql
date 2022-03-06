@@ -246,7 +246,7 @@ INSERT INTO capstone.assets (id, code, short_name, name, category_id, descriptio
 INSERT INTO capstone.assets (id, code, short_name, name, category_id, description, status, image, created_at, updated_at, deleted_at) VALUES(173, 'asset-1645750603-8', 'asset-1645750603', 'Logitech Conference Cam BCC950 960-000939', 2, 'HD Video with Audio Clarity, 1080p HD, 30 fps', 'Available', 'asset-7-1645750603.png', '2022-02-25 07:56:44', '2022-02-25 07:56:44', NULL);
 INSERT INTO capstone.assets (id, code, short_name, name, category_id, description, status, image, created_at, updated_at, deleted_at) VALUES(174, 'asset-1645750603-9', 'asset-1645750603', 'Logitech Conference Cam BCC950 960-000939', 2, 'HD Video with Audio Clarity, 1080p HD, 30 fps', 'Available', 'asset-7-1645750603.png', '2022-02-25 07:56:44', '2022-02-25 07:56:44', NULL);
 INSERT INTO capstone.assets (id, code, short_name, name, category_id, description, status, image, created_at, updated_at, deleted_at) VALUES(175, 'asset-1645750603-10', 'asset-1645750603', 'Logitech Conference Cam BCC950 960-000939', 2, 'HD Video with Audio Clarity, 1080p HD, 30 fps', 'Available', 'asset-7-1645750603.png', '2022-02-25 07:56:44', '2022-02-25 07:56:44', NULL);
-INSERT INTO capstone.assets (id, code, short_name, name, category_id, description, status, image, created_at, updated_at, deleted_at) VALUES(176, 'asset-1645750940-1', 'asset-1645750940', 'Cisco 16-port GE 2 x 1G SFP Smart Switch CBS220-16T-2G-EU', 3, 'Managed Switch, 16 10/100/1000 ports, 2 Gigabit Ethernet Small form-factor pluggable (SFP), MAC table Up to 8K addresses, Jumbo Frame sizes up to 9K bytes, Web user interface', 'Available', 'asset-8-1645750940.png', '2022-02-25 08:02:23', '2022-02-25 08:02:23', NULL);
+INSERT INTO capstone.assets (id, code, short_name, name, category_id, description, status, image, created_at, updated_at, deleted_at) VALUES(176, 'asset-1645750940-1', 'asset-1645750940', 'Cisco 16-port GE 2 x 1G SFP Smart Switch CBS220-16T-2G-EU', 3, 'Managed Switch, 16 10/100/1000 ports, 2 Gigabit Ethernet Small form-factor pluggable (SFP), MAC table Up to 8K addresses, Jumbo Frame sizes up to 9K bytes, Web user interface', 'Available', 'asset-8-1645750940.png', '2022-02-25 08:02:23', '2022-03-06 06:11:38', NULL);
 INSERT INTO capstone.assets (id, code, short_name, name, category_id, description, status, image, created_at, updated_at, deleted_at) VALUES(177, 'asset-1645750940-2', 'asset-1645750940', 'Cisco 16-port GE 2 x 1G SFP Smart Switch CBS220-16T-2G-EU', 3, 'Managed Switch, 16 10/100/1000 ports, 2 Gigabit Ethernet Small form-factor pluggable (SFP), MAC table Up to 8K addresses, Jumbo Frame sizes up to 9K bytes, Web user interface', 'Available', 'asset-8-1645750940.png', '2022-02-25 08:02:23', '2022-02-25 08:02:23', NULL);
 INSERT INTO capstone.assets (id, code, short_name, name, category_id, description, status, image, created_at, updated_at, deleted_at) VALUES(178, 'asset-1645750940-3', 'asset-1645750940', 'Cisco 16-port GE 2 x 1G SFP Smart Switch CBS220-16T-2G-EU', 3, 'Managed Switch, 16 10/100/1000 ports, 2 Gigabit Ethernet Small form-factor pluggable (SFP), MAC table Up to 8K addresses, Jumbo Frame sizes up to 9K bytes, Web user interface', 'Available', 'asset-8-1645750940.png', '2022-02-25 08:02:23', '2022-02-25 08:02:23', NULL);
 INSERT INTO capstone.assets (id, code, short_name, name, category_id, description, status, image, created_at, updated_at, deleted_at) VALUES(179, 'asset-1645750940-4', 'asset-1645750940', 'Cisco 16-port GE 2 x 1G SFP Smart Switch CBS220-16T-2G-EU', 3, 'Managed Switch, 16 10/100/1000 ports, 2 Gigabit Ethernet Small form-factor pluggable (SFP), MAC table Up to 8K addresses, Jumbo Frame sizes up to 9K bytes, Web user interface', 'Available', 'asset-8-1645750940.png', '2022-02-25 08:02:23', '2022-02-25 08:02:23', NULL);
@@ -603,6 +603,7 @@ INSERT INTO capstone.borrowORreturn_requests (id, user_id, asset_id, activity, s
 INSERT INTO capstone.borrowORreturn_requests (id, user_id, asset_id, activity, status, request_time, return_time, description, updated_at, deleted_at) VALUES(171, 32, 221, 'Return', 'Approved by Admin', '2022-03-04 12:59:47', '2022-03-04 12:59:47', 'Buat Scan Dokumen Penting', '2022-03-04 13:31:20', NULL);
 INSERT INTO capstone.borrowORreturn_requests (id, user_id, asset_id, activity, status, request_time, return_time, description, updated_at, deleted_at) VALUES(172, 32, 271, 'Borrow', 'Cancelled', '2022-03-05 03:25:02', '9999-12-31 23:59:59', 'Kebutuhan Komunikasi', '2022-03-05 03:25:49', NULL);
 INSERT INTO capstone.borrowORreturn_requests (id, user_id, asset_id, activity, status, request_time, return_time, description, updated_at, deleted_at) VALUES(173, 32, 202, 'Return', 'Approved by Admin', '2022-03-05 03:29:33', '2022-03-05 16:04:42', 'dipakai untuk komputer', '2022-03-05 16:04:42', NULL);
+INSERT INTO capstone.borrowORreturn_requests (id, user_id, asset_id, activity, status, request_time, return_time, description, updated_at, deleted_at) VALUES(174, 32, 176, 'Return', 'Approved by Admin', '2022-03-06 05:59:03', '2022-03-06 06:11:38', 'Internet rumah mati', '2022-03-06 06:11:38', NULL);
 
 -- capstone.procurement_requests seeding
 
@@ -676,7 +677,7 @@ Governor Type : Mechanic
 Cooling System : Water
 Total Coolant Capacity (lt) : 10.2
 Fuel Tank Capacity (lt) : 101', 'procure-8-1646209890.png', '2022-03-02 08:31:30', NULL);
-INSERT INTO capstone.procurement_requests (id, user_id, category_id, activity, status, request_time, description, image, updated_at, deleted_at) VALUES(8, 8, 7, 'Procure', 'Waiting approval from Manager', '2022-03-02 08:36:02', 'Butuh dispenser jus untuk kenyamanan dan kesehatan pegawai selama WFO
+INSERT INTO capstone.procurement_requests (id, user_id, category_id, activity, status, request_time, description, image, updated_at, deleted_at) VALUES(8, 8, 7, 'Procure', 'Rejected by Manager', '2022-03-02 08:36:02', 'Butuh dispenser jus untuk kenyamanan dan kesehatan pegawai selama WFO
 Estimasi harga Rp 12 juta
 Kebutuhan 5
 Spesifikasi
@@ -685,8 +686,8 @@ Cold Drink Dispenser
 Steering system
 2 x 12 liters
 350 W
-8~10 Derajat Celcius', 'procure-8-1646210162.png', '2022-03-02 08:36:02', NULL);
-INSERT INTO capstone.procurement_requests (id, user_id, category_id, activity, status, request_time, description, image, updated_at, deleted_at) VALUES(9, 8, 7, 'Procure', 'Waiting approval from Manager', '2022-03-02 08:43:54', 'Butuh AC portable sebagai backup AC utama
+8~10 Derajat Celcius', 'procure-8-1646210162.png', '2022-03-06 05:59:11', NULL);
+INSERT INTO capstone.procurement_requests (id, user_id, category_id, activity, status, request_time, description, image, updated_at, deleted_at) VALUES(9, 8, 7, 'Procure', 'Approved by Manager', '2022-03-02 08:43:54', 'Butuh AC portable sebagai backup AC utama
 Estimasi harga Rp 6 juta
 Kebutuhan 2
 Spesifikasi
@@ -695,4 +696,5 @@ Besaran PK : 1.5 PK
 Daya : 1370 Watt
 Air Circulation : 410 m3/h
 BTU : 12000
-EER : 8.7 (BTU/h/W)', 'procure-8-1646210634.png', '2022-03-02 08:43:54', NULL);
+EER : 8.7 (BTU/h/W)', 'procure-8-1646210634.png', '2022-03-06 05:59:01', NULL);
+INSERT INTO capstone.procurement_requests (id, user_id, category_id, activity, status, request_time, description, image, updated_at, deleted_at) VALUES(10, 6, 1, 'Procure', 'Waiting approval from Manager', '2022-03-06 06:00:54', 'Membutuhkan Laptop Mempuni yang bisa mengatasi kebutuhan design', 'procure-6-1646546454.jpg', '2022-03-06 06:00:54', NULL);
