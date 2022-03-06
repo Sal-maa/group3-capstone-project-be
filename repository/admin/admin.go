@@ -403,7 +403,7 @@ func (ar *AdminRepository) GetAllManagerReturned(divLogin, limit, offset int, ca
 	return requests, total, nil
 }
 
-func (ar *AdminRepository) GetAllProcureManager(limit, offset int, status, category, date, order string) (requests []_entity.Procure, total int, err error) {
+func (ar *AdminRepository) GetAllProcure(limit, offset int, status, category, date, order string) (requests []_entity.Procure, total int, err error) {
 	query := ""
 	if status == "all" {
 		status = "%Manager"

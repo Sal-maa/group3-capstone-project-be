@@ -137,7 +137,7 @@ func (m mockRepoSuccess) GetAllManager(divLogin, limit, offset int, status, cate
 	}, 1, nil
 }
 
-func (m mockRepoSuccess) GetAllProcureManager(limit, offset int, status, category, date, order string) (requests []_entity.Procure, total int, err error) {
+func (m mockRepoSuccess) GetAllProcure(limit, offset int, status, category, date, order string) (requests []_entity.Procure, total int, err error) {
 	return []_entity.Procure{
 		{
 			Id: 1,
@@ -177,7 +177,7 @@ func TestAdminGetAll(t *testing.T) {
 		context.SetPath("/requests/admin")
 
 		adminController := New(mockRepoSuccess{})
-		_midware.JWTMiddleWare()(adminController.AdminGetAll())(context)
+		_midware.JWTMiddleWare()(adminController.AdminGetAllBorrow())(context)
 
 		actual := map[string]interface{}{}
 		body := response.Body.String()
@@ -243,7 +243,7 @@ func TestAdminGetAll(t *testing.T) {
 		context.SetPath("/requests/admin")
 		context.QueryParam("s")
 		adminController := New(mockRepoSuccess{})
-		_midware.JWTMiddleWare()(adminController.AdminGetAll())(context)
+		_midware.JWTMiddleWare()(adminController.AdminGetAllBorrow())(context)
 
 		actual := map[string]interface{}{}
 		body := response.Body.String()
@@ -309,7 +309,7 @@ func TestAdminGetAll(t *testing.T) {
 		context.SetPath("/requests/admin")
 		context.QueryParam("s")
 		adminController := New(mockRepoSuccess{})
-		_midware.JWTMiddleWare()(adminController.AdminGetAll())(context)
+		_midware.JWTMiddleWare()(adminController.AdminGetAllBorrow())(context)
 
 		actual := map[string]interface{}{}
 		body := response.Body.String()
@@ -361,8 +361,8 @@ func TestAdminGetAll(t *testing.T) {
 	})
 }
 
-func TestManagerGetAllProcure(t *testing.T) {
-	t.Run("TestManagerGetAllProcureSuccess", func(t *testing.T) {
+func TestGetAllProcure(t *testing.T) {
+	t.Run("TestGetAllProcureSuccess", func(t *testing.T) {
 		token, _, _ := _midware.CreateToken(1, "Manager")
 
 		request := httptest.NewRequest(http.MethodGet, "/", nil)
@@ -378,7 +378,7 @@ func TestManagerGetAllProcure(t *testing.T) {
 		context.SetPath("/requests/manager/procure")
 
 		adminController := New(mockRepoSuccess{})
-		_midware.JWTMiddleWare()(adminController.ManagerGetAllProcure())(context)
+		_midware.JWTMiddleWare()(adminController.GetAllProcure())(context)
 
 		actual := map[string]interface{}{}
 		body := response.Body.String()
@@ -575,7 +575,7 @@ func TestRoleAdminGetAll(t *testing.T) {
 		context.SetPath("/requests/admin")
 
 		adminController := New(mockRepoSuccess{})
-		_midware.JWTMiddleWare()(adminController.AdminGetAll())(context)
+		_midware.JWTMiddleWare()(adminController.AdminGetAllBorrow())(context)
 
 		actual := map[string]interface{}{}
 		body := response.Body.String()
@@ -607,7 +607,7 @@ func TestRoleGetAllProcure(t *testing.T) {
 		context.SetPath("/requests/manager/procure")
 
 		adminController := New(mockRepoSuccess{})
-		_midware.JWTMiddleWare()(adminController.ManagerGetAllProcure())(context)
+		_midware.JWTMiddleWare()(adminController.GetAllProcure())(context)
 
 		actual := map[string]interface{}{}
 		body := response.Body.String()
@@ -672,7 +672,7 @@ func TestQueryParamAdminGetAll(t *testing.T) {
 		context.SetPath("/requests/admin")
 		context.QueryParam("p")
 		adminController := New(mockRepoSuccess{})
-		_midware.JWTMiddleWare()(adminController.AdminGetAll())(context)
+		_midware.JWTMiddleWare()(adminController.AdminGetAllBorrow())(context)
 
 		actual := map[string]interface{}{}
 		body := response.Body.String()
@@ -701,7 +701,7 @@ func TestQueryParamAdminGetAll(t *testing.T) {
 		context.SetPath("/requests/admin")
 		context.QueryParam("rp")
 		adminController := New(mockRepoSuccess{})
-		_midware.JWTMiddleWare()(adminController.AdminGetAll())(context)
+		_midware.JWTMiddleWare()(adminController.AdminGetAllBorrow())(context)
 
 		actual := map[string]interface{}{}
 		body := response.Body.String()
@@ -730,7 +730,7 @@ func TestQueryParamAdminGetAll(t *testing.T) {
 		context.SetPath("/requests/admin")
 		context.QueryParam("s")
 		adminController := New(mockRepoSuccess{})
-		_midware.JWTMiddleWare()(adminController.AdminGetAll())(context)
+		_midware.JWTMiddleWare()(adminController.AdminGetAllBorrow())(context)
 
 		actual := map[string]interface{}{}
 		body := response.Body.String()
@@ -759,7 +759,7 @@ func TestQueryParamAdminGetAll(t *testing.T) {
 		context.SetPath("/requests/admin")
 		context.QueryParam("c")
 		adminController := New(mockRepoSuccess{})
-		_midware.JWTMiddleWare()(adminController.AdminGetAll())(context)
+		_midware.JWTMiddleWare()(adminController.AdminGetAllBorrow())(context)
 
 		actual := map[string]interface{}{}
 		body := response.Body.String()
@@ -788,7 +788,7 @@ func TestQueryParamAdminGetAll(t *testing.T) {
 		context.SetPath("/requests/admin")
 		context.QueryParam("o")
 		adminController := New(mockRepoSuccess{})
-		_midware.JWTMiddleWare()(adminController.AdminGetAll())(context)
+		_midware.JWTMiddleWare()(adminController.AdminGetAllBorrow())(context)
 
 		actual := map[string]interface{}{}
 		body := response.Body.String()
@@ -821,7 +821,7 @@ func TestQueryParamGetAllProcure(t *testing.T) {
 		context.QueryParam("p")
 
 		adminController := New(mockRepoSuccess{})
-		_midware.JWTMiddleWare()(adminController.ManagerGetAllProcure())(context)
+		_midware.JWTMiddleWare()(adminController.GetAllProcure())(context)
 
 		actual := map[string]interface{}{}
 		body := response.Body.String()
@@ -851,7 +851,7 @@ func TestQueryParamGetAllProcure(t *testing.T) {
 		context.QueryParam("rp")
 
 		adminController := New(mockRepoSuccess{})
-		_midware.JWTMiddleWare()(adminController.ManagerGetAllProcure())(context)
+		_midware.JWTMiddleWare()(adminController.GetAllProcure())(context)
 
 		actual := map[string]interface{}{}
 		body := response.Body.String()
@@ -881,7 +881,7 @@ func TestQueryParamGetAllProcure(t *testing.T) {
 		context.QueryParam("s")
 
 		adminController := New(mockRepoSuccess{})
-		_midware.JWTMiddleWare()(adminController.ManagerGetAllProcure())(context)
+		_midware.JWTMiddleWare()(adminController.GetAllProcure())(context)
 
 		actual := map[string]interface{}{}
 		body := response.Body.String()
@@ -911,7 +911,7 @@ func TestQueryParamGetAllProcure(t *testing.T) {
 		context.QueryParam("c")
 
 		adminController := New(mockRepoSuccess{})
-		_midware.JWTMiddleWare()(adminController.ManagerGetAllProcure())(context)
+		_midware.JWTMiddleWare()(adminController.GetAllProcure())(context)
 
 		actual := map[string]interface{}{}
 		body := response.Body.String()
@@ -941,7 +941,7 @@ func TestQueryParamGetAllProcure(t *testing.T) {
 		context.QueryParam("o")
 
 		adminController := New(mockRepoSuccess{})
-		_midware.JWTMiddleWare()(adminController.ManagerGetAllProcure())(context)
+		_midware.JWTMiddleWare()(adminController.GetAllProcure())(context)
 
 		actual := map[string]interface{}{}
 		body := response.Body.String()
@@ -1126,7 +1126,7 @@ func (m mockRepoFail) GetAllManager(divLogin, limit, offset int, status, categor
 	return []_entity.RequestResponse{}, 0, errors.New("Failed to read data")
 }
 
-func (m mockRepoFail) GetAllProcureManager(limit, offset int, status, category, date, order string) (requests []_entity.Procure, total int, err error) {
+func (m mockRepoFail) GetAllProcure(limit, offset int, status, category, date, order string) (requests []_entity.Procure, total int, err error) {
 	return []_entity.Procure{}, 0, errors.New("Failed to read data")
 }
 
@@ -1150,7 +1150,7 @@ func TestRepoAdminGetAll(t *testing.T) {
 		context.SetPath("/requests/admin")
 
 		adminController := New(mockRepoFail{})
-		_midware.JWTMiddleWare()(adminController.AdminGetAll())(context)
+		_midware.JWTMiddleWare()(adminController.AdminGetAllBorrow())(context)
 
 		actual := map[string]interface{}{}
 		body := response.Body.String()
@@ -1179,7 +1179,7 @@ func TestRepoAdminGetAll(t *testing.T) {
 		context.SetPath("/requests/admin")
 		context.QueryParam("s")
 		adminController := New(mockRepoFail{})
-		_midware.JWTMiddleWare()(adminController.AdminGetAll())(context)
+		_midware.JWTMiddleWare()(adminController.AdminGetAllBorrow())(context)
 
 		actual := map[string]interface{}{}
 		body := response.Body.String()
@@ -1208,7 +1208,7 @@ func TestRepoAdminGetAll(t *testing.T) {
 		context.SetPath("/requests/admin")
 		context.QueryParam("s")
 		adminController := New(mockRepoFail{})
-		_midware.JWTMiddleWare()(adminController.AdminGetAll())(context)
+		_midware.JWTMiddleWare()(adminController.AdminGetAllBorrow())(context)
 
 		actual := map[string]interface{}{}
 		body := response.Body.String()
@@ -1240,7 +1240,7 @@ func TestRepoGetAllProcure(t *testing.T) {
 		context.SetPath("/requests/manager/procure")
 
 		adminController := New(mockRepoFail{})
-		_midware.JWTMiddleWare()(adminController.ManagerGetAllProcure())(context)
+		_midware.JWTMiddleWare()(adminController.GetAllProcure())(context)
 
 		actual := map[string]interface{}{}
 		body := response.Body.String()

@@ -23,7 +23,7 @@ func New(admin _adminRepo.Admin) *AdminController {
 	return &AdminController{adminRepository: admin}
 }
 
-func (ac AdminController) AdminGetAll() echo.HandlerFunc {
+func (ac AdminController) AdminGetAllBorrow() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		role := _midware.ExtractRole(c)
 		if role != "Administrator" {
@@ -225,21 +225,22 @@ func (ac AdminController) ManagerGetAllBorrow() echo.HandlerFunc {
 				log.Println(err)
 				return c.JSON(http.StatusInternalServerError, _common.NoDataResponse(http.StatusInternalServerError, "Failed to read data"))
 			}
-		}
-		requests, total, err = ac.adminRepository.GetAllManager(divLogin, limit, offset, status, category, date, order)
-		if err != nil {
-			log.Println(err)
-			return c.JSON(http.StatusInternalServerError, _common.NoDataResponse(http.StatusInternalServerError, "Failed to read data"))
+		} else {
+			requests, total, err = ac.adminRepository.GetAllManager(divLogin, limit, offset, status, category, date, order)
+			if err != nil {
+				log.Println(err)
+				return c.JSON(http.StatusInternalServerError, _common.NoDataResponse(http.StatusInternalServerError, "Failed to read data"))
+			}
 		}
 
 		return c.JSON(http.StatusOK, _common.GetAllRequestResponse(requests, total))
 	}
 }
 
-func (ac AdminController) ManagerGetAllProcure() echo.HandlerFunc {
+func (ac AdminController) GetAllProcure() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		role := _midware.ExtractRole(c)
-		if role != "Manager" {
+		if role == "Employee" {
 			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "You don't have permission"))
 		}
 
@@ -316,7 +317,7 @@ func (ac AdminController) ManagerGetAllProcure() echo.HandlerFunc {
 		}
 		order = orders[order]
 
-		requests, total, err := ac.adminRepository.GetAllProcureManager(limit, offset, status, category, date, order)
+		requests, total, err := ac.adminRepository.GetAllProcure(limit, offset, status, category, date, order)
 		if err != nil {
 			log.Println(err)
 			return c.JSON(http.StatusInternalServerError, _common.NoDataResponse(http.StatusInternalServerError, "Failed to read data"))
