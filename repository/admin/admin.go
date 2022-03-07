@@ -4,6 +4,7 @@ import (
 	_entity "capstone/be/entity"
 	"database/sql"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 )
@@ -17,45 +18,28 @@ func New(db *sql.DB) *AdminRepository {
 }
 
 func (ar *AdminRepository) GetAllAdminWaitingApproval(limit, offset int, category, date, order string) (requests []_entity.RequestResponse, total int, err error) {
-	query := ""
+
 	if category == "all" {
 		category = ""
 	}
-	if order == "DESC" {
-		query = `
-	SELECT 
-		b.id, b.user_id, u.name, u.role, d.name, a.id, a.name, a.image, c.name, b.activity, b.request_time, b.return_time, b.status, b.description
-	FROM borrowORreturn_requests b
-	JOIN users u 
-		ON b.user_id = u.id
-	JOIN assets a
-		ON b.asset_id = a.id
-	JOIN categories c
-		ON a.category_id = c.id
-	JOIN divisions d
-		ON d.id = u.division_id
-	WHERE  b.status = 'Approved by Manager' OR b.status LIKE 'Waiting approval%' AND c.name LIKE ? AND b.request_time LIKE ?
-	ORDER BY b.request_time DESC
-	LIMIT ? OFFSET ?`
-	} else {
-		query = `
-	SELECT 
-		b.id, b.user_id, u.name, u.role, d.name, a.id, a.name, a.image, c.name, b.activity, b.request_time, b.return_time, b.status, b.description
-	FROM borrowORreturn_requests b
-	JOIN users u 
-		ON b.user_id = u.id
-	JOIN assets a
-		ON b.asset_id = a.id
-	JOIN categories c
-		ON a.category_id = c.id
-	JOIN divisions d
-		ON d.id = u.division_id
-	WHERE  b.status = 'Approved by Manager' OR b.status LIKE 'Waiting approval%' AND c.name LIKE ? AND b.request_time LIKE ?
-	ORDER BY b.request_time ASC
-	LIMIT ? OFFSET ?`
-	}
 
-	stmt, err := ar.db.Prepare(query)
+	query := `
+	SELECT 
+		b.id, b.user_id, u.name, u.role, d.name, a.id, a.name, a.image, c.name, b.activity, b.request_time, b.return_time, b.status, b.description
+	FROM borrowORreturn_requests b
+	JOIN users u 
+		ON b.user_id = u.id
+	JOIN assets a
+		ON b.asset_id = a.id
+	JOIN categories c
+		ON a.category_id = c.id
+	JOIN divisions d
+		ON d.id = u.division_id
+	WHERE  b.status = ? OR b.status LIKE ? AND c.name LIKE ? AND b.request_time LIKE ?
+	ORDER BY b.request_time %s
+	LIMIT ? OFFSET ?`
+
+	stmt, err := ar.db.Prepare(fmt.Sprintf(query, order))
 
 	if err != nil {
 		log.Println(err)
@@ -64,7 +48,7 @@ func (ar *AdminRepository) GetAllAdminWaitingApproval(limit, offset int, categor
 
 	defer stmt.Close()
 
-	res, err := stmt.Query("%"+category+"%", "%"+date+"%", limit, offset)
+	res, err := stmt.Query("Approved by Manager", "Waiting approval%", "%"+category+"%", "%"+date+"%", limit, offset)
 
 	if err != nil {
 		log.Println(err)
@@ -92,12 +76,11 @@ func (ar *AdminRepository) GetAllAdminWaitingApproval(limit, offset int, categor
 }
 
 func (ar *AdminRepository) GetAllAdminReturned(limit, offset int, category, date, order string) (requests []_entity.RequestResponse, total int, err error) {
-	query := ""
+
 	if category == "all" {
 		category = ""
 	}
-	if order == "DESC" {
-		query = `
+	query := `
 	SELECT 
 		b.id, b.user_id, u.name, u.role, d.name, a.id, a.name, a.image, c.name, b.activity, b.request_time, b.return_time, b.status, b.description
 	FROM borrowORreturn_requests b
@@ -110,27 +93,10 @@ func (ar *AdminRepository) GetAllAdminReturned(limit, offset int, category, date
 	JOIN divisions d
 		ON d.id = u.division_id
 	WHERE  b.status = 'Approved by Admin' AND b.activity = 'Return' AND c.name LIKE ? AND b.request_time LIKE ?
-	ORDER BY b.request_time DESC
+	ORDER BY b.request_time %s
 	LIMIT ? OFFSET ?`
-	} else {
-		query = `
-	SELECT 
-		b.id, b.user_id, u.name, u.role, d.name, a.id, a.name, a.image, c.name, b.activity, b.request_time, b.return_time, b.status, b.description
-	FROM borrowORreturn_requests b
-	JOIN users u 
-		ON b.user_id = u.id
-	JOIN assets a
-		ON b.asset_id = a.id
-	JOIN categories c
-		ON a.category_id = c.id
-	JOIN divisions d
-		ON d.id = u.division_id
-	WHERE  b.status = 'Approved by Admin' AND b.activity = 'Return' AND c.name LIKE ? AND b.request_time LIKE ?
-	ORDER BY b.request_time ASC
-	LIMIT ? OFFSET ?`
-	}
 
-	stmt, err := ar.db.Prepare(query)
+	stmt, err := ar.db.Prepare(fmt.Sprintf(query, order))
 
 	if err != nil {
 		log.Println(err)
@@ -167,7 +133,7 @@ func (ar *AdminRepository) GetAllAdminReturned(limit, offset int, category, date
 }
 
 func (ar *AdminRepository) GetAllAdmin(limit, offset int, activity, status, category, date, order string) (requests []_entity.RequestResponse, total int, err error) {
-	query := ""
+
 	if category == "all" {
 		category = ""
 	}
@@ -179,41 +145,24 @@ func (ar *AdminRepository) GetAllAdmin(limit, offset int, activity, status, cate
 	} else {
 		status = "%" + status + "%"
 	}
-	if order == "DESC" {
-		query = `
-				SELECT 
-					b.id, b.user_id, u.name, u.role, d.name, a.id, a.name, a.image, c.name, b.activity, b.request_time, b.return_time, b.status, b.description
-				FROM borrowORreturn_requests b
-				JOIN users u 
-					ON b.user_id = u.id
-				JOIN assets a
-					ON b.asset_id = a.id
-				JOIN categories c
-					ON a.category_id = c.id
-				JOIN divisions d
-					ON d.id = u.division_id
-				WHERE b.activity LIKE ? AND b.status LIKE ? AND c.name LIKE ? AND b.request_time LIKE ?
-				ORDER BY b.request_time DESC
-				LIMIT ? OFFSET ?`
-	} else {
-		query = `
-				SELECT 
-					b.id, b.user_id, u.name, u.role, d.name, a.id, a.name, a.image, c.name, b.activity, b.request_time, b.return_time, b.status, b.description
-				FROM borrowORreturn_requests b
-				JOIN users u 
-					ON b.user_id = u.id
-				JOIN assets a
-					ON b.asset_id = a.id
-				JOIN categories c
-					ON a.category_id = c.id
-				JOIN divisions d
-					ON d.id = u.division_id
-				WHERE b.activity LIKE ? AND b.status LIKE ? AND c.name LIKE ? AND b.request_time LIKE ?
-				ORDER BY b.request_time ASC
-				LIMIT ? OFFSET ?`
-	}
 
-	stmt, err := ar.db.Prepare(query)
+	query := `
+				SELECT 
+					b.id, b.user_id, u.name, u.role, d.name, a.id, a.name, a.image, c.name, b.activity, b.request_time, b.return_time, b.status, b.description
+				FROM borrowORreturn_requests b
+				JOIN users u 
+					ON b.user_id = u.id
+				JOIN assets a
+					ON b.asset_id = a.id
+				JOIN categories c
+					ON a.category_id = c.id
+				JOIN divisions d
+					ON d.id = u.division_id
+				WHERE b.activity LIKE ? AND b.status LIKE ? AND c.name LIKE ? AND b.request_time LIKE ?
+				ORDER BY b.request_time %s
+				LIMIT ? OFFSET ?`
+
+	stmt, err := ar.db.Prepare(fmt.Sprintf(query, order))
 
 	if err != nil {
 		log.Println(err)
@@ -250,7 +199,7 @@ func (ar *AdminRepository) GetAllAdmin(limit, offset int, activity, status, cate
 }
 
 func (ar *AdminRepository) GetAllManager(divLogin, limit, offset int, status, category, date, order string) (requests []_entity.RequestResponse, total int, err error) {
-	query := ""
+
 	if status == "all" {
 		status = ""
 	}
@@ -259,41 +208,24 @@ func (ar *AdminRepository) GetAllManager(divLogin, limit, offset int, status, ca
 	if category == "all" {
 		category = ""
 	}
-	if order == "DESC" {
-		query = `
-		SELECT 
-			b.id, b.user_id, u.name, u.role, d.name,a.id, a.name, a.image, c.name, b.activity, b.request_time, b.return_time, b.status, b.description
-		FROM borrowORreturn_requests b
-		JOIN users u 
-			ON b.user_id = u.id 
-		JOIN assets a
-			ON b.asset_id = a.id
-		JOIN categories c
-			ON a.category_id = c.id
-		JOIN divisions d
-			ON d.id = u.division_id
-		WHERE u.division_id = ? AND b.status LIKE ? AND c.name LIKE ? AND b.request_time LIKE ?
-		ORDER BY b.request_time DESC
-		LIMIT ? OFFSET ?`
-	} else {
-		query = `
-		SELECT 
-			b.id, b.user_id, u.name, u.role, d.name,a.id, a.name, a.image, c.name, b.activity, b.request_time, b.return_time, b.status, b.description
-		FROM borrowORreturn_requests b
-		JOIN users u 
-			ON b.user_id = u.id 
-		JOIN assets a
-			ON b.asset_id = a.id
-		JOIN categories c
-			ON a.category_id = c.id
-		JOIN divisions d
-			ON d.id = u.division_id
-		WHERE u.division_id = ? AND b.status LIKE ? AND c.name LIKE ? AND b.request_time LIKE ?
-		ORDER BY b.request_time DESC
-		LIMIT ? OFFSET ?`
-	}
 
-	stmt, err := ar.db.Prepare(query)
+	query := `
+		SELECT 
+			b.id, b.user_id, u.name, u.role, d.name,a.id, a.name, a.image, c.name, b.activity, b.request_time, b.return_time, b.status, b.description
+		FROM borrowORreturn_requests b
+		JOIN users u 
+			ON b.user_id = u.id 
+		JOIN assets a
+			ON b.asset_id = a.id
+		JOIN categories c
+			ON a.category_id = c.id
+		JOIN divisions d
+			ON d.id = u.division_id
+		WHERE u.division_id = ? AND b.status LIKE ? AND c.name LIKE ? AND b.request_time LIKE ?
+		ORDER BY b.request_time %s
+		LIMIT ? OFFSET ?`
+
+	stmt, err := ar.db.Prepare(fmt.Sprintf(query, order))
 
 	if err != nil {
 		log.Println(err)
@@ -321,7 +253,9 @@ func (ar *AdminRepository) GetAllManager(divLogin, limit, offset int, status, ca
 
 		requests = append(requests, request)
 	}
+
 	total, err = ar.countRecordBorrow(divLogin, "Borrow", status, category)
+
 	if err != nil {
 		return requests, total, err
 	}
@@ -329,45 +263,28 @@ func (ar *AdminRepository) GetAllManager(divLogin, limit, offset int, status, ca
 }
 
 func (ar *AdminRepository) GetAllManagerReturned(divLogin, limit, offset int, category, date, order string) (requests []_entity.RequestResponse, total int, err error) {
-	query := ""
+
 	if category == "all" {
 		category = ""
 	}
-	if order == "DESC" {
-		query = `
-			SELECT 
-				b.id, b.user_id, u.name, u.role, d.name, a.id, a.name, a.image, c.name, b.activity, b.request_time, b.return_time, b.status, b.description
-			FROM borrowORreturn_requests b
-			JOIN users u 
-				ON b.user_id = u.id
-			JOIN assets a
-				ON b.asset_id = a.id
-			JOIN categories c
-				ON a.category_id = c.id
-			JOIN divisions d
-				ON d.id = u.division_id
-			WHERE  u.division_id = ? AND b.status = 'Approved by Admin' AND b.activity = 'Return' AND c.name LIKE ? AND b.request_time LIKE ?
-			ORDER BY b.request_time DESC
-			LIMIT ? OFFSET ?`
-	} else {
-		query = `
-			SELECT 
-				b.id, b.user_id, u.name, u.role, d.name, a.id, a.name, a.image, c.name, b.activity, b.request_time, b.return_time, b.status, b.description
-			FROM borrowORreturn_requests b
-			JOIN users u 
-				ON b.user_id = u.id
-			JOIN assets a
-				ON b.asset_id = a.id
-			JOIN categories c
-				ON a.category_id = c.id
-			JOIN divisions d
-				ON d.id = u.division_id
-			WHERE  u.division_id = ? AND b.status = 'Approved by Admin' AND b.activity = 'Return' AND c.name LIKE ? AND b.request_time LIKE ?
-			ORDER BY b.request_time ASC
-			LIMIT ? OFFSET ?`
-	}
 
-	stmt, err := ar.db.Prepare(query)
+	query := `
+			SELECT 
+				b.id, b.user_id, u.name, u.role, d.name, a.id, a.name, a.image, c.name, b.activity, b.request_time, b.return_time, b.status, b.description
+			FROM borrowORreturn_requests b
+			JOIN users u 
+				ON b.user_id = u.id
+			JOIN assets a
+				ON b.asset_id = a.id
+			JOIN categories c
+				ON a.category_id = c.id
+			JOIN divisions d
+				ON d.id = u.division_id
+			WHERE  u.division_id = ? AND b.status = 'Approved by Admin' AND b.activity = 'Return' AND c.name LIKE ? AND b.request_time LIKE ?
+			ORDER BY b.request_time %s
+			LIMIT ? OFFSET ?`
+
+	stmt, err := ar.db.Prepare(fmt.Sprintf(query, order))
 
 	if err != nil {
 		log.Println(err)
@@ -404,7 +321,7 @@ func (ar *AdminRepository) GetAllManagerReturned(divLogin, limit, offset int, ca
 }
 
 func (ar *AdminRepository) GetAllProcure(limit, offset int, status, category, date, order string) (requests []_entity.Procure, total int, err error) {
-	query := ""
+
 	if status == "all" {
 		status = "%Manager"
 	} else {
@@ -413,37 +330,22 @@ func (ar *AdminRepository) GetAllProcure(limit, offset int, status, category, da
 	if category == "all" {
 		category = ""
 	}
-	if order == "DESC" {
-		query = `
-			SELECT 
-				p.id, p.user_id, u.name, u.role, d.name, c.name, p.image, p.activity, p.request_time, p.status, p.description
-			FROM procurement_requests p
-			JOIN users u 
-				ON p.user_id = u.id 
-			JOIN categories c
-				ON p.category_id = c.id
-			JOIN divisions d
-				ON d.id = u. division_id
-			WHERE p.status LIKE ? AND c.name LIKE ? AND p.request_time LIKE ?
-			ORDER BY p.request_time DESC
-			LIMIT ? OFFSET ?`
-	} else {
-		query = `
-			SELECT 
-				p.id, p.user_id, u.name, u.role, d.name, c.name, p.image, p.activity, p.request_time, p.status, p.description
-			FROM procurement_requests p
-			JOIN users u 
-				ON p.user_id = u.id 
-			JOIN categories c
-				ON p.category_id = c.id
-			JOIN divisions d
-				ON d.id = u. division_id
-			WHERE p.status LIKE ? AND c.name LIKE ? AND p.request_time LIKE ?
-			ORDER BY p.request_time ASC
-			LIMIT ? OFFSET ?`
-	}
 
-	stmt, err := ar.db.Prepare(query)
+	query := `
+			SELECT 
+				p.id, p.user_id, u.name, u.role, d.name, c.name, p.image, p.activity, p.request_time, p.status, p.description
+			FROM procurement_requests p
+			JOIN users u 
+				ON p.user_id = u.id 
+			JOIN categories c
+				ON p.category_id = c.id
+			JOIN divisions d
+				ON d.id = u. division_id
+			WHERE p.status LIKE ? AND c.name LIKE ? AND p.request_time LIKE ?
+			ORDER BY p.request_time %s
+			LIMIT ? OFFSET ?`
+
+	stmt, err := ar.db.Prepare(fmt.Sprintf(query, order))
 
 	if err != nil {
 		log.Println(err)
@@ -452,7 +354,7 @@ func (ar *AdminRepository) GetAllProcure(limit, offset int, status, category, da
 
 	defer stmt.Close()
 
-	res, err := stmt.Query("%"+status+"%", "%"+category+"%", "%"+date+"%", limit, offset)
+	res, err := stmt.Query(status, "%"+category+"%", "%"+date+"%", limit, offset)
 
 	if err != nil {
 		log.Println(err)
