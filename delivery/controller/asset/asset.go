@@ -145,7 +145,7 @@ func (ac AssetController) GetAll() echo.HandlerFunc {
 			category = "ALL"
 		}
 
-		category_list := map[string]string{"ALL": "%%", "COMPUTER": "Computer", "COMPUTER-ACCESSORIES": "Computer Accessories", "NETWORKING": "Networking", "UPS": "UPS", "PRINTER-SCANNER": "Printer and Scanner", "ELECTRONICS": "Electronics", "OTHERS": "Others"}
+		category_list := map[string]string{"ALL": "%%", "COMPUTER": "Computer", "COMPUTER-ACCESSORIES": "Computer Accessories", "NETWORKING": "Networking", "UPS": "UPS", "PRINTER-AND-SCANNER": "Printer and Scanner", "ELECTRONICS": "Electronics", "OTHERS": "Others"}
 
 		if _, exist := category_list[category]; !exist {
 			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "category invalid"))
