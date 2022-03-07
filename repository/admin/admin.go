@@ -190,7 +190,11 @@ func (ar *AdminRepository) GetAllAdmin(limit, offset int, activity, status, cate
 		requests = append(requests, request)
 	}
 
+<<<<<<< HEAD
 	total, err = ar.countRecordBorrow("1,2,3,4,5", activity, status, category)
+=======
+	total, err = ar.countRecordBorrowAdmin(activity, status, category)
+>>>>>>> main
 	if err != nil {
 		return requests, total, err
 	}
@@ -253,7 +257,9 @@ func (ar *AdminRepository) GetAllManager(divLogin, limit, offset int, status, ca
 
 		requests = append(requests, request)
 	}
-	total, err = ar.countRecordBorrow(fmt.Sprintf("%d", divLogin), "Borrow", status, category)
+
+	total, err = ar.countRecordBorrow(divLogin, "Borrow", status, category)
+
 	if err != nil {
 		return requests, total, err
 	}
@@ -421,7 +427,11 @@ func (rr *AdminRepository) GetUserDivision(id int) (divId int, code int, err err
 	return divId, http.StatusOK, nil
 }
 
+<<<<<<< HEAD
 func (ar *AdminRepository) countRecordBorrow(division, activity, status, category string) (total int, err error) {
+=======
+func (ar *AdminRepository) countRecordBorrow(division int, activity, status, category string) (total int, err error) {
+>>>>>>> main
 	stmt, err := ar.db.Prepare(`
 	SELECT COUNT(b.id) 
 	FROM borrowORreturn_requests b
@@ -431,6 +441,51 @@ func (ar *AdminRepository) countRecordBorrow(division, activity, status, categor
 	ON a.category_id = c.id
 	JOIN users u
 	ON b.user_id = u.id
+<<<<<<< HEAD
+=======
+	WHERE b.activity LIKE ?
+	  AND b.status LIKE ?
+	  AND c.name LIKE ?
+	  AND u.division_id IN (?)
+	`)
+
+	if err != nil {
+		log.Println(err)
+		return total, err
+	}
+
+	defer stmt.Close()
+
+	res, err := stmt.Query(activity, status, "%"+category+"%", division)
+
+	if err != nil {
+		log.Println(err)
+		return total, err
+	}
+
+	defer res.Close()
+
+	if res.Next() {
+		if err := res.Scan(&total); err != nil {
+			log.Println(err)
+			return total, err
+		}
+	}
+
+	return total, nil
+}
+
+func (ar *AdminRepository) countRecordBorrowAdmin(activity, status, category string) (total int, err error) {
+	stmt, err := ar.db.Prepare(`
+	SELECT COUNT(b.id) 
+	FROM borrowORreturn_requests b
+	JOIN assets a
+	ON b.asset_id = a.id
+	JOIN categories c
+	ON a.category_id = c.id
+	JOIN users u
+	ON b.user_id = u.id
+>>>>>>> main
 	WHERE b.activity LIKE ?
 	  AND b.status LIKE ?
 	  AND c.name LIKE ?
