@@ -65,7 +65,7 @@ func (ac AdminController) AdminGetAllBorrow() echo.HandlerFunc {
 			status = "ALL"
 		}
 
-		allstatus := map[string]string{"ALL": "all", "WAITING-APPROVAL": "Waiting Approval", "APPROVED": "Approved", "REJECTED": "Rejected", "RETURNED": "Returned"}
+		allstatus := map[string]string{"ALL": "all", "WAITING-APPROVAL": "Waiting approval", "APPROVED": "Approved", "REJECTED": "Rejected", "RETURNED": "Returned"}
 
 		if _, exist := allstatus[status]; !exist {
 			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request"))
@@ -121,20 +121,30 @@ func (ac AdminController) AdminGetAllBorrow() echo.HandlerFunc {
 		var requests []_entity.RequestResponse
 		var total int
 
-		if status == "Waiting Approval" {
-			requests, total, err = ac.adminRepository.GetAllAdminWaitingApproval(limit, offset, category, date, order)
-			if err != nil {
-				log.Println(err)
-				return c.JSON(http.StatusInternalServerError, _common.NoDataResponse(http.StatusInternalServerError, "Failed to read data"))
+		if activity == "Borrow" {
+			if status == "Waiting approval" {
+				requests, total, err = ac.adminRepository.GetAllAdminWaitingApproval(limit, offset, category, date, order)
+				if err != nil {
+					log.Println(err)
+					return c.JSON(http.StatusInternalServerError, _common.NoDataResponse(http.StatusInternalServerError, "Failed to read data"))
+				}
+			} else if status == "Returned" {
+				requests, total, err = ac.adminRepository.GetAllAdminReturned(limit, offset, category, date, order)
+				if err != nil {
+					log.Println(err)
+					return c.JSON(http.StatusInternalServerError, _common.NoDataResponse(http.StatusInternalServerError, "Failed to read data"))
+				}
+			} else {
+				requests, total, err = ac.adminRepository.GetAllAdmin(limit, offset, activity, status, category, date, order)
+				if err != nil {
+					log.Println(err)
+					return c.JSON(http.StatusInternalServerError, _common.NoDataResponse(http.StatusInternalServerError, "Failed to read data"))
+				}
 			}
-		} else if status == "Returned" {
-			requests, total, err = ac.adminRepository.GetAllAdminReturned(limit, offset, category, date, order)
-			if err != nil {
-				log.Println(err)
-				return c.JSON(http.StatusInternalServerError, _common.NoDataResponse(http.StatusInternalServerError, "Failed to read data"))
-			}
-		} else {
-			requests, total, err = ac.adminRepository.GetAllAdmin(limit, offset, activity, status, category, date, order)
+		}
+
+		if activity == "Return" {
+			requests, total, err = ac.adminRepository.GetAllAdmin(limit, offset, activity, "Waiting approval", category, date, order)
 			if err != nil {
 				log.Println(err)
 				return c.JSON(http.StatusInternalServerError, _common.NoDataResponse(http.StatusInternalServerError, "Failed to read data"))
@@ -192,7 +202,7 @@ func (ac AdminController) ManagerGetAllBorrow() echo.HandlerFunc {
 			status = "ALL"
 		}
 
-		allstatus := map[string]string{"ALL": "all", "WAITING-APPROVAL": "Waiting Approval", "APPROVED": "Approved", "REJECTED": "Rejected", "RETURNED": "Returned"}
+		allstatus := map[string]string{"ALL": "all", "WAITING-APPROVAL": "Waiting approval", "APPROVED": "Approved", "REJECTED": "Rejected", "RETURNED": "Returned"}
 
 		if _, exist := allstatus[status]; !exist {
 			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request"))
@@ -292,7 +302,7 @@ func (ac AdminController) GetAllProcure() echo.HandlerFunc {
 			status = "ALL"
 		}
 
-		allstatus := map[string]string{"ALL": "all", "WAITING-APPROVAL": "Waiting Approval", "APPROVED": "Approved", "REJECTED": "Rejected", "REQUEST-TO-RETURN": "Request to Return"}
+		allstatus := map[string]string{"ALL": "all", "WAITING-APPROVAL": "Waiting approval", "APPROVED": "Approved", "REJECTED": "Rejected", "REQUEST-TO-RETURN": "Request to Return"}
 
 		if _, exist := allstatus[status]; !exist {
 			return c.JSON(http.StatusBadRequest, _common.NoDataResponse(http.StatusBadRequest, "Bad request"))
