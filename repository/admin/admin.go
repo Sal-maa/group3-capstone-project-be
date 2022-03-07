@@ -20,7 +20,7 @@ func New(db *sql.DB) *AdminRepository {
 func (ar *AdminRepository) GetAllAdminWaitingApproval(limit, offset int, category, date, order string) (requests []_entity.RequestResponse, total int, err error) {
 
 	if category == "all" {
-		category = ""
+		category = "%%"
 	}
 
 	query := `
@@ -48,7 +48,7 @@ func (ar *AdminRepository) GetAllAdminWaitingApproval(limit, offset int, categor
 
 	defer stmt.Close()
 
-	res, err := stmt.Query("Approved by Manager", "Waiting approval%", "%"+category+"%", "%"+date+"%", limit, offset)
+	res, err := stmt.Query("Approved by Manager", "Waiting approval%", category, "%"+date+"%", limit, offset)
 
 	if err != nil {
 		log.Println(err)
@@ -78,7 +78,7 @@ func (ar *AdminRepository) GetAllAdminWaitingApproval(limit, offset int, categor
 func (ar *AdminRepository) GetAllAdminReturned(limit, offset int, category, date, order string) (requests []_entity.RequestResponse, total int, err error) {
 
 	if category == "all" {
-		category = ""
+		category = "%%"
 	}
 	query := `
 	SELECT 
@@ -105,7 +105,7 @@ func (ar *AdminRepository) GetAllAdminReturned(limit, offset int, category, date
 
 	defer stmt.Close()
 
-	res, err := stmt.Query("%"+category+"%", "%"+date+"%", limit, offset)
+	res, err := stmt.Query(category, "%"+date+"%", limit, offset)
 
 	if err != nil {
 		log.Println(err)
@@ -135,7 +135,7 @@ func (ar *AdminRepository) GetAllAdminReturned(limit, offset int, category, date
 func (ar *AdminRepository) GetAllAdmin(limit, offset int, activity, status, category, date, order string) (requests []_entity.RequestResponse, total int, err error) {
 
 	if category == "all" {
-		category = ""
+		category = "%%"
 	}
 
 	if status == "all" {
@@ -171,7 +171,7 @@ func (ar *AdminRepository) GetAllAdmin(limit, offset int, activity, status, cate
 
 	defer stmt.Close()
 
-	res, err := stmt.Query(activity, status, "%"+category+"%", "%"+date+"%", limit, offset)
+	res, err := stmt.Query(activity, status, category, "%"+date+"%", limit, offset)
 
 	if err != nil {
 		log.Println(err)
@@ -206,7 +206,7 @@ func (ar *AdminRepository) GetAllManager(divLogin, limit, offset int, status, ca
 	status = status + "%Manager"
 
 	if category == "all" {
-		category = ""
+		category = "%%"
 	}
 
 	query := `
@@ -234,7 +234,7 @@ func (ar *AdminRepository) GetAllManager(divLogin, limit, offset int, status, ca
 
 	defer stmt.Close()
 
-	res, err := stmt.Query(divLogin, status, "%"+category+"%", "%"+date+"%", limit, offset)
+	res, err := stmt.Query(divLogin, status, category, "%"+date+"%", limit, offset)
 
 	if err != nil {
 		log.Println(err)
@@ -265,7 +265,7 @@ func (ar *AdminRepository) GetAllManager(divLogin, limit, offset int, status, ca
 func (ar *AdminRepository) GetAllManagerReturned(divLogin, limit, offset int, category, date, order string) (requests []_entity.RequestResponse, total int, err error) {
 
 	if category == "all" {
-		category = ""
+		category = "%%"
 	}
 
 	query := `
@@ -293,7 +293,7 @@ func (ar *AdminRepository) GetAllManagerReturned(divLogin, limit, offset int, ca
 
 	defer stmt.Close()
 
-	res, err := stmt.Query(divLogin, "%"+category+"%", "%"+date+"%", limit, offset)
+	res, err := stmt.Query(divLogin, category, "%"+date+"%", limit, offset)
 
 	if err != nil {
 		log.Println(err)
@@ -328,7 +328,7 @@ func (ar *AdminRepository) GetAllProcure(limit, offset int, status, category, da
 		status = status + "%Manager"
 	}
 	if category == "all" {
-		category = ""
+		category = "%%"
 	}
 
 	query := `
@@ -354,7 +354,7 @@ func (ar *AdminRepository) GetAllProcure(limit, offset int, status, category, da
 
 	defer stmt.Close()
 
-	res, err := stmt.Query(status, "%"+category+"%", "%"+date+"%", limit, offset)
+	res, err := stmt.Query(status, category, "%"+date+"%", limit, offset)
 
 	if err != nil {
 		log.Println(err)
@@ -446,7 +446,7 @@ func (ar *AdminRepository) countRecordBorrow(division int, activity, status, cat
 
 	defer stmt.Close()
 
-	res, err := stmt.Query(activity, status, "%"+category+"%", division)
+	res, err := stmt.Query(activity, status, category, division)
 
 	if err != nil {
 		log.Println(err)
@@ -487,7 +487,7 @@ func (ar *AdminRepository) countRecordBorrowAdmin(activity, status, category str
 
 	defer stmt.Close()
 
-	res, err := stmt.Query(activity, status, "%"+category+"%")
+	res, err := stmt.Query(activity, status, category)
 
 	if err != nil {
 		log.Println(err)
@@ -607,7 +607,7 @@ func (ar *AdminRepository) countRecordManagerReturned(divLogin int, category str
 
 	defer stmt.Close()
 
-	res, err := stmt.Query("%"+category+"%", divLogin)
+	res, err := stmt.Query(category, divLogin)
 
 	if err != nil {
 		log.Println(err)
@@ -643,7 +643,7 @@ func (ar *AdminRepository) countRecordProcure(status, category string) (total in
 
 	defer stmt.Close()
 
-	res, err := stmt.Query("%"+category+"%", status)
+	res, err := stmt.Query(category, status)
 
 	if err != nil {
 		log.Println(err)
