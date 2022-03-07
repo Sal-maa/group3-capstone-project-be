@@ -190,11 +190,7 @@ func (ar *AdminRepository) GetAllAdmin(limit, offset int, activity, status, cate
 		requests = append(requests, request)
 	}
 
-<<<<<<< HEAD
-	total, err = ar.countRecordBorrow("1,2,3,4,5", activity, status, category)
-=======
 	total, err = ar.countRecordBorrowAdmin(activity, status, category)
->>>>>>> main
 	if err != nil {
 		return requests, total, err
 	}
@@ -427,11 +423,7 @@ func (rr *AdminRepository) GetUserDivision(id int) (divId int, code int, err err
 	return divId, http.StatusOK, nil
 }
 
-<<<<<<< HEAD
-func (ar *AdminRepository) countRecordBorrow(division, activity, status, category string) (total int, err error) {
-=======
 func (ar *AdminRepository) countRecordBorrow(division int, activity, status, category string) (total int, err error) {
->>>>>>> main
 	stmt, err := ar.db.Prepare(`
 	SELECT COUNT(b.id) 
 	FROM borrowORreturn_requests b
@@ -441,8 +433,6 @@ func (ar *AdminRepository) countRecordBorrow(division int, activity, status, cat
 	ON a.category_id = c.id
 	JOIN users u
 	ON b.user_id = u.id
-<<<<<<< HEAD
-=======
 	WHERE b.activity LIKE ?
 	  AND b.status LIKE ?
 	  AND c.name LIKE ?
@@ -485,11 +475,9 @@ func (ar *AdminRepository) countRecordBorrowAdmin(activity, status, category str
 	ON a.category_id = c.id
 	JOIN users u
 	ON b.user_id = u.id
->>>>>>> main
 	WHERE b.activity LIKE ?
 	  AND b.status LIKE ?
 	  AND c.name LIKE ?
-	  AND u.division_id IN (?)
 	`)
 
 	if err != nil {
@@ -499,7 +487,7 @@ func (ar *AdminRepository) countRecordBorrowAdmin(activity, status, category str
 
 	defer stmt.Close()
 
-	res, err := stmt.Query(activity, status, "%"+category+"%", division)
+	res, err := stmt.Query(activity, status, "%"+category+"%")
 
 	if err != nil {
 		log.Println(err)
