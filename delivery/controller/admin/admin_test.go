@@ -592,7 +592,7 @@ func TestRoleAdminGetAll(t *testing.T) {
 
 func TestRoleGetAllProcure(t *testing.T) {
 	t.Run("TestRoleGetAllProcureFailed", func(t *testing.T) {
-		token, _, _ := _midware.CreateToken(1, "Administrator")
+		token, _, _ := _midware.CreateToken(1, "Employee")
 
 		request := httptest.NewRequest(http.MethodGet, "/", nil)
 		request.Header.Set("Content-Type", "application/json")
@@ -787,6 +787,35 @@ func TestQueryParamAdminGetAll(t *testing.T) {
 		context := e.NewContext(request, response)
 		context.SetPath("/requests/admin")
 		context.QueryParam("o")
+		adminController := New(mockRepoSuccess{})
+		_midware.JWTMiddleWare()(adminController.AdminGetAllBorrow())(context)
+
+		actual := map[string]interface{}{}
+		body := response.Body.String()
+		json.Unmarshal([]byte(body), &actual)
+
+		expected := map[string]interface{}{
+			"code":    float64(http.StatusBadRequest),
+			"message": "Bad request",
+		}
+
+		assert.Equal(t, expected, actual)
+	})
+	t.Run("TestActivityAdminGetAllFailed", func(t *testing.T) {
+		token, _, _ := _midware.CreateToken(1, "Administrator")
+
+		request := httptest.NewRequest(http.MethodGet, "/?a=uhuy", nil)
+		request.Header.Set("Content-Type", "application/json")
+		request.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", token))
+		request.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+
+		response := httptest.NewRecorder()
+
+		e := echo.New()
+
+		context := e.NewContext(request, response)
+		context.SetPath("/requests/admin")
+		context.QueryParam("a")
 		adminController := New(mockRepoSuccess{})
 		_midware.JWTMiddleWare()(adminController.AdminGetAllBorrow())(context)
 
