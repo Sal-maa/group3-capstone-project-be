@@ -11,7 +11,7 @@ This application provides REST API for Company Asset Management System. Among it
 ### 🕮 &nbsp;Documentation
 
 See open API documentation [here](https://app.swaggerhub.com/apis-docs/bagusbpg6/group3-capstone-API/1.0.0).
-Run Postman collection [here](https://go.postman.co/workspace/My-Workspace~db1faef6-858e-444c-82a8-5a0aae145f1b/collection/17089952-9488e3dd-6a06-4f9f-bcb6-3b0a8a145e4e?action=share&creator=17089952).
+Run Postman collection [here](https://www.getpostman.com/collections/ef32190e3c805ac015e8).
 
 ### 🖳 &nbsp;Installation
 To run the application, clone this repository first,
