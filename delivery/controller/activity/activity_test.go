@@ -278,6 +278,38 @@ func TestGetDetailActivityByRequestIdInvalidReqid(t *testing.T) {
 	})
 }
 
+//unautorized
+func TestGetDetailActivityByRequestIdUnauth(t *testing.T) {
+	t.Run("TestGetDetailActivityByRequestIdInvalidReqid", func(t *testing.T) {
+		token, _, _ := _midware.CreateToken(3, "")
+
+		request := httptest.NewRequest(http.MethodGet, "/", nil)
+		request.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", token))
+		request.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+
+		response := httptest.NewRecorder()
+
+		e := echo.New()
+
+		context := e.NewContext(request, response)
+		context.SetPath("/activities/:user_id/:request_id")
+		context.SetParamNames("user_id", "request_id")
+		context.SetParamValues("1", "1")
+		activityController := New(mockRepoSuccess{})
+		_midware.JWTMiddleWare()(activityController.GetDetailActivityByRequestId())(context)
+
+		actual := map[string]interface{}{}
+		body := response.Body.String()
+		json.Unmarshal([]byte(body), &actual)
+
+		expected := map[string]interface{}{
+			"code":    float64(http.StatusUnauthorized),
+			"message": "unauthorized",
+		}
+		assert.Equal(t, expected, actual)
+	})
+}
+
 //unauthorized
 
 func TestGetAllActivityOfUserUnauthorized(t *testing.T) {
@@ -632,6 +664,42 @@ func TestUpdateRrquestStastus(t *testing.T) {
 				"status":        "Cancelled",
 				"stock_left":    float64(1),
 				"user_name":     "test"},
+		}
+		assert.Equal(t, expected, actual)
+	})
+}
+
+//failed bind data
+func TestUpdateRrquestStastusBindfail(t *testing.T) {
+	t.Run("TestUpdateRrquestStatus", func(t *testing.T) {
+		token, _, _ := _midware.CreateToken(1, "Administrator")
+
+		requestBody, _ := json.Marshal(map[string]interface{}{
+			"status": 1,
+		})
+		request := httptest.NewRequest(http.MethodPut, "/", bytes.NewBuffer(requestBody))
+		request.Header.Set("Content-Type", "application/json")
+		request.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", token))
+		request.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+
+		response := httptest.NewRecorder()
+
+		e := echo.New()
+
+		context := e.NewContext(request, response)
+		context.SetPath("/activities/:user_id/:request_id")
+		context.SetParamNames("user_id", "request_id")
+		context.SetParamValues("1", "1")
+		activityController := New(mockRepoSuccess{})
+		_midware.JWTMiddleWare()(activityController.UpdateRequestStatus())(context)
+
+		actual := map[string]interface{}{}
+		body := response.Body.String()
+		json.Unmarshal([]byte(body), &actual)
+
+		expected := map[string]interface{}{
+			"code":    float64(http.StatusBadRequest),
+			"message": "failed to bind data",
 		}
 		assert.Equal(t, expected, actual)
 	})
