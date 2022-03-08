@@ -560,6 +560,9 @@ func (m mockRepoFail) ReturnRequest(int) (int, error) {
 	return http.StatusInternalServerError, errors.New("internal server error")
 }
 
+func (m mockRepoFail) UpdateRequestStatus(int) (int, error) {
+	return http.StatusInternalServerError, errors.New("internal server error")
+}
 func TestGetAllActivityOfUserFaildRepo(t *testing.T) {
 	t.Run("TestGetAllActivityOfUserFaildRepo", func(t *testing.T) {
 		token, _, _ := _midware.CreateToken(1, "Administrator")
@@ -690,7 +693,7 @@ func TestUpdateRrquestStastusBindfail(t *testing.T) {
 		context.SetPath("/activities/:user_id/:request_id")
 		context.SetParamNames("user_id", "request_id")
 		context.SetParamValues("1", "1")
-		activityController := New(mockRepoSuccess{})
+		activityController := New(mockRepoFail{})
 		_midware.JWTMiddleWare()(activityController.UpdateRequestStatus())(context)
 
 		actual := map[string]interface{}{}
@@ -700,6 +703,41 @@ func TestUpdateRrquestStastusBindfail(t *testing.T) {
 		expected := map[string]interface{}{
 			"code":    float64(http.StatusBadRequest),
 			"message": "failed to bind data",
+		}
+		assert.Equal(t, expected, actual)
+	})
+}
+
+func TestUpdateRrquestStastusFaild(t *testing.T) {
+	t.Run("TestUpdateRrquestStatus", func(t *testing.T) {
+		token, _, _ := _midware.CreateToken(1, "Administrator")
+
+		requestBody, _ := json.Marshal(map[string]interface{}{
+			"status": "cancel",
+		})
+		request := httptest.NewRequest(http.MethodPut, "/", bytes.NewBuffer(requestBody))
+		request.Header.Set("Content-Type", "application/json")
+		request.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("Bearer %s", token))
+		request.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+
+		response := httptest.NewRecorder()
+
+		e := echo.New()
+
+		context := e.NewContext(request, response)
+		context.SetPath("/activities/:user_id/:request_id")
+		context.SetParamNames("user_id", "request_id")
+		context.SetParamValues("1", "1")
+		activityController := New(mockRepoFail{})
+		_midware.JWTMiddleWare()(activityController.UpdateRequestStatus())(context)
+
+		actual := map[string]interface{}{}
+		body := response.Body.String()
+		json.Unmarshal([]byte(body), &actual)
+
+		expected := map[string]interface{}{
+			"code":    float64(http.StatusInternalServerError),
+			"message": "internal server error",
 		}
 		assert.Equal(t, expected, actual)
 	})
